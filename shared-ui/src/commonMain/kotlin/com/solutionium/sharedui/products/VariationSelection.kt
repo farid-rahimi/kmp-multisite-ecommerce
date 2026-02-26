@@ -1,6 +1,5 @@
-package com.solutionium.feature.product.detail
+package com.solutionium.sharedui.products
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -33,7 +31,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.toColorInt
 import coil3.compose.AsyncImage
 import com.solutionium.shared.data.model.ProductAttribute
 import com.solutionium.shared.data.model.ProductVariation
@@ -46,27 +43,13 @@ fun VariationSelectionSection(
     isLoading: Boolean,
     onOptionSelected: (attributeId: Int, optionValue: String) -> Unit,
     isOptionAvailable: (attributeId: Int, optionValue: String) -> Boolean,
-
-
-    ) {
-//    // A map to quickly check if an option is available for purchase
-//    val availabilityMap = remember(variations) {
-//        val map = mutableMapOf<Pair<String, String>, Boolean>()
-//        variations.filter { it.stockStatus == "instock" }.forEach { variation ->
-//            variation.attributes.forEach { attr ->
-//                map[attr.name to attr.option] = true
-//            }
-//        }
-//        map
-//    }
-
+) {
     if (isLoading) {
-        // Show a loading indicator or placeholder
         Box(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             CircularProgressIndicator(
                 modifier = Modifier
@@ -76,8 +59,7 @@ fun VariationSelectionSection(
                 strokeWidth = 2.dp,
             )
         }
-
-    } else
+    } else {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             attributes.sortedByDescending { it.position }.forEach { attribute ->
                 VariationAttributeRow(
@@ -89,38 +71,37 @@ fun VariationSelectionSection(
                     },
                     isOptionAvailable = { optionValue ->
                         isOptionAvailable(attribute.id, optionValue)
-                    }
+                    },
                 )
             }
         }
+    }
 }
 
-@SuppressLint("RememberReturnType")
 @Composable
 private fun VariationAttributeRow(
     attribute: ProductAttribute,
     variations: List<ProductVariation>,
     selectedOption: String?,
     onOptionSelected: (String) -> Unit,
-    isOptionAvailable: (String) -> Boolean
+    isOptionAvailable: (String) -> Boolean,
 ) {
-
     Column {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp), // Add padding here
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = attribute.name,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
             selectedOption?.let {
                 Text(
                     text = ": $it",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Normal,
-                    modifier = Modifier.padding(start = 4.dp)
+                    modifier = Modifier.padding(start = 4.dp),
                 )
             }
         }
@@ -128,12 +109,10 @@ private fun VariationAttributeRow(
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            items(attribute.options) { option -> // Use items extension for LazyRow
-                // Here you can decide which chip to show based on attribute name
+            items(attribute.options) { option ->
                 val isColorAttribute = attribute.slug.equals("pa_color", ignoreCase = true)
-
 
                 if (isColorAttribute) {
                     val imageUrl = remember(variations, option) {
@@ -141,7 +120,7 @@ private fun VariationAttributeRow(
                             variation.attributes.any { attr ->
                                 attr.id == attribute.id && attr.option == option
                             }
-                        }?.image // Get the image source URL
+                        }?.image
                     }
 
                     ColorSwatch(
@@ -149,14 +128,14 @@ private fun VariationAttributeRow(
                         imageUrl = imageUrl,
                         isSelected = selectedOption == option,
                         isAvailable = isOptionAvailable(option),
-                        onClick = { onOptionSelected(option) }
+                        onClick = { onOptionSelected(option) },
                     )
                 } else {
                     OptionChip(
                         text = option,
                         isSelected = selectedOption == option,
                         isAvailable = isOptionAvailable(option),
-                        onClick = { onOptionSelected(option) }
+                        onClick = { onOptionSelected(option) },
                     )
                 }
             }
@@ -169,7 +148,7 @@ private fun OptionChip(
     text: String,
     isSelected: Boolean,
     isAvailable: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val backgroundColor =
         if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
@@ -183,7 +162,7 @@ private fun OptionChip(
             .alpha(alpha)
             .clickable(enabled = isAvailable, onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(if (isSelected) 4.dp else 1.dp)
+        elevation = CardDefaults.cardElevation(if (isSelected) 4.dp else 1.dp),
     ) {
         Text(
             text = text,
@@ -191,7 +170,7 @@ private fun OptionChip(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -199,10 +178,10 @@ private fun OptionChip(
 @Composable
 private fun ColorSwatch(
     option: String,
-    imageUrl: String?, // The image URL for this color variation
+    imageUrl: String?,
     isSelected: Boolean,
     isAvailable: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
     val alpha = if (isAvailable) 1f else 0.4f
@@ -212,38 +191,54 @@ private fun ColorSwatch(
         modifier = Modifier
             .size(56.dp)
             .alpha(alpha)
-
             .clickable(enabled = isAvailable, onClick = onClick),
-        // Add a border to the Surface itself
-        border = BorderStroke(1.dp, borderColor)
+        border = BorderStroke(1.dp, borderColor),
     ) {
-        // Use a Box to layer the image/color and a potential inner border
         Box {
             if (imageUrl != null) {
-                // If we have an image URL, display it
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = "Variation for $option",
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .matchParentSize()
-                        .padding(4.dp)
+                        .padding(4.dp),
                 )
             } else {
-                // Fallback to a solid color if no image or if the option is a hex code
-                val color = remember(option) {
-                    try {
-                        Color(option.toColorInt())
-                    } catch (e: Exception) {
-                        // Fallback for non-hex color names without an image
-                        Color.Gray
-                    }
-                }
+                val color = remember(option) { parseColor(option) ?: Color.Gray }
                 Surface(
                     color = color,
-                    modifier = Modifier.matchParentSize()
+                    modifier = Modifier.matchParentSize(),
                 ) {}
             }
         }
+    }
+}
+
+private fun parseColor(raw: String): Color? {
+    val hex = raw.removePrefix("#")
+    val value = hex.toLongOrNull(16) ?: return null
+    return when (hex.length) {
+        6 -> {
+            val rgb = value.toInt()
+            Color(
+                red = ((rgb shr 16) and 0xFF) / 255f,
+                green = ((rgb shr 8) and 0xFF) / 255f,
+                blue = (rgb and 0xFF) / 255f,
+                alpha = 1f,
+            )
+        }
+
+        8 -> {
+            val argb = value.toInt()
+            Color(
+                red = ((argb shr 16) and 0xFF) / 255f,
+                green = ((argb shr 8) and 0xFF) / 255f,
+                blue = (argb and 0xFF) / 255f,
+                alpha = ((argb shr 24) and 0xFF) / 255f,
+            )
+        }
+
+        else -> null
     }
 }

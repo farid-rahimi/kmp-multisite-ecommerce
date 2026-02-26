@@ -30,7 +30,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.solutionium.shared.data.model.ProductThumbnail
 import com.solutionium.sharedui.common.component.ProductThumbnailCard2
 import com.solutionium.sharedui.common.component.ProductThumbnailPlaceholder
-import io.ktor.http.parametersOf
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 

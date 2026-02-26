@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,8 +33,8 @@ import com.solutionium.sharedui.common.component.StoryViewer
 import com.solutionium.feature.account.navigateToAccount
 import com.solutionium.feature.cart.CartViewModel
 import com.solutionium.feature.home.GRAPH_HOME_ROUTE
-import com.solutionium.feature.home.HomeNavigationEvent
-import com.solutionium.feature.home.HomeViewModel
+import com.solutionium.shared.viewmodel.HomeNavigationEvent
+import com.solutionium.shared.viewmodel.HomeViewModel
 import com.solutionium.feature.product.detail.navigateProductDetail
 import com.solutionium.feature.product.list.navigateProductList
 import com.solutionium.woo.ui.navigation.RootDestination
@@ -44,6 +45,7 @@ import com.solutionium.woo.ui.navigation.RootScreen.Cart
 import com.solutionium.woo.ui.navigation.RootScreen.Account
 import com.solutionium.woo.ui.navigation.WooNavHost
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun WooApp(
@@ -54,8 +56,12 @@ fun WooApp(
     val currentRoute = currentBackStackEntry?.destination?.route
     val cartUiState by koinViewModel<CartViewModel>().uiState.collectAsState()
 
-    val homeViewModel: HomeViewModel = koinViewModel()
+    val homeViewModel: HomeViewModel = koinInject()
     val homeState by homeViewModel.state.collectAsStateWithLifecycle()
+
+    DisposableEffect(homeViewModel) {
+        onDispose { homeViewModel.clear() }
+    }
 
     // 2. Manage the state for showing the StoryViewer here.
     var showStoryViewer by rememberSaveable { mutableStateOf(false) }

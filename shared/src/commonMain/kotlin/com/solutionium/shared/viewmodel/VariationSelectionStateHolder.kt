@@ -1,4 +1,4 @@
-package com.solutionium.feature.product.detail
+package com.solutionium.shared.viewmodel
 
 
 import com.solutionium.shared.data.model.ProductAttribute

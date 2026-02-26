@@ -1,14 +1,8 @@
-package com.solutionium.feature.product.detail
+package com.solutionium.shared.viewmodel
 
-import android.content.Context
-import android.content.Intent
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.solutionium.shared.data.model.Decant
 import com.solutionium.shared.data.model.GeneralError
 import com.solutionium.shared.data.model.ProductAttribute
-import com.solutionium.shared.data.model.ProductDetail
 import com.solutionium.shared.data.model.ProductVarType
 import com.solutionium.shared.data.model.ProductVariation
 import com.solutionium.shared.data.model.Result
@@ -23,6 +17,10 @@ import com.solutionium.shared.domain.favorite.ToggleFavoriteUseCase
 import com.solutionium.shared.domain.review.GetTopReviewsUseCase
 import com.solutionium.shared.domain.products.GetProductDetailsUseCase
 import com.solutionium.shared.domain.products.GetProductVariationsUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +32,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ProductDetailViewModel(
-    savedStateHandle: SavedStateHandle,
+    initialArgs: Map<String, String> = emptyMap(),
     private val getProductDetails: GetProductDetailsUseCase,
     private val getProductVariations: GetProductVariationsUseCase,
     private val addToCart: AddToCartUseCase,
@@ -45,11 +43,13 @@ class ProductDetailViewModel(
     private val paymentMethodDiscountUseCase: PaymentMethodDiscountUseCase,
     private val getTopReviews: GetTopReviewsUseCase,
 
-    ) : ViewModel() {
+    ) {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     // --- State Holder Instance ---
     // The ViewModel owns the state holder and provides its scope.
-    private val variationStateHolder = VariationSelectionStateHolder(viewModelScope)
+    private val variationStateHolder = VariationSelectionStateHolder(scope)
 
     // --- Expose State to the UI ---
     // The UI will observe these flows directly from the ViewModel.
@@ -90,9 +90,8 @@ class ProductDetailViewModel(
         _selectedDecant.value = null // Set to null to signify "Full Bottle"
     }
 
-    private val productId: Int =
-        savedStateHandle["productId"] ?: throw IllegalArgumentException("Product ID is required")
-    private val productSlug: String? = savedStateHandle["productSlug"]
+    private val productId: Int = initialArgs["productId"]?.toIntOrNull() ?: -1
+    private val productSlug: String? = initialArgs["productSlug"]
 
     init {
         fetchData()
@@ -107,7 +106,7 @@ class ProductDetailViewModel(
     }
 
     fun refresh() {
-        viewModelScope.launch {
+        scope.launch {
             _isRefreshing.value = true
             // Re-run all the initial data fetching logic
             fetchData()
@@ -118,7 +117,7 @@ class ProductDetailViewModel(
     }
 
     private fun loadTopReviews() {
-        viewModelScope.launch {
+        scope.launch {
             getTopReviews(productId).collect { result ->
                 when (result) {
                     is Result.Success -> {
@@ -136,14 +135,14 @@ class ProductDetailViewModel(
     }
 
     private fun loadPaymentMethodDiscounts() {
-        viewModelScope.launch {
+        scope.launch {
             val discounts = paymentMethodDiscountUseCase()
             _state.update { it.copy(paymentDiscount = discounts.values.maxOrNull()) }
         }
     }
 
     private fun observeFavorites() {
-        viewModelScope.launch {
+        scope.launch {
             observeFavoritesUseCase().collect { favoriteIds ->
                 _state.update { it.copy(favoriteIds = favoriteIds) }
             }
@@ -151,7 +150,7 @@ class ProductDetailViewModel(
     }
 
     private fun observeCartQuantity() {
-        viewModelScope.launch {
+        scope.launch {
             // This pipeline now reacts to changes in `selectedVariation` automatically.
             combine(selectedVariation, selectedDecant) { variation, decant ->
                 Pair(variation, decant)
@@ -180,7 +179,7 @@ class ProductDetailViewModel(
         }
     }
 
-    private fun load() = viewModelScope.launch {
+    private fun load() = scope.launch {
         _state.update { it.copy(isLoading = true) }
 
         val result = if (productId > 0) getProductDetails(productId) else getProductDetails(
@@ -250,7 +249,7 @@ class ProductDetailViewModel(
 
     // --- Data Fetching ---
     private fun loadProductVariations(productId: Int) {
-        viewModelScope.launch {
+        scope.launch {
             _state.value = _state.value.copy(isLoadingVariations = true)
 
 
@@ -314,7 +313,7 @@ class ProductDetailViewModel(
 //            }
 //        }
 
-        viewModelScope.launch {
+        scope.launch {
             _state.value.product?.let { product ->
                 val decantSelection = selectedDecant.value
 
@@ -357,7 +356,7 @@ class ProductDetailViewModel(
     }
 
     fun removeItem() {
-        viewModelScope.launch {
+        scope.launch {
             state.value.cartItem?.let {
                 if (it.quantity > 1) {
                     // Pass both IDs to uniquely identify the item to update
@@ -370,7 +369,7 @@ class ProductDetailViewModel(
     }
 
     fun increaseQuantity() {
-        viewModelScope.launch {
+        scope.launch {
             state.value.cartItem?.let {
                 // Pass both IDs to uniquely identify the item to update
                 updateCartItemUseCase.increaseCartItemQuantity(it.productId, it.variationId)
@@ -378,33 +377,17 @@ class ProductDetailViewModel(
         }
     }
 
-
-    fun onShareClicked(context: Context, product: ProductDetail?) {
-        val productUrl = product?.permalink ?: ""
-
-        // 2. Create and launch the standard Android Share Intent.
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.share_product_subject))
-            putExtra(
-                Intent.EXTRA_TEXT,
-                context.getString(R.string.share_product_text, product?.name ?: "", productUrl)
-            )
-        }
-
-        // 3. Let the user choose which app to share with.
-        context.startActivity(
-            Intent.createChooser(shareIntent, context.getString(R.string.share_via))
-        )
-    }
-
     fun toggleFavorite() {
-        viewModelScope.launch {
+        scope.launch {
             toggleFavoriteUseCase(productId, state.value.isFavorite())
         }
     }
 
     fun onRetry() {
         load()
+    }
+
+    fun clear() {
+        scope.cancel()
     }
 }

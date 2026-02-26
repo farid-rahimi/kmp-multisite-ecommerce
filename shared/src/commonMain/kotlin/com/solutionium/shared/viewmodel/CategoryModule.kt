@@ -1,21 +1,24 @@
-package com.solutionium.feature.category
+package com.solutionium.shared.viewmodel
 
 import com.solutionium.shared.domain.config.getConfigDomainModules
-import com.solutionium.shared.domain.user.getUserDomainModules
 import com.solutionium.shared.domain.products.getProductsDomainModules
-import org.koin.core.module.dsl.viewModel
+import com.solutionium.shared.domain.user.getUserDomainModules
 import org.koin.dsl.module
 
-fun getCategoryModules() = setOf(categoryModule) + getProductsDomainModules() + getUserDomainModules() + getConfigDomainModules()
+fun getCategoryModules() =
+    setOf(categoryModule) +
+        getProductsDomainModules() +
+        getUserDomainModules() +
+        getConfigDomainModules()
 
 val categoryModule = module {
-    viewModel {
+    factory {
         CategoryViewModel(
             getBrands = get(),
             getAttributeTerms = get(),
             getAppImages = get(),
             searchProducts = get(),
-            checkSuperUserUserCase = get()
+            checkSuperUserUserCase = get(),
         )
     }
 }

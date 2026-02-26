@@ -28,10 +28,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.solutionium.core.ui.common.R
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.search_anything
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SearchAppBar(
@@ -39,13 +40,11 @@ fun SearchAppBar(
     onQueryChanged: (String) -> Unit,
     onSearch: () -> Unit,
     onClose: () -> Unit,
-    // Add a new parameter to automatically request focus when the bar appears
-    autoFocus: Boolean = false
+    autoFocus: Boolean = false,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
 
-    // Automatically request focus and show keyboard when autoFocus is true
     LaunchedEffect(autoFocus) {
         if (autoFocus) {
             focusRequester.requestFocus()
@@ -55,38 +54,27 @@ fun SearchAppBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp), // Standard TopAppBar height
+            .height(60.dp),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 4.dp
+        shadowElevation = 4.dp,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Back Button
-//            IconButton(onClick = onClose) {
-//                Icon(
-//                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-//                    contentDescription = "Back",
-//                    tint = MaterialTheme.colorScheme.onSurface
-//                )
-//            }
-
-            // The Search Field
             TextField(
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(focusRequester)
-                    .clip(CircleShape), // Pill shape
+                    .clip(CircleShape),
                 value = query,
-                onValueChange = { onQueryChanged(it) },
+                onValueChange = onQueryChanged,
                 placeholder = {
                     Text(
-                        text = stringResource(R.string.search_anything),
-                        // Use a more subtle placeholder color
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        text = stringResource(Res.string.search_anything),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     )
                 },
                 textStyle = MaterialTheme.typography.bodyMedium,
@@ -95,43 +83,36 @@ fun SearchAppBar(
                     Icon(
                         imageVector = Icons.Outlined.Search,
                         contentDescription = "Search Icon",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     )
                 },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
-                        IconButton(
-                            onClick = { onQueryChanged("") }
-                        ) {
+                        IconButton(onClick = { onQueryChanged("") }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Clear Search",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
                 },
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Search
-                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(
                     onSearch = {
                         onSearch()
-                        keyboardController?.hide() // Hide keyboard on search
-                    }
+                        keyboardController?.hide()
+                    },
                 ),
                 colors = TextFieldDefaults.colors(
-                    // Give the field a distinct, subtle background color
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    // Remove the underline
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
-                )
+                ),
             )
         }
     }
 }
-

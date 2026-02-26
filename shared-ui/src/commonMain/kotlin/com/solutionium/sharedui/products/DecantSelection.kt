@@ -1,4 +1,4 @@
-package com.solutionium.feature.product.detail
+package com.solutionium.sharedui.products
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,77 +16,68 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.solutionium.sharedui.common.component.FormattedPriceV2
 import com.solutionium.shared.data.model.Decant
+import com.solutionium.sharedui.common.component.FormattedPriceV3
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.decant_selection_title
+import com.solutionium.sharedui.resources.full_bottle
+import com.solutionium.sharedui.resources.out_of_stock
+import org.jetbrains.compose.resources.stringResource
 
-// In ProductDetailScreen.kt
-// 1. Update the DecantSelectionSection composable
 @Composable
 fun DecantSelectionSection(
-    productPrice: Double, // Pass the full bottle price
+    productPrice: Double,
     decants: List<Decant>,
     selectedDecant: Decant?,
     onDecantSelected: (Decant) -> Unit,
     fullBottleAvailable: Boolean = true,
     onFullBottleSelected: () -> Unit,
-    displayPrice: Boolean = false
+    displayPrice: Boolean = false,
 ) {
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp),
-    ) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.decant_selection_title),
+                text = stringResource(Res.string.decant_selection_title),
                 fontSize = MaterialTheme.typography.titleMedium.fontSize,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
-            // Display the selected option
-            val selectionText = selectedDecant?.size ?: stringResource(R.string.full_bottle)
+            val selectionText = selectedDecant?.size ?: stringResource(Res.string.full_bottle)
             Text(
                 text = ": $selectionText",
                 fontSize = MaterialTheme.typography.titleMedium.fontSize,
                 fontWeight = FontWeight.Normal,
-                modifier = Modifier.padding(start = 4.dp)
+                modifier = Modifier.padding(start = 4.dp),
             )
         }
         Spacer(Modifier.height(12.dp))
 
-        // Use FlowRow for better layout
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            //verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // "Full Bottle" Chip - selected if `selectedDecant` is null
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OptionChipWithPrice(
-                primaryText = stringResource(R.string.full_bottle),
+                primaryText = stringResource(Res.string.full_bottle),
                 isAvailable = fullBottleAvailable,
-                price = productPrice, // Show full bottle price
+                price = productPrice,
                 isSelected = (selectedDecant == null && fullBottleAvailable),
                 onClick = onFullBottleSelected,
-                displayPrice = displayPrice
-
+                displayPrice = displayPrice,
             )
 
-            // Decant Chips
             decants.forEach { decant ->
                 OptionChipWithPrice(
                     primaryText = decant.size,
-                    price = decant.price, // Show decant price
+                    price = decant.price,
                     isSelected = selectedDecant == decant,
                     onClick = { onDecantSelected(decant) },
-                    displayPrice = displayPrice
+                    displayPrice = displayPrice,
                 )
             }
         }
     }
 }
 
-// 2. Create a new, more advanced OptionChip
 @Composable
 private fun OptionChipWithPrice(
     primaryText: String,
@@ -94,7 +85,7 @@ private fun OptionChipWithPrice(
     isSelected: Boolean,
     isAvailable: Boolean = true,
     onClick: () -> Unit,
-    displayPrice: Boolean = true
+    displayPrice: Boolean = true,
 ) {
     val backgroundColor =
         if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
@@ -108,43 +99,36 @@ private fun OptionChipWithPrice(
             .alpha(alpha)
             .clickable(enabled = isAvailable, onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(if (isSelected) 4.dp else 1.dp)
+        elevation = CardDefaults.cardElevation(if (isSelected) 4.dp else 1.dp),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = primaryText,
                 color = contentColor,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
             if (isAvailable) {
-                if (displayPrice)
-                    FormattedPriceV2(
-                        price.toLong(),
+                if (displayPrice) {
+                    FormattedPriceV3(
+                        amount = price.toLong(),
                         mainStyle = TextStyle(
                             color = contentColor,
                             fontSize = 14.sp,
-                            //fontWeight = FontWeight.SemiBold
                         ),
-                        magnifier = 0.8
+                        magnifier = 0.8,
                     )
+                }
             } else {
                 Text(
-                    text = stringResource(R.string.out_of_stock),
+                    text = stringResource(Res.string.out_of_stock),
                     color = contentColor,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-//            Text(
-//                text = secondaryText,
-//                color = contentColor.copy(alpha = 0.8f),
-//                style = MaterialTheme.typography.bodySmall,
-//                fontWeight = FontWeight.Normal
-//            )
         }
     }
 }
-

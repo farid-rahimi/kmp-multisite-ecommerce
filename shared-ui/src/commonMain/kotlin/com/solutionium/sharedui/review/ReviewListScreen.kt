@@ -1,4 +1,4 @@
-package com.solutionium.feature.review
+package com.solutionium.sharedui.review
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,34 +20,47 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.solutionium.sharedui.common.component.CriteriaRatingBar
 import com.solutionium.sharedui.common.component.OrderSummaryCardPlaceholder
 import com.solutionium.sharedui.common.component.ReviewItem
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.criteria_ratings_title
+import com.solutionium.sharedui.resources.login_to_review
+import com.solutionium.sharedui.resources.no_reviews_yet
+import com.solutionium.sharedui.resources.review_field_label
+import com.solutionium.sharedui.resources.review_form_title
+import com.solutionium.sharedui.resources.reviews_title
+import com.solutionium.sharedui.resources.submit_review
+import com.solutionium.sharedui.resources.write_a_review
 import com.solutionium.shared.data.model.Review
+import com.solutionium.shared.viewmodel.ReviewFormState
+import com.solutionium.shared.viewmodel.ReviewViewModel
+import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewListScreen(
     viewModel: ReviewViewModel,
     onBackClick: () -> Unit
 ) {
     val reviews: LazyPagingItems<Review> = viewModel.reviews.collectAsLazyPagingItems()
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsState()
+    val showReviewDialog by viewModel.showReviewDialog.collectAsState()
+    val productReviewCriteria by viewModel.productReviewCriteria.collectAsState()
 
     val isRefreshing = reviews.loadState.refresh is LoadState.Loading
 
 
-    if (viewModel.showReviewDialog) {
+    if (showReviewDialog) {
         ReviewFormDialog(
             formState = state,
-            reviewCriteria = viewModel.productReviewCriteria,
+            reviewCriteria = productReviewCriteria,
             onDismiss = { viewModel.onCloseReviewDialog() },
             onRatingChange = { viewModel.onRatingChange(it) },
             onReviewTextChange = { viewModel.onReviewTextChange(it) },
@@ -68,7 +81,7 @@ fun ReviewListScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(stringResource(R.string.reviews_title))
+                        Text(stringResource(Res.string.reviews_title))
                         if (!productName.isNullOrBlank()) {
                             Text(
                                 text = productName,
@@ -98,8 +111,8 @@ fun ReviewListScreen(
             ExtendedFloatingActionButton(
                 onClick = { if (state.isLoggedIn) viewModel.onOpenReviewDialog() },
                 icon = { Icon(Icons.Filled.Edit, contentDescription = "Write a review") },
-                text = { if (state.isLoggedIn) Text(stringResource(R.string.write_a_review)) else Text(
-                    stringResource(R.string.login_to_review)
+                text = { if (state.isLoggedIn) Text(stringResource(Res.string.write_a_review)) else Text(
+                    stringResource(Res.string.login_to_review)
                 ) }
             )
         },
@@ -119,7 +132,7 @@ fun ReviewListScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = stringResource(R.string.no_reviews_yet),
+                        text = stringResource(Res.string.no_reviews_yet),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -185,7 +198,7 @@ fun ReviewFormDialog(
             ) {
                 item {
                     Text(
-                        stringResource(R.string.review_form_title),
+                        stringResource(Res.string.review_form_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -214,7 +227,7 @@ fun ReviewFormDialog(
                     OutlinedTextField(
                         value = formState.reviewText,
                         onValueChange = onReviewTextChange,
-                        label = { Text(stringResource(R.string.review_field_label)) },
+                        label = { Text(stringResource(Res.string.review_field_label)) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp),
@@ -226,7 +239,7 @@ fun ReviewFormDialog(
                 if (reviewCriteria.isNotEmpty()) {
                     item {
                         Text(
-                            stringResource(R.string.criteria_ratings_title),
+                            stringResource(Res.string.criteria_ratings_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -264,7 +277,7 @@ fun ReviewFormDialog(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text(stringResource(R.string.submit_review))
+                            Text(stringResource(Res.string.submit_review))
                         }
                     }
                 }
@@ -272,4 +285,3 @@ fun ReviewFormDialog(
         }
     }
 }
-

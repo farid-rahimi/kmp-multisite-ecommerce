@@ -7,6 +7,18 @@
     <string name="cancel">Cancel</string>
     <string name="order">Order %1$s</string>
     <string name="search_anything">Search anything…</string>
+    <string name="search">Search "%1$s"</string>
+    <string name="show_all_results">Show all results</string>
+    <string name="no_results_found">No results found</string>
+    <string name="all_perfumes_title">All Perfumes</string>
+    <string name="all_shoes_title">All Shoes</string>
+    <string name="discover_perfume_collections">Discover perfume collections</string>
+    <string name="brands_title">Brands</string>
+    <string name="show_all_brands_text">Show all brands</string>
+    <string name="scents_title">Scents</string>
+    <string name="show_all_scents_text">Show all scents</string>
+    <string name="seasons_title">Seasons</string>
+    <string name="shoe_brands_title">Shoe Brands</string>
     <string name="out_of_stock">Sold Out</string>
     <string name="in_stock">Available</string>
     <string name="in_stock_count">In Stock: %1$s</string>
@@ -61,5 +73,44 @@
     <string name="refunded">Refunded</string>
     <string name="pending">Pending</string>
     <string name="unknown_order_status">Unknown Status</string>
+
+    <string name="reviews_title">Reviews</string>
+    <string name="write_a_review">Write a Review</string>
+    <string name="login_to_review">Login to Review</string>
+    <string name="review_form_title">What's your rating?</string>
+    <string name="review_field_label">Share your experience</string>
+    <string name="criteria_ratings_title">Detailed Ratings</string>
+    <string name="submit_review">Submit Review</string>
+    <string name="no_reviews_yet">No Review Yet!</string>
+
+    <string name="an_unexpected_error_occurred">An unexpected error occurred.</string>
+    <string name="product_data_is_unavailable">Product data is unavailable.</string>
+    <string name="product_detail_title">Details</string>
+    <string name="product_attributes_title">Product Details</string>
+    <string name="description">Description</string>
+    <string name="show_less">Show Less</string>
+    <string name="customer_reviews_title">Customer Reviews</string>
+    <string name="no_review_title">No Reviews Yet</string>
+    <string name="no_review_content">Be the first to share your thoughts on %1$s!</string>
+    <string name="write_review_button">Write a Review</string>
+    <string name="see_all_reviews">See All</string>
+    <string name="reviews_count">Reviews %1$s</string>
+    <string name="decant_selection_title">Available Sizes</string>
+    <string name="full_bottle">Full Bottle</string>
+    <string name="add_to_cart_low">ADD TO CART (Low)</string>
+    <string name="add_to_cart">ADD TO CART</string>
+    <string name="variation_not_selected_msg">Please select product options</string>
+    <string name="out_of_stock_msg">This item is currently out of stock</string>
+    <string name="low_in_stock_msg">Hurry! Only a few items left in stock.</string>
+    <string name="retry">Retry</string>
+    <string name="new_arrivals">New Arrivals</string>
+    <string name="on_sales">On Sales</string>
+    <string name="featured">Featured</string>
+    <string name="app_offers">Only App Offers</string>
+    <string name="update_available">Update Available</string>
+    <string name="force_update_text">Your app version is no longer supported. Please update to version %1$s to continue.</string>
+    <string name="update_text">A new version (%1$s) is available. Update for the latest features and improvements.</string>
+    <string name="update_now">Update Now</string>
+    <string name="later">Later</string>
 
 </resources>

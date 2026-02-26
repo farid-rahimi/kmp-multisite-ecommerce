@@ -8,6 +8,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":shared-ui"))
 
     implementation(project(":domain:woo-products"))
     implementation(project(":domain:favorite"))

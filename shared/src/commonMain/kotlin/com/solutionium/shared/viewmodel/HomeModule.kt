@@ -1,22 +1,25 @@
-package com.solutionium.feature.home
+package com.solutionium.shared.viewmodel
 
 import com.solutionium.shared.domain.cart.getCartDomainModules
+import com.solutionium.shared.domain.categories.getCategoryDomainModules
 import com.solutionium.shared.domain.config.getConfigDomainModules
 import com.solutionium.shared.domain.favorite.getFavoriteDomainModules
-import com.solutionium.shared.domain.user.getUserDomainModules
-import com.solutionium.shared.domain.categories.getCategoryDomainModules
 import com.solutionium.shared.domain.products.getProductsDomainModules
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.module.dsl.viewModel
+import com.solutionium.shared.domain.user.getUserDomainModules
 import org.koin.dsl.module
 
-fun getHomeModules() = setOf(homeModule) + getCartDomainModules() + getFavoriteDomainModules() + getUserDomainModules() + getConfigDomainModules() + getProductsDomainModules() + getCategoryDomainModules()
-
+fun getHomeModules() =
+    setOf(homeModule) +
+        getCartDomainModules() +
+        getFavoriteDomainModules() +
+        getUserDomainModules() +
+        getConfigDomainModules() +
+        getProductsDomainModules() +
+        getCategoryDomainModules()
 
 val homeModule = module {
-    viewModel {
+    factory {
         HomeViewModel(
-            context = androidContext(),
             getProductsUseCase = get(),
             getCategoriesUseCase = get(),
             observeCartUseCase = get(),
@@ -33,7 +36,8 @@ val homeModule = module {
             checkLoginUserUseCase = get(),
             checkSuperUserUseCase = get(),
             getVersionsUseCase = get(),
-            getContactInfoUseCase = get()
+            getContactInfoUseCase = get(),
+            appVersionProvider = get(),
         )
     }
 }

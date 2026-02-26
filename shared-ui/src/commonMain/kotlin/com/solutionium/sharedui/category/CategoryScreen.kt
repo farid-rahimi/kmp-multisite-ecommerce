@@ -1,7 +1,6 @@
-package com.solutionium.feature.category
+package com.solutionium.sharedui.category
 
 import com.solutionium.sharedui.common.component.SearchAppBar
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +27,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,20 +46,31 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.solutionium.sharedui.common.component.CategoryScreenPlaceholder
-import com.solutionium.sharedui.common.component.PerfumeAttributes
-import com.solutionium.sharedui.common.component.PriceView
-import com.solutionium.sharedui.common.component.ShoeAttributes
+import com.solutionium.sharedui.common.component.PerfumeAttributes2
+import com.solutionium.sharedui.common.component.PriceView2
+import com.solutionium.sharedui.common.component.ShoeAttributes2
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.all_perfumes_title
+import com.solutionium.sharedui.resources.all_shoes_title
+import com.solutionium.sharedui.resources.brands_title
+import com.solutionium.sharedui.resources.discover_perfume_collections
+import com.solutionium.sharedui.resources.in_stock
+import com.solutionium.sharedui.resources.in_stock_count
+import com.solutionium.sharedui.resources.no_results_found
+import com.solutionium.sharedui.resources.out_of_stock
+import com.solutionium.sharedui.resources.scents_title
+import com.solutionium.sharedui.resources.search
+import com.solutionium.sharedui.resources.seasons_title
+import com.solutionium.sharedui.resources.shoe_brands_title
+import com.solutionium.sharedui.resources.show_all_brands_text
+import com.solutionium.sharedui.resources.show_all_results
+import com.solutionium.sharedui.resources.show_all_scents_text
 import com.solutionium.shared.data.model.AttributeTerm
 import com.solutionium.shared.data.model.DisplayableTerm
 import com.solutionium.shared.data.model.PERFUME_CAT_ID
@@ -72,22 +83,22 @@ import com.solutionium.shared.data.model.PRODUCT_ARG_TITLE
 import com.solutionium.shared.data.model.ProductCatType
 import com.solutionium.shared.data.model.ProductThumbnail
 import com.solutionium.shared.data.model.SHOES_CAT_ID
+import com.solutionium.shared.viewmodel.CategoryDisplayType
+import com.solutionium.shared.viewmodel.CategoryScreenState
+import com.solutionium.shared.viewmodel.CategoryViewModel
+import org.jetbrains.compose.resources.stringResource
 
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun CategoryScreen(
     navigateToProductList: (Map<String, String>) -> Unit = {},
     onProductClick: (productId: Int) -> Unit = {},
     onNavigateBack: () -> Unit = {}, // Optional if it's a top-level screen
     viewModel: CategoryViewModel
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    BackHandler(enabled = uiState.searchQuery.isNotEmpty()) {
-        viewModel.clearSearch()
-    }
-
-    val searchTitle = stringResource(R.string.search, uiState.searchQuery)
+    val uiState by viewModel.uiState.collectAsState()
+    val searchTitle = stringResource(Res.string.search, uiState.searchQuery)
 
     val isRefreshing by viewModel.isRefreshing.collectAsState() // <-- Collect the refreshing state
 
@@ -193,7 +204,7 @@ fun SearchPreview(
             }
             item {
                 TextButton(onClick = onShowAllClick, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.show_all_results))
+                    Text(stringResource(Res.string.show_all_results))
                 }
             }
         } else {
@@ -214,7 +225,7 @@ fun SearchPreview(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = stringResource(R.string.no_results_found),
+                        text = stringResource(Res.string.no_results_found),
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.Gray,
                         modifier = Modifier.padding(16.dp)
@@ -240,10 +251,7 @@ fun SearchPreviewItem(
     ) {
         // Product Image Thumbnail
         AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(product.imageUrl)
-                .crossfade(true)
-                .build(),
+            model = product.imageUrl,
             placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceContainer),
             error = ColorPainter(MaterialTheme.colorScheme.surfaceContainer),
             contentDescription = product.name,
@@ -269,13 +277,13 @@ fun SearchPreviewItem(
             if (showStock) {
                 val stockText = if (product.manageStock && product.stock > 0) {
                     stringResource(
-                        com.solutionium.core.ui.common.R.string.in_stock_count,
+                        Res.string.in_stock_count,
                         product.stock
                     )
                 } else if (!product.manageStock && product.stockStatus == "instock") {
-                    stringResource(com.solutionium.core.ui.common.R.string.in_stock)
+                    stringResource(Res.string.in_stock)
                 } else {
-                    stringResource(com.solutionium.core.ui.common.R.string.out_of_stock)
+                    stringResource(Res.string.out_of_stock)
                 }
                 Text(
                     text = stockText,
@@ -295,11 +303,11 @@ fun SearchPreviewItem(
                 modifier = Modifier.fillMaxWidth()
             ) {
 
-                PriceView(product.price, product.onSale, product.regularPrice)
+                PriceView2(product.price, product.onSale, product.regularPrice)
                 Spacer(modifier = Modifier.weight(1f))
                 when (product.type) {
-                    ProductCatType.PERFUME -> PerfumeAttributes(product, onlyVolume = true)
-                    ProductCatType.SHOES -> ShoeAttributes(product)
+                    ProductCatType.PERFUME -> PerfumeAttributes2(product, onlyVolume = true)
+                    ProductCatType.SHOES -> ShoeAttributes2(product)
                     else -> {}
                 }
             }
@@ -330,14 +338,9 @@ fun CategoryContent(
         )
     } else {
 
-        val allPerfumeTitle = stringResource(R.string.all_perfumes_title)
-        val allShoesTitle = stringResource(R.string.all_shoes_title)
+        val allPerfumeTitle = stringResource(Res.string.all_perfumes_title)
+        val allShoesTitle = stringResource(Res.string.all_shoes_title)
 
-
-        BackHandler(enabled = uiState.categoryDisplayType != CategoryDisplayType.MAIN) {
-            // When back is pressed, simply call the ViewModel function to reset the state.
-            viewModel.backToMainDisplay()
-        }
 
         when (uiState.categoryDisplayType) {
             CategoryDisplayType.MAIN -> {
@@ -352,7 +355,7 @@ fun CategoryContent(
                     item {
                         PerfumeSpotlightSection(
                             spotlightTerms = uiState.perfumeSpotlightTerms,
-                            title = stringResource(R.string.discover_perfume_collections),
+                            title = stringResource(Res.string.discover_perfume_collections),
                             imageFinder = { uiState.images[it] },
                             onCategoryClick = { termId, title ->
                                 navigateToProductList(
@@ -378,7 +381,7 @@ fun CategoryContent(
                     // --- Perfume Brands ---
                     item {
                         SmallItemsSection(
-                            title = stringResource(R.string.brands_title),
+                            title = stringResource(Res.string.brands_title),
                             items = uiState.perfumeBrands,
                             onClick = { brandId, title ->
                                 navigateToProductList(
@@ -392,15 +395,15 @@ fun CategoryContent(
                             onViewAllClick = {
                                 viewModel.goToAllBrands()
                             },
-                            viewAllText = stringResource(R.string.show_all_brands_text),
+                            viewAllText = stringResource(Res.string.show_all_brands_text),
                         )
                     }
 
                     // --- Top Scent Section ---
                     item {
                         ItemGridSection(
-                            title = stringResource(R.string.scents_title),
-                            viewAllText = stringResource(R.string.show_all_scents_text),
+                            title = stringResource(Res.string.scents_title),
+                            viewAllText = stringResource(Res.string.show_all_scents_text),
                             items = uiState.topScentGroups,
                             imageFinder = { uiState.images[it] },
                             onClick = { termId, title ->
@@ -422,7 +425,7 @@ fun CategoryContent(
                     item {
                         PerfumeSpotlightSection(
                             spotlightTerms = uiState.perfumeSeasonTerms,
-                            title = stringResource(R.string.seasons_title),
+                            title = stringResource(Res.string.seasons_title),
                             imageFinder = { uiState.images[it] },
                             onCategoryClick = { termId, title ->
                                 navigateToProductList(
@@ -457,7 +460,7 @@ fun CategoryContent(
                     if (uiState.showShoes)
                         item {
                             SmallItemsSection(
-                                title = stringResource(R.string.shoe_brands_title),
+                                title = stringResource(Res.string.shoe_brands_title),
                                 items = uiState.shoeBrands,
                                 onClick = { brandId, title ->
                                     navigateToProductList(
@@ -486,7 +489,7 @@ fun CategoryContent(
 
             CategoryDisplayType.ALL_BRANDS -> {
                 AllItemsScreen(
-                    title = stringResource(R.string.show_all_brands_text),
+                    title = stringResource(Res.string.show_all_brands_text),
                     items = uiState.allBrands,
                     imageFinder = { uiState.images[it] },
                     onItemClick = { brandId, title ->
@@ -503,7 +506,7 @@ fun CategoryContent(
 
             CategoryDisplayType.ALL_SCENT_GROUPS -> {
                 AllItemsScreen(
-                    title = stringResource(R.string.show_all_scents_text),
+                    title = stringResource(Res.string.show_all_scents_text),
                     items = uiState.allScentGroups,
                     imageFinder = { uiState.images[it] },
                     onItemClick = { termId, title ->
@@ -537,7 +540,7 @@ fun PerfumeSpotlightSection(
         SectionHeader(
             title = title,
             onViewAllClick = onShopAllPerfumesClick,
-            viewAllText = stringResource(R.string.all_perfumes_title)
+            viewAllText = stringResource(Res.string.all_perfumes_title)
         )
 
         // Spotlight categories (e.g., For Him, For Her) could be larger cards or a LazyRow
@@ -572,12 +575,9 @@ fun SpotlightCategoryCard(
     ) {
         Box {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(
-                        image ?: ""
-                    ) // Fallback color
-                    .crossfade(true)
-                    .build(),
+                model = image,
+                placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceContainer),
+                error = ColorPainter(MaterialTheme.colorScheme.surfaceContainer),
                 contentDescription = term.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -659,12 +659,9 @@ fun MediumItemCard(
     ) {
         Box {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(
-                        term.imageUrl ?: image ?: ""
-                    ) // Fallback color
-                    .crossfade(true)
-                    .build(),
+                model = term.imageUrl ?: image,
+                placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceContainer),
+                error = ColorPainter(MaterialTheme.colorScheme.surfaceContainer),
                 contentDescription = term.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -753,13 +750,9 @@ fun SmallItemCard(
             verticalArrangement = Arrangement.Center
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(
-                        item.imageUrl ?: image
-                        ?: ColorPainter(MaterialTheme.colorScheme.secondaryContainer)
-                    ) // Placeholder
-                    .crossfade(true)
-                    .build(),
+                model = item.imageUrl ?: image,
+                placeholder = ColorPainter(MaterialTheme.colorScheme.secondaryContainer),
+                error = ColorPainter(MaterialTheme.colorScheme.secondaryContainer),
                 contentDescription = item.name,
                 modifier = Modifier
                     .size(60.dp)

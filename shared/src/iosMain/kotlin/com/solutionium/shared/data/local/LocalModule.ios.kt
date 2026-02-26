@@ -1,3 +1,5 @@
+package com.solutionium.shared.data.local
+
 import com.russhwolf.settings.NSUserDefaultsSettings
 import com.russhwolf.settings.Settings
 import org.koin.core.qualifier.named

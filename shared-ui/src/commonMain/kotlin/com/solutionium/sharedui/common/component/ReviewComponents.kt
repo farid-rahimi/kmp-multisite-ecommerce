@@ -38,25 +38,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.solutionium.sharedui.common.DateHelper
-import com.solutionium.core.ui.common.R
 import com.solutionium.shared.data.model.Review
 import com.solutionium.shared.data.model.ReviewChild
-
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.shop_manager
+import com.solutionium.sharedui.resources.verified_purchase
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ReviewItem(review: Review, modifier: Modifier = Modifier) {
-
-    val context = LocalContext.current
-
     Column(modifier = modifier) {
-        // --- Header Section ---
         Row(verticalAlignment = Alignment.CenterVertically) {
             ReviewerAvatar(reviewerName = review.reviewer)
             Spacer(Modifier.width(16.dp))
@@ -69,14 +64,17 @@ fun ReviewItem(review: Review, modifier: Modifier = Modifier) {
                 )
 
                 Text(
-                    text = DateHelper.getRelativeTimeSpanString(context, review.dateCreated),
+                    text = review.dateCreated,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 RatingBar(rating = review.rating, modifier = Modifier.padding(top = 2.dp))
             }
             if (review.verified) {
-                Text(style = MaterialTheme.typography.bodySmall, text = stringResource(R.string.verified_purchase))
+                Text(
+                    style = MaterialTheme.typography.bodySmall,
+                    text = stringResource(Res.string.verified_purchase)
+                )
                 Spacer(Modifier.width(4.dp))
                 Icon(
                     imageVector = Icons.Filled.VerifiedUser,
@@ -85,24 +83,19 @@ fun ReviewItem(review: Review, modifier: Modifier = Modifier) {
                     modifier = Modifier.size(20.dp)
                 )
             }
-
-
         }
 
         Spacer(Modifier.height(12.dp))
 
-        // --- Star Rating & Review Text ---
         Row(verticalAlignment = Alignment.Top) {
             Text(
                 modifier = Modifier.padding(horizontal = 6.dp),
                 text = review.review.stripHtmlTags(),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                //lineHeight = 20.sp
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
-        // --- Criteria Ratings ---
         if (review.criteriaRatings.isNotEmpty()) {
             Column(
                 modifier = Modifier
@@ -110,8 +103,7 @@ fun ReviewItem(review: Review, modifier: Modifier = Modifier) {
                         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
                         shape = RoundedCornerShape(8.dp)
                     )
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                ,
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 review.criteriaRatings.forEach { criteria ->
@@ -122,24 +114,20 @@ fun ReviewItem(review: Review, modifier: Modifier = Modifier) {
 
         if (review.children.isNotEmpty()) {
             Spacer(Modifier.height(20.dp))
-            for (response in review.children) {
+            review.children.forEach { response ->
                 AdminResponseItem(response = response)
             }
         }
     }
 }
 
-
 @Composable
 fun AdminResponseItem(response: ReviewChild, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 8.dp)
     ) {
-        // Indentation Icon
         Icon(
             imageVector = Icons.AutoMirrored.Filled.Reply,
             contentDescription = "Admin Reply",
@@ -148,30 +136,28 @@ fun AdminResponseItem(response: ReviewChild, modifier: Modifier = Modifier) {
                 .padding(end = 12.dp, top = 4.dp)
                 .size(20.dp)
         )
-        // Response Content in a Card
+
         Card(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(topStart = 4.dp, topEnd = 12.dp, bottomStart = 12.dp, bottomEnd = 12.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
-                // Header for the response
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = stringResource(R.string.shop_manager, response.author), // e.g., "Admin" or "Store Owner"
+                        text = stringResource(Res.string.shop_manager, response.author),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(Modifier.weight(1f))
                     Text(
-                        text = DateHelper.getRelativeTimeSpanString(context = context, response.date),
+                        text = response.date,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                // The actual response text
                 Text(
                     text = response.content.stripHtmlTags(),
                     style = MaterialTheme.typography.bodyMedium,
@@ -183,8 +169,6 @@ fun AdminResponseItem(response: ReviewChild, modifier: Modifier = Modifier) {
     }
 }
 
-
-// --- MODIFIED: Compact CriteriaRatingBar ---
 @Composable
 fun CriteriaRatingBar(
     label: String,
@@ -239,6 +223,7 @@ fun CriteriaRatingBar(
         }
     }
 }
+
 @Composable
 fun ReviewerAvatar(reviewerName: String, modifier: Modifier = Modifier) {
     val initial = reviewerName.firstOrNull()?.uppercaseChar() ?: '#'
@@ -272,7 +257,6 @@ fun RatingBar(rating: Int, modifier: Modifier = Modifier, starColor: Color = Col
     }
 }
 
-
 @Composable
 fun ReviewSummaryItemCard(review: Review, modifier: Modifier = Modifier) {
     Card(
@@ -281,7 +265,6 @@ fun ReviewSummaryItemCard(review: Review, modifier: Modifier = Modifier) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Reviewer Info
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val initial = review.reviewer.firstOrNull()?.uppercaseChar() ?: '#'
                 Box(
@@ -304,7 +287,6 @@ fun ReviewSummaryItemCard(review: Review, modifier: Modifier = Modifier) {
             }
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Star Rating
             Row(verticalAlignment = Alignment.CenterVertically) {
                 repeat(5) { index ->
                     Icon(
@@ -318,22 +300,16 @@ fun ReviewSummaryItemCard(review: Review, modifier: Modifier = Modifier) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Review Text
             Text(
                 text = review.review.stripHtmlTags(),
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 lineHeight = 20.sp,
-                modifier = Modifier.heightIn(min = 60.dp) // Ensure a consistent height
+                modifier = Modifier.heightIn(min = 60.dp)
             )
         }
     }
 }
 
-
-
-
-private fun String.stripHtmlTags(): String {
-    return this.replace(Regex("<.*?>"), "")
-}
+private fun String.stripHtmlTags(): String = replace(Regex("<.*?>"), "")

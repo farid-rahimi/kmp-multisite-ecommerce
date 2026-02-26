@@ -1,4 +1,4 @@
-package com.solutionium.feature.home
+package com.solutionium.sharedui.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -35,21 +34,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.solutionium.sharedui.common.component.BannerSlider
-import com.solutionium.sharedui.common.component.CategoryThumbnailCard
-import com.solutionium.sharedui.common.component.ContactSupportDialog
-import com.solutionium.sharedui.common.component.HeaderLogo
 import com.solutionium.sharedui.common.component.ProductCarouselPlaceholder
 import com.solutionium.sharedui.common.component.ProductThumbnailCard2
 import com.solutionium.sharedui.common.component.StoryReelPlaceholder
-import com.solutionium.sharedui.common.component.StoryReelSection
-import com.solutionium.shared.data.model.Category
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.app_offers
+import com.solutionium.sharedui.resources.featured
+import com.solutionium.sharedui.resources.new_arrivals
+import com.solutionium.sharedui.resources.on_sales
 import com.solutionium.shared.data.model.PRODUCT_ARG_FEATURED
 import com.solutionium.shared.data.model.PRODUCT_ARG_ON_SALE
 import com.solutionium.shared.data.model.PRODUCT_ARG_TAG
@@ -57,55 +51,36 @@ import com.solutionium.shared.data.model.PRODUCT_ARG_TITLE
 import com.solutionium.shared.data.model.ProductListType
 import com.solutionium.shared.data.model.ProductThumbnail
 import com.solutionium.shared.data.model.StoryItem
+import com.solutionium.shared.viewmodel.HomeViewModel
+import com.solutionium.shared.viewmodel.UpdateType
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun HomeScreen(
     onProductClick: (Int) -> Unit,
     navigateToProductList: (params: Map<String, String>) -> Unit = {},
     onStoryClick: (StoryItem) -> Unit,
-    viewModel: HomeViewModel
+    viewModel: HomeViewModel,
+    onUpdateNowClick: () -> Unit = {},
 ) {
-
-
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsState()
     val bannerState by viewModel.bannerState.collectAsState()
-
-    val isRefreshing by viewModel.isRefreshing.collectAsState() // <-- Collect the refreshing state
-
-//    LaunchedEffect(Unit) {
-//        viewModel.navigationEvent.collect { event ->
-//            when (event) {
-//                is HomeNavigationEvent.ToProduct -> onProductClick(event.productId)
-//                is HomeNavigationEvent.ToProductList -> navigateToProductList(event.params)
-//                is HomeNavigationEvent.ToExternalLink -> {
-//                    try {
-//                        val intent = Intent(Intent.ACTION_VIEW, event.url.toUri())
-//                        context.startActivity(intent)
-//                    } catch (e: Exception) {
-//                        e.printStackTrace()
-//                    }
-//                }
-//            }
-//        }
-//    }
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = { viewModel.refresh() }
+            onRefresh = { viewModel.refresh() },
         ) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(), // Ensure LazyColumn fills the box
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-
-
                 state.headerLogoUrl?.let {
                     item {
                         Spacer(modifier = Modifier.height(18.dp))
-                        HeaderLogo(it, Modifier.height(32.dp))
+                        PlatformHeaderLogo(it, Modifier.height(32.dp))
                     }
                 }
 
@@ -115,9 +90,9 @@ fun HomeScreen(
                         if (state.storiesLoading) {
                             StoryReelPlaceholder()
                         } else if (state.storyItems.isNotEmpty()) {
-                            StoryReelSection(
+                            PlatformStoryReelSection(
                                 stories = state.storyItems,
-                                onStoryClick = onStoryClick
+                                onStoryClick = onStoryClick,
                             )
                         }
                         Spacer(modifier = Modifier.height(1.dp))
@@ -126,32 +101,28 @@ fun HomeScreen(
 
                 item {
                     if (bannerState.isLoading) {
-                        // Show a loading shimmer or placeholder for the banner area
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(200.dp)
-                                .background(Color.LightGray)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
                         )
                     } else {
-                        BannerSlider(
+                        PlatformBannerSlider(
                             items = bannerState.banners,
                             onBannerClick = { banner ->
-                                banner.link?.let {
-                                    viewModel.onLinkClick(it)
-                                }
-
+                                banner.link?.let { viewModel.onLinkClick(it) }
                             },
-                            modifier = Modifier.padding(top = 8.dp) // Some top padding
+                            modifier = Modifier.padding(top = 8.dp),
                         )
                     }
                 }
 
                 item {
-                    if (state.newArrivalsLoading)
+                    if (state.newArrivalsLoading) {
                         ProductCarouselPlaceholder()
-                    else {
-                        val title = stringResource(R.string.new_arrivals)
+                    } else {
+                        val title = stringResource(Res.string.new_arrivals)
                         ProductSectionRow(
                             title = title,
                             items = state.newArrivals,
@@ -165,16 +136,16 @@ fun HomeScreen(
                             },
                             onAddToCartClick = viewModel::addToCart,
                             onRemoveFromCartClick = viewModel::removeFromCart,
-                            showStock = state.isSuperUser
+                            showStock = state.isSuperUser,
                         )
                     }
                 }
 
                 item {
-                    if (state.appOffersLoading)
+                    if (state.appOffersLoading) {
                         ProductCarouselPlaceholder()
-                    else {
-                        val title = stringResource(R.string.app_offers)
+                    } else {
+                        val title = stringResource(Res.string.app_offers)
                         ProductSectionRow(
                             title = title,
                             items = state.appOffers,
@@ -187,24 +158,22 @@ fun HomeScreen(
                                 navigateToProductList(
                                     mapOf(
                                         PRODUCT_ARG_TITLE to title,
-                                        PRODUCT_ARG_TAG to (ProductListType.Offers.queries["tag"]
-                                            ?: "")
-                                    )
+                                        PRODUCT_ARG_TAG to (ProductListType.Offers.queries["tag"] ?: ""),
+                                    ),
                                 )
                             },
                             onAddToCartClick = viewModel::addToCart,
                             onRemoveFromCartClick = viewModel::removeFromCart,
-                            showStock = state.isSuperUser
+                            showStock = state.isSuperUser,
                         )
                     }
                 }
 
-
                 item {
-                    if (state.onSalesLoading)
+                    if (state.onSalesLoading) {
                         ProductCarouselPlaceholder()
-                    else if (state.onSales.isNotEmpty()) {
-                        val title = stringResource(R.string.on_sales)
+                    } else if (state.onSales.isNotEmpty()) {
+                        val title = stringResource(Res.string.on_sales)
                         ProductSectionRow(
                             title = title,
                             items = state.onSales,
@@ -217,22 +186,22 @@ fun HomeScreen(
                                 navigateToProductList(
                                     mapOf(
                                         PRODUCT_ARG_TITLE to title,
-                                        PRODUCT_ARG_ON_SALE to "true"
-                                    )
+                                        PRODUCT_ARG_ON_SALE to "true",
+                                    ),
                                 )
                             },
                             onAddToCartClick = viewModel::addToCart,
                             onRemoveFromCartClick = viewModel::removeFromCart,
-                            showStock = state.isSuperUser
+                            showStock = state.isSuperUser,
                         )
                     }
                 }
 
                 item {
-                    if (state.featuredLoading)
+                    if (state.featuredLoading) {
                         ProductCarouselPlaceholder()
-                    else {
-                        val title = stringResource(R.string.featured)
+                    } else {
+                        val title = stringResource(Res.string.featured)
                         ProductSectionRow(
                             title = title,
                             items = state.featured,
@@ -245,46 +214,18 @@ fun HomeScreen(
                                 navigateToProductList(
                                     mapOf(
                                         PRODUCT_ARG_TITLE to title,
-                                        PRODUCT_ARG_FEATURED to "true"
-                                    )
+                                        PRODUCT_ARG_FEATURED to "true",
+                                    ),
                                 )
                             },
                             onAddToCartClick = viewModel::addToCart,
                             onRemoveFromCartClick = viewModel::removeFromCart,
-                            showStock = state.isSuperUser
+                            showStock = state.isSuperUser,
                         )
                     }
                 }
-
-//        items(state.sectionItems) { homeSection ->
-//            if (homeSection is CategorySection) {
-//                CategorySectionRow(
-//                    title = homeSection.title,
-//                    items = homeSection.items,
-//                    onCategoryClick = { },
-//                    onSectionClick = onSectionClick,
-//                )
-//            } else if (homeSection is ProductSection) {
-//                ProductSectionRow(
-//                    title = homeSection.title,
-//                    items = homeSection.items,
-//                    toggleFavorite = viewModel::toggleFavorite,
-//                    isFavorite = state::isFavorite,
-//                    discountedPrice = state::discountedPrice,
-//                    cartCounter = state::cartItemCount,
-//                    onProductClick = onProductClick,
-//                    onShowMoreProduceClick = {
-//                        onShowMoreProduceClick(homeSection.productListType)
-//                    },
-//                    onAddToCartClick = viewModel::addToCart,
-//                    onRemoveFromCartClick = viewModel::removeFromCart,
-//                )
-//            }
-//        }
             }
-
         }
-        //}
 
         val updateInfo = state.updateInfo
         val isForcedUpdate = updateInfo.type == UpdateType.FORCED
@@ -292,7 +233,7 @@ fun HomeScreen(
         AnimatedVisibility(
             visible = isForcedUpdate,
             enter = fadeIn(),
-            exit = fadeOut()
+            exit = fadeOut(),
         ) {
             ForcedUpdateScrim()
         }
@@ -301,18 +242,19 @@ fun HomeScreen(
             UpdateDialog(
                 updateInfo = state.updateInfo,
                 onDismiss = { viewModel.dismissUpdateDialog() },
-                onContactSupportClick = { viewModel.showContactSupport() } // Trigger the new state
+                onContactSupportClick = { viewModel.showContactSupport() },
+                onUpdateNowClick = onUpdateNowClick,
             )
         }
+
         if (state.showContactSupportDialog && state.contactInfo != null) {
-            ContactSupportDialog(
-                contactInfo = state.contactInfo, // Pass the config from your state
-                onDismiss = { viewModel.dismissContactSupport() }
+            PlatformContactSupportDialog(
+                contactInfo = state.contactInfo,
+                onDismiss = { viewModel.dismissContactSupport() },
             )
         }
     }
 }
-
 
 @Composable
 fun ProductSectionRow(
@@ -326,8 +268,7 @@ fun ProductSectionRow(
     onShowMoreProduceClick: () -> Unit,
     onAddToCartClick: (ProductThumbnail) -> Unit = {},
     onRemoveFromCartClick: (Int) -> Unit = {},
-    showStock: Boolean = false
-
+    showStock: Boolean = false,
 ) {
     Column {
         Row(
@@ -337,24 +278,18 @@ fun ProductSectionRow(
                 .clickable { onShowMoreProduceClick() },
         ) {
             Text(
-                modifier = Modifier
-                    .padding(start = 16.dp),
+                modifier = Modifier.padding(start = 16.dp),
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(modifier = Modifier.weight(1f))
-            IconButton(
-                onClick = { onShowMoreProduceClick() },
-
-                ) {
+            IconButton(onClick = { onShowMoreProduceClick() }) {
                 Icon(
                     Icons.AutoMirrored.Outlined.ArrowRight,
                     contentDescription = "More",
-                    //modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
                 )
             }
-
         }
 
         LazyRow(
@@ -365,8 +300,7 @@ fun ProductSectionRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(items) { item ->
-                Modifier
-                    .testTag("discover_carousel_item")
+                Modifier.testTag("discover_carousel_item")
 
                 ProductThumbnailCard2(
                     product = item,
@@ -378,21 +312,17 @@ fun ProductSectionRow(
                         .animateItem()
                         .fillParentMaxHeight()
                         .aspectRatio(0.49f),
-
                     inCartQuantity = cartCounter(item.id),
                     maxQuantity = if (item.manageStock) item.stock else 12,
                     onAddToCartClick = { onAddToCartClick(item) },
                     onRemoveFromCartClick = onRemoveFromCartClick,
                     priceMagnifier = 0.8,
-                    showStock = showStock
+                    showStock = showStock,
                 )
-
             }
         }
     }
 }
-
-// At the bottom of HomeScreen.kt
 
 @Composable
 private fun ForcedUpdateScrim(modifier: Modifier = Modifier) {
@@ -402,99 +332,9 @@ private fun ForcedUpdateScrim(modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.8f))
             .clickable(
                 enabled = true,
-                // Block all clicks behind the scrim
                 onClick = {},
-                indication = null, // No ripple effect
-                interactionSource = remember { MutableInteractionSource() }
-            )
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+            ),
     )
 }
-
-
-@Composable
-fun CategorySectionRow(
-    title: String,
-    items: List<Category>,
-    onCategoryClick: (Int) -> Unit,
-    onSectionClick: () -> Unit,
-) {
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onSectionClick() },
-        ) {
-            Text(
-                modifier = Modifier
-                    .padding(start = 16.dp),
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-            )
-        }
-        LazyRow(
-            modifier = Modifier
-                .height(200.dp)
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(items) { item ->
-                Modifier
-                    .testTag("discover_carousel_item")
-                CategoryThumbnailCard(
-                    modifier = Modifier
-                        .animateItem()
-                        .fillParentMaxHeight()
-                        .aspectRatio(2 / 3f),
-                    category = item,
-                    onClick = {
-                        onCategoryClick(item.id)
-                    },
-                )
-            }
-        }
-    }
-}
-
-
-@Composable
-fun LoadingVideoSectionRow(
-    numberOfSections: Int,
-) {
-    LazyColumn(
-        contentPadding = PaddingValues(top = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(numberOfSections) {
-            Box(
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .size(50.dp, 20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(ShimmerBrush(showShimmer = false)),
-            )
-            LazyRow(
-                modifier = Modifier
-                    .height(200.dp)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(10) {
-                    Box(
-                        modifier = Modifier
-                            .fillParentMaxHeight()
-                            .aspectRatio(2 / 3f)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(ShimmerBrush(showShimmer = false)),
-
-                        )
-                }
-            }
-        }
-    }
-}
-
-
-
-

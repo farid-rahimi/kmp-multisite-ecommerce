@@ -1,10 +1,12 @@
 package com.solutionium.feature.category
 
-import org.koin.compose.viewmodel.koinViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import com.solutionium.sharedui.common.DestinationRoute
+import com.solutionium.sharedui.category.CategoryScreen
+import com.solutionium.shared.viewmodel.CategoryViewModel
+import org.koin.compose.koinInject
 
 val GRAPH_CATEGORY_ROUTE = DestinationRoute("category_graph_route")
 private const val ROUTE_CATEGORY_SCREEN = "category"
@@ -23,11 +25,12 @@ fun NavGraphBuilder.categoryScreen(
         composable(
             route = "${GRAPH_CATEGORY_ROUTE.route}/$ROUTE_CATEGORY_SCREEN",
         ) {
+            val categoryViewModel = koinInject<CategoryViewModel>()
             CategoryScreen(
                 navigateToProductList = { navigateToProductList(GRAPH_CATEGORY_ROUTE, it) },
                 onNavigateBack = {},
                 onProductClick = { onProductClick(GRAPH_CATEGORY_ROUTE, it) },
-                viewModel =koinViewModel()
+                viewModel = categoryViewModel,
             )
         }
         nestedGraphs(GRAPH_CATEGORY_ROUTE)
