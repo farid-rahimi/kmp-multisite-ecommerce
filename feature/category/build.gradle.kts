@@ -8,7 +8,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":data:model"))
     implementation(project(":domain:woo-products"))
     implementation(project(":domain:config"))
     implementation(project(":domain:user"))

@@ -8,7 +8,6 @@ android {
 
 dependencies {
 
-    implementation(project(":data:woo-orders"))
 
     api(libs.paging.runtime)
 

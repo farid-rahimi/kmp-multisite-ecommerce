@@ -8,7 +8,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":data:model"))
     implementation(project(":core:design-system"))
     implementation(project(":domain:user"))
     implementation(libs.androidx.material3)

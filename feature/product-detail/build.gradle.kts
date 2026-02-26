@@ -18,7 +18,6 @@ dependencies {
     implementation(project(":domain:review"))
 
 
-    implementation(project(":data:model"))
 
 
     implementation(libs.androidx.material3)

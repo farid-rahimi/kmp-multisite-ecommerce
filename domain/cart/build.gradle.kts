@@ -8,6 +8,4 @@ android {
 
 dependencies {
 
-    implementation(project(":data:cart"))
-    implementation(project(":data:woo-products"))
 }

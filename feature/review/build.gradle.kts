@@ -9,7 +9,6 @@ android {
 
 dependencies {
     implementation(project(":shared-ui"))
-    implementation(project(":data:model"))
     implementation(project(":domain:config"))
     implementation(project(":domain:user"))
     implementation(project(":domain:review"))

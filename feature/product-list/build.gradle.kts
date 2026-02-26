@@ -9,7 +9,6 @@ android {
 
 dependencies {
 
-    implementation(project(":data:model"))
     implementation(project(":domain:woo-products"))
     implementation(project(":domain:cart"))
     implementation(project(":domain:favorite"))

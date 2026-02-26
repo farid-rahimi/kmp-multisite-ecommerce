@@ -8,7 +8,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":data:model"))
     implementation(libs.androidx.material3)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)

@@ -52,8 +52,6 @@ android {
 
 dependencies {
 
-    implementation(project(":data:model"))
-    implementation(project(":data:local"))
     implementation(project(":shared-ui"))
     implementation(project(":feature:product-detail"))
     implementation(project(":feature:home"))
