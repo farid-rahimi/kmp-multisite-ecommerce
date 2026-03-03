@@ -1,15 +1,18 @@
-package com.solutionium.feature.cart
+package com.solutionium.shared.viewmodel
 
 import com.solutionium.shared.domain.cart.getCartDomainModules
 import com.solutionium.shared.domain.config.getConfigDomainModules
 import com.solutionium.shared.domain.user.getUserDomainModules
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-fun getCartFeatureModules() = getCartDomainModules() + setOf(cartFeatureModule) + getUserDomainModules() + getCartDomainModules() + getConfigDomainModules()
+fun getCartModules() =
+    getCartDomainModules() +
+        setOf(cartModule) +
+        getUserDomainModules() +
+        getConfigDomainModules()
 
-val cartFeatureModule = module {
-    viewModel {
+val cartModule = module {
+    factory {
         CartViewModel(
             updateCartItemUseCase = get(),
             observeCartUseCase = get(),
@@ -17,7 +20,7 @@ val cartFeatureModule = module {
             validateCartUseCase = get(),
             confirmValidation = get(),
             paymentMethodDiscountUseCase = get(),
-            checkLoginUserUseCase = get()
+            checkLoginUserUseCase = get(),
         )
     }
 }

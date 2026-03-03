@@ -25,13 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.solutionium.core.ui.common.R
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.full_pay
+import com.solutionium.sharedui.resources.installment_pay
 import com.solutionium.shared.data.model.CartItem
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CartItemCard(
@@ -136,7 +138,7 @@ fun CartItemCard(
                     Column {
                         Row {
                             Text(
-                                text = stringResource(R.string.installment_pay),
+                                text = stringResource(Res.string.installment_pay),
                                 fontSize = 10.sp,
                                 color = Color.Gray
                             )
@@ -146,7 +148,7 @@ fun CartItemCard(
                                 fontSize = 10.sp,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                             )
-                            PriceView(
+                            PriceView2(
                                 cartItem.currentPrice / 4,
                                 cartItem.isOnSale,
                                 cartItem.regularPrice?.let { it / 4 }
@@ -155,12 +157,12 @@ fun CartItemCard(
                         discountedPrice(cartItem.currentPrice)?.let {
                             Row {
                                 Text(
-                                    text = stringResource(R.string.full_pay),
+                                    text = stringResource(Res.string.full_pay),
                                     fontSize = 10.sp,
                                     color = Color.Gray
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                PriceView(
+                                PriceView2(
                                     it,
                                     cartItem.isOnSale,
                                     cartItem.regularPrice,

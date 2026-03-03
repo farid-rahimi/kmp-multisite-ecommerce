@@ -1,6 +1,5 @@
-package com.solutionium.feature.cart
+package com.solutionium.sharedui.cart
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,100 +34,79 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solutionium.sharedui.common.LoginPromptDialog
 import com.solutionium.sharedui.common.component.CartItemCard
-import com.solutionium.sharedui.common.component.PriceView
+import com.solutionium.sharedui.common.component.InfoBox
+import com.solutionium.sharedui.common.component.PriceView2
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.all_items_updated_msg
+import com.solutionium.sharedui.resources.cart_updated_items_title
+import com.solutionium.sharedui.resources.cart_validation_multiple_issues
+import com.solutionium.sharedui.resources.cart_validation_network_error
+import com.solutionium.sharedui.resources.cart_validation_out_of_stock_short
+import com.solutionium.sharedui.resources.cart_validation_price_changed
+import com.solutionium.sharedui.resources.cart_validation_regular_price_changed
+import com.solutionium.sharedui.resources.cart_validation_stock_changed
+import com.solutionium.sharedui.resources.confirm_updates
+import com.solutionium.sharedui.resources.empty_cart
+import com.solutionium.sharedui.resources.proceed_to_checkout
+import com.solutionium.sharedui.resources.review_the_changes_before_proceeding
+import com.solutionium.sharedui.resources.validating_cart_items
 import com.solutionium.shared.data.model.CartItem
-import com.solutionium.shared.data.model.UiText
+import com.solutionium.shared.data.model.ChangeType
 import com.solutionium.shared.data.model.ValidationInfo
-import kotlin.collections.toTypedArray
+import com.solutionium.shared.viewmodel.CartScreenUiState
+import com.solutionium.shared.viewmodel.CartViewModel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CartScreen(
     viewModel: CartViewModel,
     onCheckoutClick: () -> Unit,
     onProductClick: (id: Int) -> Unit,
-    onNavigateToAccount: () -> Unit, // Add this new navigation callback
-    lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
+    onNavigateToAccount: () -> Unit,
 ) {
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.clear() }
+    }
 
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    val isRefreshing by viewModel.isRefreshing.collectAsState() // <-- Collect the refreshing state
-
+    val state by viewModel.uiState.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     if (state.showLoginPrompt) {
         LoginPromptDialog(
             onDismiss = viewModel::dismissLoginPrompt,
             onConfirm = {
-                viewModel.dismissLoginPrompt() // Dismiss first
-                onNavigateToAccount() // Then navigate
-            }
+                viewModel.dismissLoginPrompt()
+                onNavigateToAccount()
+            },
         )
     }
 
-
-    //LaunchedEffect() { }
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                // The screen has become visible to the user.
-                // Call the validation function in the ViewModel.
-                //println("CartScreen RESUMED, triggering validation.")
-                viewModel.validateCart()
-            }
-        }
-
-        // Add the observer to the lifecycle
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        // When the effect leaves the Composition, remove the observer
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
     PullToRefreshBox(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         isRefreshing = isRefreshing,
-        onRefresh = { viewModel.refresh() }
+        onRefresh = { viewModel.refresh() },
     ) {
         CartScreenContent(
             state = state,
             onCheckoutClick = {
-                viewModel.onCheckoutClick(
-                    onNavigateToCheckout = onCheckoutClick
-                )
-
-//            if (state.isUserLoggedIn) {
-//                onCheckoutClick() // Navigate directly if logged in
-//            } else {
-//                viewModel.onCheckoutClick() // Show prompt if not logged in
-//            }
+                viewModel.onCheckoutClick(onNavigateToCheckout = onCheckoutClick)
             },
             onProductClick = onProductClick,
             onRemove = { viewModel.removeItem(it) },
             onIncreaseQuantity = { viewModel.increaseQuantity(it) },
             onDecreaseQuantity = { viewModel.decreaseQuantity(it) },
             onConfirmValidation = { viewModel.confirmCartValidation() },
-            infoMapper = viewModel::mapValidationInfoToUiText
+            infoMapper = { validationInfo ->
+                validationInfoMessage(validationInfo)
+            },
         )
     }
-
-
 }
-
 
 @Composable
 fun CartScreenContent(
@@ -139,20 +117,16 @@ fun CartScreenContent(
     onIncreaseQuantity: (CartItem) -> Unit,
     onDecreaseQuantity: (CartItem) -> Unit,
     onConfirmValidation: () -> Unit,
-    infoMapper: (ValidationInfo?) -> UiText?
+    infoMapper: @Composable (ValidationInfo?) -> String?,
 ) {
-
-//    Box(
-//        modifier = Modifier.fillMaxSize(),
-//    ) {
-
     Column(modifier = Modifier.fillMaxSize()) {
-        // Validation Summary
-        if (state.cartItems.isNotEmpty())
+        if (state.cartItems.isNotEmpty()) {
             ValidationSummary(
-                summaryId = state.validationSummaryId,
-                error = state.validationError
+                summaryKey = state.validationSummaryKey,
+                summaryCount = state.validationSummaryCount,
+                error = state.validationError,
             )
+        }
 
         Box(modifier = Modifier.weight(1f)) {
             if (state.isPerformingValidation) {
@@ -161,80 +135,53 @@ fun CartScreenContent(
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            stringResource(R.string.validating_cart_items),
-                            style = MaterialTheme.typography.bodyMedium
+                            stringResource(Res.string.validating_cart_items),
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                     }
                 }
             } else if (state.cartItems.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        stringResource(R.string.empty_cart),
-                        style = MaterialTheme.typography.titleMedium
+                        stringResource(Res.string.empty_cart),
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
+                    verticalArrangement = Arrangement.spacedBy(0.dp),
                 ) {
                     items(
                         state.cartItems,
-                        key = { intArrayOf(it.productId, it.variationId) }) { item ->
+                        key = { intArrayOf(it.productId, it.variationId) },
+                    ) { item ->
                         CartItemCard(
                             cartItem = item,
-                            validationMessage = infoMapper(item.validationInfo)?.asString(),
+                            validationMessage = infoMapper(item.validationInfo),
                             onProductClick = { onProductClick(item.productId) },
                             discountedPrice = state::discountedPrice,
                             onRemove = { onRemove(item) },
                             onIncreaseQuantity = { onIncreaseQuantity(item) },
-                            onDecreaseQuantity = { onDecreaseQuantity(item) }
+                            onDecreaseQuantity = { onDecreaseQuantity(item) },
                         )
                     }
                 }
             }
-
         }
+
         if (!state.isPerformingValidation && state.cartItems.isNotEmpty()) {
             CartBottomBar(
                 totalPrice = state.totalPrice,
                 hasAttentionItems = state.hasAttentionItems,
                 discountedPrice = state::discountedPrice,
                 onConfirmValidation = onConfirmValidation,
-                onCheckoutClick = onCheckoutClick
+                onCheckoutClick = onCheckoutClick,
             )
         }
     }
-
-
-//            Row {
-//                Button(
-//                    onClick = onCheckoutClick,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(16.dp)
-//                        //.align(Alignment.BottomCenter),
-//                ) {
-//                    Text(text = "Checkout")
-//                }
-//                Button(
-//                    onClick = onValidateClick,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(16.dp)
-//                    //.align(Alignment.BottomCenter),
-//                ) {
-//                    Text(text = "Validate")
-//                }
-//            }
-
-
-    //}
-
-
 }
-
 
 @Composable
 fun CartBottomBar(
@@ -243,62 +190,53 @@ fun CartBottomBar(
     hasAttentionItems: Boolean,
     discountedPrice: (Double?) -> Double? = { null },
     onConfirmValidation: () -> Unit,
-    onCheckoutClick: () -> Unit
+    onCheckoutClick: () -> Unit,
 ) {
     Surface(shadowElevation = 8.dp) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
         ) {
             if (hasAttentionItems) {
                 Text(
-                    stringResource(R.string.review_the_changes_before_proceeding),
+                    stringResource(Res.string.review_the_changes_before_proceeding),
                     color = MaterialTheme.colorScheme.error,
                     fontSize = MaterialTheme.typography.bodyMedium.fontSize,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 8.dp)
+                        .padding(bottom = 8.dp),
                 )
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
-                    Row (verticalAlignment = Alignment.CenterVertically) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = "قسطی",
                             fontSize = 11.sp,
-                            color = Color.Gray
+                            color = Color.Gray,
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(" x 4 ", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                        PriceView(
-                            totalPrice / 4,
-                            false,
-                            null,
-                            magnifier = 1.5
-                        )
+                        PriceView2(totalPrice / 4, false, null, magnifier = 1.5)
                     }
                     discountedPrice(totalPrice)?.let {
                         Row {
                             Text(
                                 text = "نقدی",
                                 fontSize = 11.sp,
-                                color = Color.Gray
+                                color = Color.Gray,
                             )
                             Spacer(modifier = Modifier.width(12.dp))
-                            PriceView(it, false, null, magnifier = 1.0)
+                            PriceView2(it, false, null, magnifier = 1.0)
                         }
                     }
                 }
-//                FormattedPriceV2(
-//                    amount = totalPrice.toLong(),
-//                    magnifier = 1.5
-//                )
 
                 Button(
                     onClick = if (hasAttentionItems) onConfirmValidation else onCheckoutClick,
@@ -306,12 +244,10 @@ fun CartBottomBar(
                     modifier = Modifier
                         .height(40.dp)
                         .defaultMinSize(minWidth = 140.dp),
-                    // Disable checkout if items need review; user must re-validate first.
-                    //enabled = !hasAttentionItems
                 ) {
-                    Text(if (hasAttentionItems) stringResource(R.string.confirm_updates) else stringResource(
-                        R.string.proceed_to_checkout
-                    )
+                    Text(
+                        if (hasAttentionItems) stringResource(Res.string.confirm_updates)
+                        else stringResource(Res.string.proceed_to_checkout),
                     )
                 }
             }
@@ -319,10 +255,14 @@ fun CartBottomBar(
     }
 }
 
-
 @Composable
-fun ValidationSummary(summaryId: Int?, error: String?) {
-    val message = if (summaryId != null) stringResource(summaryId) else null
+fun ValidationSummary(summaryKey: String?, summaryCount: Int?, error: String?) {
+    val message = when (summaryKey) {
+        "cart_updated_items_title" -> stringResource(Res.string.cart_updated_items_title, (summaryCount ?: 0).toString())
+        "all_items_updated_msg" -> stringResource(Res.string.all_items_updated_msg)
+        else -> null
+    }
+
     if (message != null) {
         val isError = error != null
         InfoBox(
@@ -330,50 +270,39 @@ fun ValidationSummary(summaryId: Int?, error: String?) {
             icon = if (isError) Icons.Default.Warning else Icons.Outlined.Info,
             color = if (isError) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiaryContainer,
             contentColor = if (isError) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onTertiaryContainer,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
         )
     }
 }
 
 @Composable
-fun InfoBox(
-    message: String,
-    icon: ImageVector,
-    color: Color,
-    contentColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(color, shape = RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(imageVector = icon, contentDescription = null, tint = contentColor)
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = message, color = contentColor, style = MaterialTheme.typography.bodyMedium)
+private fun validationInfoMessage(validationInfo: ValidationInfo?): String? {
+    if (validationInfo == null) return null
+
+    return when (validationInfo.type) {
+        ChangeType.PRICE_CHANGED -> stringResource(
+            Res.string.cart_validation_price_changed,
+            validationInfo.values.getOrNull(0) ?: "",
+            validationInfo.values.getOrNull(1) ?: "",
+        )
+
+        ChangeType.REGULAR_PRICE_CHANGED -> stringResource(
+            Res.string.cart_validation_regular_price_changed,
+            validationInfo.values.getOrNull(0) ?: "",
+            validationInfo.values.getOrNull(1) ?: "",
+        )
+
+        ChangeType.STOCK_CHANGED -> stringResource(
+            Res.string.cart_validation_stock_changed,
+            validationInfo.values.getOrNull(0) ?: "",
+            validationInfo.values.getOrNull(1) ?: "0",
+        )
+
+        ChangeType.OUT_OF_STOCK,
+        ChangeType.NOT_AVAILABLE,
+        -> stringResource(Res.string.cart_validation_out_of_stock_short)
+
+        ChangeType.MULTIPLE_ISSUES -> stringResource(Res.string.cart_validation_multiple_issues)
+        ChangeType.NETWORK_ERROR -> stringResource(Res.string.cart_validation_network_error)
     }
 }
-
-@SuppressLint("DiscouragedApi")
-@Composable
-fun UiText.asString(): String {
-    return when (this) {
-        is UiText.DynamicString -> this.value
-        is UiText.StringResource -> {
-            val context = androidx.compose.ui.platform.LocalContext.current
-            // The resId is now an Int, so we can use it directly
-            // No need for getIdentifier, which is slower and less safe
-            if (this.args.isEmpty()) {
-                context.getString(this.resId)
-            } else {
-                context.getString(this.resId, *this.args.toTypedArray())
-            }
-        }
-    }
-}
-
-
-
-
