@@ -1,8 +1,5 @@
-package com.solutionium.feature.account
+package com.solutionium.shared.viewmodel
 
-import android.util.Patterns
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.solutionium.shared.data.model.ActionType
 import com.solutionium.shared.data.model.GeneralError
 import com.solutionium.shared.data.model.Result
@@ -21,6 +18,10 @@ import com.solutionium.shared.domain.user.LogoutUseCase
 import com.solutionium.shared.domain.user.ObserveLanguageUseCase
 import com.solutionium.shared.domain.user.SendOtpUseCase
 import com.solutionium.shared.domain.user.SetLanguageUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,7 +46,8 @@ class AccountViewModel(
     private val observeLanguageUseCase: ObserveLanguageUseCase,
     private val getPrivacyPolicyUseCase: GetPrivacyPolicyUseCase,
     private val getContactInfoUseCase: GetContactInfoUseCase
-) : ViewModel() {
+) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _state: MutableStateFlow<AccountUIState> = MutableStateFlow(AccountUIState())
     val state: StateFlow<AccountUIState> = _state.asStateFlow()
@@ -66,7 +68,7 @@ class AccountViewModel(
     }
 
     fun refresh() {
-        viewModelScope.launch {
+        scope.launch {
             _isRefreshing.value = true
             // Re-run all the initial data fetching logic
             fetchData()
@@ -77,21 +79,21 @@ class AccountViewModel(
     }
 
     private fun fetchPrivacyPolicy() {
-        viewModelScope.launch {
+        scope.launch {
             val policy = getPrivacyPolicyUseCase()
             _state.update { it.copy(privacyPolicy = policy) }
         }
     }
 
     private fun getContactInfo() {
-        viewModelScope.launch {
+        scope.launch {
             val contactInfo = getContactInfoUseCase()
             _state.update { it.copy(contactInfo = contactInfo) }
         }
     }
 
     private fun observeLanguage() {
-        viewModelScope.launch {
+        scope.launch {
             observeLanguageUseCase().collect { langCode ->
                 _state.update { it.copy(currentLanguage = langCode ?: "fa") }
             }
@@ -151,7 +153,7 @@ class AccountViewModel(
 
 
     private fun checkLoginStatus() {
-        viewModelScope.launch {
+        scope.launch {
             _state.update { it.copy(isLoading = true) }
             val isLoggedIn = checkLoginUserUseCase().first() // Assume not logged in initially
             if (isLoggedIn) {
@@ -189,7 +191,7 @@ class AccountViewModel(
             return
         }
 
-        viewModelScope.launch {
+        scope.launch {
             //_screenState.value = AccountUiState.Loading
             _state.update { it.copy(otp = "", isLoading = true) }
 
@@ -230,7 +232,7 @@ class AccountViewModel(
 
             return
         }
-        viewModelScope.launch {
+        scope.launch {
             val phoneNumber = _state.value.phoneNumber ?: "0"
             _state.update { it.copy(isLoading = true) }
             //_screenState.value = AccountUiState.Loading
@@ -291,7 +293,7 @@ class AccountViewModel(
             return
         }
 
-        viewModelScope.launch {
+        scope.launch {
             _state.update { it.copy(isLoading = true, message = null) }
 
             // --- Call the Use Case ---
@@ -328,7 +330,7 @@ class AccountViewModel(
     }
 
     private fun updateFTMToken() {
-        viewModelScope.launch {
+        scope.launch {
 
             editUserDetailsUseCase(userDetails = UserDetails())
 
@@ -342,17 +344,15 @@ class AccountViewModel(
         _state.update { it.copy(validationErrors = FieldErrors()) }
         val firstNameBlank = userDetails.firstName.isBlank()
         val lastNameBlank = userDetails.lastName.isBlank()
-        val emailInvalid =
-            userDetails.email.isNotBlank() && !Patterns.EMAIL_ADDRESS.matcher(userDetails.email)
-                .matches()
+        val emailInvalid = userDetails.email.isNotBlank() && !isValidEmail(userDetails.email)
 
         if (firstNameBlank || lastNameBlank || emailInvalid) {
             _state.update {
                 it.copy(
                     validationErrors = FieldErrors(
-                        firstNameError = if (firstNameBlank) R.string.error_field_required else null,
-                        lastNameError = if (lastNameBlank) R.string.error_field_required else null,
-                        emailError = if (emailInvalid) R.string.error_invalid_email else null
+                        firstNameErrorKey = if (firstNameBlank) AccountValidationErrorKeys.FIELD_REQUIRED else null,
+                        lastNameErrorKey = if (lastNameBlank) AccountValidationErrorKeys.FIELD_REQUIRED else null,
+                        emailErrorKey = if (emailInvalid) AccountValidationErrorKeys.INVALID_EMAIL else null,
                     )
                 )
             }
@@ -371,7 +371,7 @@ class AccountViewModel(
         // --- VALIDATION LOGIC END ---
 
 
-        viewModelScope.launch {
+        scope.launch {
             _state.update { it.copy(isLoading = true) }
             when (val result = editUserDetailsUseCase(userDetails)) {
                 is Result.Success -> {
@@ -395,7 +395,7 @@ class AccountViewModel(
 
 
     private fun fetchUserDetailsAndOrders() {
-        viewModelScope.launch {
+        scope.launch {
             _state.update { it.copy(isLoading = true, isLoadingWallet = true, isLoadingLatestOrder = true) }
             getCurrentUserUseCase().collect { result ->
                 when (result) {
@@ -477,7 +477,7 @@ class AccountViewModel(
 
 
     private fun logout() {
-        viewModelScope.launch {
+        scope.launch {
             _state.update { it.copy(isLoading = true) }
             logoutUseCase().collect { _ ->
 
@@ -499,7 +499,7 @@ class AccountViewModel(
 
     // In AccountViewModel.kt
     fun onMyFavoritesClicked(navigateToProductList: (String) -> Unit) {
-        viewModelScope.launch {
+        scope.launch {
             // This suspends until the IDs are fetched from the database
             val result = observeFavoritesUseCase.getSnapshot()
             if (result.isEmpty()) {
@@ -527,9 +527,20 @@ class AccountViewModel(
     }
 
     fun setLanguage(langCode: String) {
-        viewModelScope.launch {
+        scope.launch {
             seLanguageUseCase(langCode)
         }
     }
 
+    fun clear() {
+        scope.cancel()
+    }
+
+    private fun isValidEmail(email: String): Boolean {
+        if (email.isBlank()) return false
+        val atIndex = email.indexOf('@')
+        if (atIndex <= 0 || atIndex == email.lastIndex) return false
+        val domain = email.substring(atIndex + 1)
+        return domain.contains('.') && !domain.startsWith('.') && !domain.endsWith('.')
+    }
 }

@@ -1,15 +1,14 @@
-package com.solutionium.feature.account
+package com.solutionium.shared.viewmodel
 
 import com.solutionium.shared.domain.config.getConfigDomainModules
 import com.solutionium.shared.domain.favorite.getFavoriteDomainModules
 import com.solutionium.shared.domain.user.getUserDomainModules
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 fun getAccountModules() = setOf(accountModule) + getUserDomainModules() + getFavoriteDomainModules() + getConfigDomainModules()
 
 val accountModule = module {
-    viewModel {
+    factory {
         AccountViewModel(
             checkLoginUserUseCase = get(),
             sendOtpUseCase = get(),

@@ -1,4 +1,4 @@
-package com.solutionium.feature.account
+package com.solutionium.shared.viewmodel
 
 import com.solutionium.shared.data.model.ContactInfo
 import com.solutionium.shared.data.model.Order
@@ -48,8 +48,12 @@ enum class AccountStage{
 }
 
 data class FieldErrors(
-    val firstNameError: Int? = null,
-    val lastNameError: Int? = null,
-    val emailError: Int? = null
+    val firstNameErrorKey: String? = null,
+    val lastNameErrorKey: String? = null,
+    val emailErrorKey: String? = null
 )
 
+object AccountValidationErrorKeys {
+    const val FIELD_REQUIRED = "error_field_required"
+    const val INVALID_EMAIL = "error_invalid_email"
+}
