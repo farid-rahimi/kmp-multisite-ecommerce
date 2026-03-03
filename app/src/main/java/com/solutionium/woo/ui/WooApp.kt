@@ -31,8 +31,8 @@ import com.solutionium.sharedui.common.GlobalUiState
 import com.solutionium.sharedui.common.LoginPromptDialog
 import com.solutionium.sharedui.common.component.StoryViewer
 import com.solutionium.feature.account.navigateToAccount
-import com.solutionium.feature.cart.CartViewModel
 import com.solutionium.feature.home.GRAPH_HOME_ROUTE
+import com.solutionium.shared.viewmodel.CartViewModel
 import com.solutionium.shared.viewmodel.HomeNavigationEvent
 import com.solutionium.shared.viewmodel.HomeViewModel
 import com.solutionium.feature.product.detail.navigateProductDetail
@@ -44,7 +44,6 @@ import com.solutionium.woo.ui.navigation.RootScreen.Category
 import com.solutionium.woo.ui.navigation.RootScreen.Cart
 import com.solutionium.woo.ui.navigation.RootScreen.Account
 import com.solutionium.woo.ui.navigation.WooNavHost
-import org.koin.compose.viewmodel.koinViewModel
 import org.koin.compose.koinInject
 
 @Composable
@@ -54,10 +53,15 @@ fun WooApp(
 ) {
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
-    val cartUiState by koinViewModel<CartViewModel>().uiState.collectAsState()
+    val cartViewModel: CartViewModel = koinInject()
+    val cartUiState by cartViewModel.uiState.collectAsState()
 
     val homeViewModel: HomeViewModel = koinInject()
     val homeState by homeViewModel.state.collectAsStateWithLifecycle()
+
+    DisposableEffect(cartViewModel) {
+        onDispose { cartViewModel.clear() }
+    }
 
     DisposableEffect(homeViewModel) {
         onDispose { homeViewModel.clear() }

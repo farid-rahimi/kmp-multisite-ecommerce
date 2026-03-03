@@ -5,6 +5,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+
+enum class WooBrand {
+    SiteA,
+    SiteB,
+}
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -82,14 +88,40 @@ private val darkScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDark,
 )
 
+private val siteBLightScheme = lightScheme.copy(
+    primary = Color(0xFF005E2E),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF00874A),
+    onPrimaryContainer = Color(0xFFE8FFE8),
+    secondary = Color(0xFF2E7D32),
+    onSecondary = Color.White,
+    tertiary = Color(0xFF00696B),
+    onTertiary = Color.White,
+)
+
+private val siteBDarkScheme = darkScheme.copy(
+    primary = Color(0xFF63DC93),
+    onPrimary = Color(0xFF003919),
+    primaryContainer = Color(0xFF005228),
+    onPrimaryContainer = Color(0xFF8FF9AE),
+    secondary = Color(0xFFA4D6A7),
+    onSecondary = Color(0xFF0E3B16),
+    tertiary = Color(0xFF80D5D7),
+    onTertiary = Color(0xFF003738),
+)
+
 @Composable
 @Suppress("UNUSED_PARAMETER")
 fun WooTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    brand: WooBrand = WooBrand.SiteA,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = if (darkTheme) darkScheme else lightScheme
+    val colorScheme = when (brand) {
+        WooBrand.SiteA -> if (darkTheme) darkScheme else lightScheme
+        WooBrand.SiteB -> if (darkTheme) siteBDarkScheme else siteBLightScheme
+    }
 
     MaterialTheme(
         colorScheme = colorScheme,

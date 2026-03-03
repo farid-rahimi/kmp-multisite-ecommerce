@@ -25,6 +25,9 @@ suspend fun <T : Any, R> handleNetworkResponse(
         }
         is NetworkResponse.ApiError -> {
             val errorResponse = result.body
+            println(
+                "Network ApiError -> status=${errorResponse.data?.status}, code=${errorResponse.code}, message=${errorResponse.message}"
+            )
             Napier.d(tag = "TAG", message = "${errorResponse.toString()} handleNetworkResponse: api error")
             Result.Failure(GeneralError.ApiError(errorResponse.message, errorResponse.code, errorResponse.data?.status))
         }

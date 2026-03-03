@@ -10,10 +10,6 @@ class WooApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-//        if (BuildConfig.DEBUG) {
-//            Napier.base(DebugAntilog())
-//        }
-
         startKoin {
             androidContext(this@WooApplication)
             modules(allModules) // From AppModule.kt

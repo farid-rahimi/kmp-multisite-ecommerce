@@ -50,10 +50,11 @@ internal class WooProductsRemoteSourceImpl(
         queries:  Map<String, String>,
     ): Result<List<ProductThumbnail>, GeneralError> =
         handleNetworkResponse(
-            //networkCall = { wooProductService.getProductList(page, queries) },
-            networkCall = { productApi.getFastProduct(page, queries) },
+            networkCall = { productApi.getProductList(page, queries) },
+            //networkCall = { productApi.getFastProduct(page, queries) },
             mapper = { responseList ->
-                responseList.products?.map { it.toProductThumbnail() } ?: emptyList()
+                responseList.map { it.toProductThumbnail() }
+                //responseList.products?.map { it.toProductThumbnail() } ?: emptyList()
             }
         )
 

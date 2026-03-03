@@ -13,9 +13,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C669B5A62F4E3F6000A15E5B"
-               BuildableName = "QSolu.app"
-               BlueprintName = "QSolu"
+               BlueprintIdentifier = "C62CE39B2F576D5E00314D6E"
+               BuildableName = "QSoluSiteB.app"
+               BlueprintName = "QSoluSiteB"
                ReferencedContainer = "container:QSolu.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -42,9 +42,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C669B5A62F4E3F6000A15E5B"
-            BuildableName = "QSolu.app"
-            BlueprintName = "QSolu"
+            BlueprintIdentifier = "C62CE39B2F576D5E00314D6E"
+            BuildableName = "QSoluSiteB.app"
+            BlueprintName = "QSoluSiteB"
             ReferencedContainer = "container:QSolu.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

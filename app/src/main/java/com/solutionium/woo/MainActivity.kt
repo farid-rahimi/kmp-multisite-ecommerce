@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.solutionium.sharedui.designsystem.theme.WooBrand
 import com.solutionium.sharedui.designsystem.theme.WooTheme
 import com.solutionium.sharedui.common.component.LanguageSelectionScreen
 import com.solutionium.feature.home.GRAPH_HOME_ROUTE
@@ -108,9 +109,13 @@ class MainActivity : ComponentActivity() {
             } else {
                 LayoutDirection.Ltr
             }
+            val brand = when (BuildConfig.SITE_BRAND) {
+                "SITE_B" -> WooBrand.SiteB
+                else -> WooBrand.SiteA
+            }
 
             CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-                WooTheme {
+                WooTheme(brand = brand) {
                     if (uiState.showLanguageScreen) {
                         LanguageSelectionScreen(
                             onLanguageSelected = viewModel::onLanguageSelected,
@@ -154,7 +159,7 @@ fun DeepLinkHandler(
         if (deepLinkData == null) return@LaunchedEffect
 
         val uri = deepLinkData.uri
-        if (uri.scheme == "https" && uri.host == "qeshminora.com" && uri.pathSegments.firstOrNull() == "product") {
+        if (uri.scheme == "https" && uri.host == BuildConfig.API_SITE_HOST && uri.pathSegments.firstOrNull() == "product") {
             val productSlug = uri.pathSegments.getOrNull(1)
 
             if (!productSlug.isNullOrBlank()) {

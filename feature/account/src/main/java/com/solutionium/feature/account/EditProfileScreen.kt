@@ -35,6 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.solutionium.shared.data.model.UserDetails
+import com.solutionium.shared.viewmodel.AccountValidationErrorKeys
+import com.solutionium.shared.viewmodel.FieldErrors
 
 
 // --- Placeholder Sub-Screens for Edit Profile, View Orders, Manage Addresses ---
@@ -92,13 +94,13 @@ fun EditProfileSubScreen(
                     onValueChange = { firstName = it },
                     label = { Text(stringResource(R.string.first_name)) },
                     modifier = Modifier.weight(1f),
-                    isError = validationErrors.firstNameError != null,
+                    isError = validationErrors.firstNameErrorKey != null,
 
                     supportingText = {
                         // If there's an error, display the string from the resource ID
-                        if (validationErrors.firstNameError != null) {
+                        if (validationErrors.firstNameErrorKey != null) {
                             Text(
-                                text = stringResource(id = validationErrors.firstNameError),
+                                text = stringResource(id = mapValidationErrorToRes(validationErrors.firstNameErrorKey)),
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
@@ -110,11 +112,11 @@ fun EditProfileSubScreen(
                     onValueChange = { lastName = it },
                     label = { Text(stringResource(R.string.last_name)) },
                     modifier = Modifier.weight(1f),
-                    isError = validationErrors.lastNameError != null,
+                    isError = validationErrors.lastNameErrorKey != null,
                     supportingText = {
-                        if (validationErrors.lastNameError != null) {
+                        if (validationErrors.lastNameErrorKey != null) {
                             Text(
-                                text = stringResource(id = validationErrors.lastNameError),
+                                text = stringResource(id = mapValidationErrorToRes(validationErrors.lastNameErrorKey)),
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
@@ -134,11 +136,11 @@ fun EditProfileSubScreen(
                 label = { Text(stringResource(R.string.email_address)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
-                isError = validationErrors.emailError != null,
+                isError = validationErrors.emailErrorKey != null,
                 supportingText = {
-                    if (validationErrors.emailError != null) {
+                    if (validationErrors.emailErrorKey != null) {
                         Text(
-                            text = stringResource(id = validationErrors.emailError),
+                            text = stringResource(id = mapValidationErrorToRes(validationErrors.emailErrorKey)),
                             color = MaterialTheme.colorScheme.error
                         )
                     }
@@ -185,3 +187,10 @@ fun EditProfileSubScreen(
     }
 }
 
+private fun mapValidationErrorToRes(errorKey: String?): Int {
+    return when (errorKey) {
+        AccountValidationErrorKeys.FIELD_REQUIRED -> R.string.error_field_required
+        AccountValidationErrorKeys.INVALID_EMAIL -> R.string.error_invalid_email
+        else -> R.string.error_field_required
+    }
+}
