@@ -167,5 +167,29 @@
     <string name="login_with_otp_instead">Login with phone</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="close">Close</string>
+    <string name="city">City</string>
+    <string name="edit">Edit</string>
+    <string name="my_addresses">My Addresses</string>
+    <string name="no_address_yet">You haven&apos;t added any addresses yet.</string>
+    <string name="add_new_address">Add New Address</string>
+    <string name="default_address">Default Address</string>
+    <string name="delete_address">Delete Address</string>
+    <string name="delete_address_text">Are you sure you want to delete the address for &apos;%1$s&apos;?</string>
+    <string name="delete">Delete</string>
+    <string name="edit_address">Edit Address</string>
+    <string name="save_address">Save Address</string>
+    <string name="address_line_1">Address Line 1</string>
+    <string name="address_line_2_optional">Address Line 2 (Optional)</string>
+    <string name="state_province">State/Province</string>
+    <string name="postal_code_title">Postal Code</string>
+    <string name="address_title_optional">Address Title (Optional)</string>
+    <string name="address_title_support_text">Only visible to you. e.g. Home, Work</string>
+    <string name="first_name_cannot_be_empty">First name cannot be empty.</string>
+    <string name="last_name_cannot_be_empty">Last name cannot be empty.</string>
+    <string name="state_cannot_be_empty">State cannot be empty.</string>
+    <string name="city_cannot_be_empty">City cannot be empty.</string>
+    <string name="address_line_cannot_be_empty">Address line 1 cannot be empty.</string>
+    <string name="postal_code_cannot_be_empty">Postal code cannot be empty.</string>
+    <string name="enter_a_valid_phone_number">Enter a valid phone number.</string>
 
 </resources>

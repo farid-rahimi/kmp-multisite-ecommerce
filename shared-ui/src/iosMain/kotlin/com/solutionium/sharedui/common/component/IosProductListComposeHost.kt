@@ -11,11 +11,14 @@ import com.solutionium.shared.viewmodel.ProductDetailViewModel
 import com.solutionium.shared.viewmodel.ReviewViewModel
 import com.solutionium.shared.viewmodel.CategoryViewModel
 import com.solutionium.shared.viewmodel.AccountViewModel
+import com.solutionium.shared.viewmodel.AddressViewModel
 import com.solutionium.shared.viewmodel.CartViewModel
 import com.solutionium.shared.viewmodel.OrderListViewModel
 import com.solutionium.sharedui.bootstrap.IosKoinBridge
 import com.solutionium.sharedui.bootstrap.IosRuntimeConfig
 import com.solutionium.sharedui.account.AccountScreen
+import com.solutionium.sharedui.address.AddEditAddressScreen
+import com.solutionium.sharedui.address.AddressListScreen
 import com.solutionium.sharedui.cart.CartScreen
 import com.solutionium.sharedui.designsystem.theme.WooTheme
 import com.solutionium.sharedui.category.CategoryScreen
@@ -36,6 +39,8 @@ import androidx.compose.runtime.setValue
 
 private sealed interface IosShopRoute {
     data object Account : IosShopRoute
+    data object AddressList : IosShopRoute
+    data class AddressEdit(val addressIdOrNew: Int) : IosShopRoute
     data object Cart : IosShopRoute
     data object Category : IosShopRoute
     data object Home : IosShopRoute
@@ -71,8 +76,25 @@ class IosProductListComposeHost {
                         IosShopRoute.Account -> {
                             IosAccountRoute(
                                 onOpenHome = { route = IosShopRoute.Home },
+                                onOpenAddress = { route = IosShopRoute.AddressList },
                                 onOpenOrders = { route = IosShopRoute.OrderList },
                                 onOpenProductList = { args -> route = IosShopRoute.ProductList(args) },
+                            )
+                        }
+
+                        IosShopRoute.AddressList -> {
+                            IosAddressListRoute(
+                                onBack = { route = IosShopRoute.Account },
+                                onEditAddress = { addressIdOrNew ->
+                                    route = IosShopRoute.AddressEdit(addressIdOrNew)
+                                },
+                            )
+                        }
+
+                        is IosShopRoute.AddressEdit -> {
+                            IosAddressEditRoute(
+                                addressIdOrNew = activeRoute.addressIdOrNew,
+                                onBack = { route = IosShopRoute.AddressList },
                             )
                         }
 
@@ -172,6 +194,7 @@ class IosProductListComposeHost {
 @Composable
 private fun IosAccountRoute(
     onOpenHome: () -> Unit,
+    onOpenAddress: () -> Unit,
     onOpenOrders: () -> Unit,
     onOpenProductList: (Map<String, String>) -> Unit,
 ) {
@@ -182,7 +205,7 @@ private fun IosAccountRoute(
     }
 
     AccountScreen(
-        onAddressClick = {},
+        onAddressClick = onOpenAddress,
         onFavoriteClick = { title, ids ->
             onOpenProductList(
                 mapOf(
@@ -195,6 +218,50 @@ private fun IosAccountRoute(
         onOrderClick = { onOpenOrders() },
         viewModel = viewModel,
         onBack = onOpenHome,
+    )
+}
+
+@Composable
+private fun IosAddressListRoute(
+    onBack: () -> Unit,
+    onEditAddress: (Int) -> Unit,
+) {
+    val viewModel = koinInject<AddressViewModel>(
+        parameters = { parametersOf(emptyMap<String, String>()) },
+    )
+
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.clear() }
+    }
+
+    AddressListScreen(
+        onNavigateToEditAddress = { addressId -> onEditAddress(addressId ?: -1) },
+        onBackNavigation = onBack,
+        viewModel = viewModel,
+    )
+}
+
+@Composable
+private fun IosAddressEditRoute(
+    addressIdOrNew: Int,
+    onBack: () -> Unit,
+) {
+    val viewModel = koinInject<AddressViewModel>(
+        parameters = {
+            parametersOf(
+                mapOf("address_id_or_new" to addressIdOrNew.toString()),
+            )
+        },
+    )
+
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.clear() }
+    }
+
+    AddEditAddressScreen(
+        onSaved = onBack,
+        onBack = onBack,
+        viewModel = viewModel,
     )
 }
 
