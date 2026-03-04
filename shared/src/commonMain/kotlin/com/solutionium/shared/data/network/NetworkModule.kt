@@ -30,6 +30,7 @@ data class NetworkConfig(
     val baseUrl: String,
     val consumerKey: String,
     val consumerSecret: String,
+    val passwordLoginPath: String = "wp-json/digits/v1/login_user",
     val enableNetworkLogs: Boolean = true,
 )
 
@@ -132,7 +133,13 @@ val networkModule = module {
     single { WooCheckoutOrderClient(get(named("BasicAuthKtorClient"))) }
     single { WooOrderClient(get(named("BasicAuthKtorClient"))) }
     
-    single { DigitsClient(get(named("NoAuthKtorClient"))) }
+    single {
+        val networkConfig = getOrNull<NetworkConfigProvider>()?.get() ?: defaultNetworkConfig()
+        DigitsClient(
+            client = get(named("NoAuthKtorClient")),
+            passwordLoginPath = networkConfig.passwordLoginPath,
+        )
+    }
     single { UserClient(get(named("NoAuthKtorClient"))) }
 
     // --- OTHER ---

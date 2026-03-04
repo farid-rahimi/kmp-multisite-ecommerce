@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class CartViewModel(
     private val updateCartItemUseCase: UpdateCartItemUseCase,
@@ -61,7 +62,9 @@ class CartViewModel(
         scope.launch {
             val isLoggedIn = checkLoginUserUseCase().first()
             if (isLoggedIn) {
-                onNavigateToCheckout()
+                withContext(Dispatchers.Main) {
+                    onNavigateToCheckout()
+                }
             } else {
                 _uiState.update { it.copy(showLoginPrompt = true) }
             }

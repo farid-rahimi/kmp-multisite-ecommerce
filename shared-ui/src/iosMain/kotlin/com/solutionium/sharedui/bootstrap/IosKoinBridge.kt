@@ -8,6 +8,7 @@ import com.solutionium.shared.viewmodel.getAccountModules
 import com.solutionium.shared.viewmodel.getCartModules
 import com.solutionium.shared.viewmodel.getCategoryModules
 import com.solutionium.shared.viewmodel.getHomeModules
+import com.solutionium.shared.viewmodel.getOrderListModules
 import com.solutionium.shared.viewmodel.getProductDetailModules
 import com.solutionium.shared.viewmodel.getProductListModules
 import com.solutionium.shared.viewmodel.getReviewModules
@@ -36,6 +37,11 @@ class IosKoinBridge {
                         baseUrl = baseUrl,
                         consumerKey = consumerKey,
                         consumerSecret = consumerSecret,
+                        passwordLoginPath = if (siteBrand.uppercase() == "SITE_B") {
+                            "wp-json/woo-mobile-auth/v1/login_user"
+                        } else {
+                            "wp-json/digits/v1/login_user"
+                        },
                         enableNetworkLogs = true,
                     )
                 }
@@ -50,6 +56,7 @@ class IosKoinBridge {
                             getCartModules() +
                             getHomeModules() +
                             getCategoryModules() +
+                            getOrderListModules() +
                             getProductListModules() +
                             getProductDetailModules() +
                             getReviewModules() +

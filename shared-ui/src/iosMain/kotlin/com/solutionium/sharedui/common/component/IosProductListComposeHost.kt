@@ -10,13 +10,17 @@ import com.solutionium.shared.viewmodel.HomeViewModel
 import com.solutionium.shared.viewmodel.ProductDetailViewModel
 import com.solutionium.shared.viewmodel.ReviewViewModel
 import com.solutionium.shared.viewmodel.CategoryViewModel
+import com.solutionium.shared.viewmodel.AccountViewModel
 import com.solutionium.shared.viewmodel.CartViewModel
+import com.solutionium.shared.viewmodel.OrderListViewModel
 import com.solutionium.sharedui.bootstrap.IosKoinBridge
 import com.solutionium.sharedui.bootstrap.IosRuntimeConfig
+import com.solutionium.sharedui.account.AccountScreen
 import com.solutionium.sharedui.cart.CartScreen
 import com.solutionium.sharedui.designsystem.theme.WooTheme
 import com.solutionium.sharedui.category.CategoryScreen
 import com.solutionium.sharedui.home.HomeScreen
+import com.solutionium.sharedui.orders.OrderListScreen
 import com.solutionium.sharedui.products.ProductDetailScreen
 import com.solutionium.sharedui.products.ProductListScreen
 import com.solutionium.sharedui.review.ReviewListScreen
@@ -31,9 +35,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
 private sealed interface IosShopRoute {
+    data object Account : IosShopRoute
     data object Cart : IosShopRoute
     data object Category : IosShopRoute
     data object Home : IosShopRoute
+    data object OrderList : IosShopRoute
     data class ProductList(val args: Map<String, String>) : IosShopRoute
     data class Detail(val productId: Int, val fromListArgs: Map<String, String>?) : IosShopRoute
     data class Review(
@@ -58,10 +64,18 @@ class IosProductListComposeHost {
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background,
             ) {
-                var route by remember { mutableStateOf<IosShopRoute>(IosShopRoute.Home) }
+                var route by remember { mutableStateOf<IosShopRoute>(IosShopRoute.Account) }
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     when (val activeRoute = route) {
+                        IosShopRoute.Account -> {
+                            IosAccountRoute(
+                                onOpenHome = { route = IosShopRoute.Home },
+                                onOpenOrders = { route = IosShopRoute.OrderList },
+                                onOpenProductList = { args -> route = IosShopRoute.ProductList(args) },
+                            )
+                        }
+
                         IosShopRoute.Cart -> {
                             IosCartRoute()
                         }
@@ -91,6 +105,12 @@ class IosProductListComposeHost {
                                 onOpenProductList = { args ->
                                     route = IosShopRoute.ProductList(args)
                                 },
+                            )
+                        }
+
+                        IosShopRoute.OrderList -> {
+                            IosOrderListRoute(
+                                onBack = { route = IosShopRoute.Account },
                             )
                         }
 
@@ -147,6 +167,52 @@ class IosProductListComposeHost {
     }
 
     fun viewController(): UIViewController = controller
+}
+
+@Composable
+private fun IosAccountRoute(
+    onOpenHome: () -> Unit,
+    onOpenOrders: () -> Unit,
+    onOpenProductList: (Map<String, String>) -> Unit,
+) {
+    val viewModel = koinInject<AccountViewModel>()
+
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.clear() }
+    }
+
+    AccountScreen(
+        onAddressClick = {},
+        onFavoriteClick = { title, ids ->
+            onOpenProductList(
+                mapOf(
+                    "title" to title,
+                    "ids" to ids,
+                ),
+            )
+        },
+        onOrdersClick = onOpenOrders,
+        onOrderClick = { onOpenOrders() },
+        viewModel = viewModel,
+        onBack = onOpenHome,
+    )
+}
+
+@Composable
+private fun IosOrderListRoute(
+    onBack: () -> Unit,
+) {
+    val viewModel = koinInject<OrderListViewModel>()
+
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.clear() }
+    }
+
+    OrderListScreen(
+        onOrderClick = {},
+        onBack = onBack,
+        viewModel = viewModel,
+    )
 }
 
 @Composable

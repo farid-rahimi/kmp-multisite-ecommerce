@@ -2,10 +2,16 @@ package com.solutionium.shared.viewmodel
 
 import com.solutionium.shared.domain.config.getConfigDomainModules
 import com.solutionium.shared.domain.favorite.getFavoriteDomainModules
+import com.solutionium.shared.domain.order.getOrderDomainModules
 import com.solutionium.shared.domain.user.getUserDomainModules
 import org.koin.dsl.module
 
-fun getAccountModules() = setOf(accountModule) + getUserDomainModules() + getFavoriteDomainModules() + getConfigDomainModules()
+fun getAccountModules() =
+    setOf(accountModule) +
+        getUserDomainModules() +
+        getFavoriteDomainModules() +
+        getConfigDomainModules() +
+        getOrderDomainModules()
 
 val accountModule = module {
     factory {

@@ -18,7 +18,8 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.path
 
 class DigitsClient(
-    private val client: HttpClient
+    private val client: HttpClient,
+    private val passwordLoginPath: String = "wp-json/digits/v1/login_user",
 ) {
 
     suspend fun sendOTP(params: Map<String, String>) =
@@ -31,18 +32,52 @@ class DigitsClient(
         }
 
     suspend fun loginUser(user: String, password: String) =
-        client.safeRequest<DigitsLoginRegisterResponse, DigitsErrorResponse> {
-            method = HttpMethod.Post
-            url { path("wp-json/digits/v1/login_user") }
-            setBody(
-                MultiPartFormDataContent(
-                    formData {
-                        append("user", user)
-                        append("password", password)
+        run {
+            val candidates = listOf(
+                passwordLoginPath,
+                "wp-json/digits/v1/login_user",
+                "wp-json/woo-mobile-auth/v1/login_user",
+            ).distinct()
+
+            var lastResult: com.solutionium.shared.data.network.adapter.NetworkResponse<DigitsLoginRegisterResponse, DigitsErrorResponse>? =
+                null
+
+            for (candidate in candidates) {
+                val result = loginUserViaPath(candidate, user, password)
+                lastResult = result
+
+                when (result) {
+                    is com.solutionium.shared.data.network.adapter.NetworkResponse.Success -> return@run result
+                    is com.solutionium.shared.data.network.adapter.NetworkResponse.ApiError -> {
+                        // If endpoint is missing on this site, try next candidate.
+                        if (result.code == 404 || result.code == 405) continue
+                        return@run result
                     }
-                )
-            )
+
+                    is com.solutionium.shared.data.network.adapter.NetworkResponse.NetworkError,
+                    is com.solutionium.shared.data.network.adapter.NetworkResponse.UnknownError -> return@run result
+                }
+            }
+
+            lastResult ?: loginUserViaPath("wp-json/digits/v1/login_user", user, password)
         }
+
+    private suspend fun loginUserViaPath(
+        pathValue: String,
+        user: String,
+        password: String,
+    ) = client.safeRequest<DigitsLoginRegisterResponse, DigitsErrorResponse> {
+        method = HttpMethod.Post
+        url { path(pathValue) }
+        setBody(
+            MultiPartFormDataContent(
+                formData {
+                    append("user", user)
+                    append("password", password)
+                },
+            ),
+        )
+    }
 
     suspend fun verifyOTP(otp: String, phone: String) =
         client.safeRequest<DigitsLoginRegisterResponse, DigitsErrorResponse> {

@@ -27,8 +27,12 @@ val appModule = module {
         NetworkConfigProvider {
             NetworkConfig(
                 baseUrl = BuildConfig.API_BASE_URL,
-                consumerKey = "ck_92e3c10aef47e3f8a9bc4cc525c5ad52ae20ada2",//BuildConfig.API_CONSUMER_KEY,
-                consumerSecret = "cs_3ec93d75322dc29891a5df67b756cc8bb5fa95dd",//BuildConfig.API_CONSUMER_SECRET,
+                consumerKey = BuildConfig.API_CONSUMER_KEY,
+                consumerSecret = BuildConfig.API_CONSUMER_SECRET,
+                passwordLoginPath = when (BuildConfig.SITE_BRAND) {
+                    "SITE_B" -> "wp-json/woo-mobile-auth/v1/login_user"
+                    else -> "wp-json/digits/v1/login_user"
+                },
                 enableNetworkLogs = true,
             )
         }

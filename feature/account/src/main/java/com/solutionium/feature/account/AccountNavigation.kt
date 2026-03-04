@@ -5,6 +5,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import com.solutionium.sharedui.account.AccountScreen as SharedAccountScreen
 import com.solutionium.sharedui.common.DestinationRoute
 import com.solutionium.shared.data.model.PRODUCT_ARG_IDS
 import com.solutionium.shared.data.model.PRODUCT_ARG_TITLE
@@ -31,7 +32,7 @@ fun NavGraphBuilder.accountScreen(
         composable(
             route = "${GRAPH_ACCOUNT_ROUTE.route}/$ROUTE_ACCOUNT_SCREEN",
         ) {
-            AccountScreen(
+            SharedAccountScreen(
                 onAddressClick = { onAddressClick(GRAPH_ACCOUNT_ROUTE) },
                 onFavoriteClick = { title, ids ->
                     navigateToProductList(
