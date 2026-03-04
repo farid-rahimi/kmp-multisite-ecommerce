@@ -5,6 +5,7 @@ import com.solutionium.shared.data.local.iosLocalModule
 import com.solutionium.shared.data.network.NetworkConfig
 import com.solutionium.shared.data.network.NetworkConfigProvider
 import com.solutionium.shared.viewmodel.getAccountModules
+import com.solutionium.shared.viewmodel.getAddressModules
 import com.solutionium.shared.viewmodel.getCartModules
 import com.solutionium.shared.viewmodel.getCategoryModules
 import com.solutionium.shared.viewmodel.getHomeModules
@@ -53,6 +54,7 @@ class IosKoinBridge {
                 modules(
                     (
                         getAccountModules() +
+                            getAddressModules() +
                             getCartModules() +
                             getHomeModules() +
                             getCategoryModules() +

@@ -1,19 +1,18 @@
-package com.solutionium.feature.address
+package com.solutionium.shared.viewmodel
 
 import com.solutionium.shared.domain.user.getUserDomainModules
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 fun getAddressModules() = setOf(addressModule) + getUserDomainModules()
 
 val addressModule = module {
-    viewModel {
+    factory { (args: Map<String, String>) ->
         AddressViewModel(
             saveAddressUseCase = get(),
             loadAddressUseCase = get(),
             deleteAddressUseCase = get(),
             setAsDefaultAddressUseCase = get(),
-            savedStateHandle = get()
+            args = args,
         )
     }
 }

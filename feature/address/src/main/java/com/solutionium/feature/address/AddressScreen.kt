@@ -56,6 +56,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solutionium.shared.data.model.Address
+import com.solutionium.shared.viewmodel.AddressField
+import com.solutionium.shared.viewmodel.AddressValidationError
+import com.solutionium.shared.viewmodel.AddressViewModel
 import kotlin.text.isNullOrBlank
 
 
@@ -474,7 +477,7 @@ fun AddressTextField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
-    errorMessage: Int? = null,
+    errorMessage: AddressValidationError? = null,
     supportingText: String? = null,
     keyboardType: KeyboardType = KeyboardType.Text,
     imeAction: ImeAction = ImeAction.Default,
@@ -495,7 +498,10 @@ fun AddressTextField(
         singleLine = singleLine,
         supportingText = {
             if (errorMessage != null)
-                Text(stringResource(errorMessage), color = MaterialTheme.colorScheme.error)
+                Text(
+                    stringResource(errorMessage.toStringRes()),
+                    color = MaterialTheme.colorScheme.error,
+                )
             else if (supportingText != null)
                 Text(supportingText)
 
@@ -503,3 +509,12 @@ fun AddressTextField(
     )
 }
 
+private fun AddressValidationError.toStringRes(): Int = when (this) {
+    AddressValidationError.FIRST_NAME_EMPTY -> R.string.first_name_cannot_be_empty
+    AddressValidationError.LAST_NAME_EMPTY -> R.string.last_name_cannot_be_empty
+    AddressValidationError.STATE_EMPTY -> R.string.state_cannot_be_empty
+    AddressValidationError.CITY_EMPTY -> R.string.city_cannot_be_empty
+    AddressValidationError.ADDRESS_LINE_EMPTY -> R.string.address_line_cannot_be_empty
+    AddressValidationError.POSTAL_CODE_EMPTY -> R.string.postal_code_cannot_be_empty
+    AddressValidationError.INVALID_PHONE -> R.string.enter_a_valid_phone_number
+}

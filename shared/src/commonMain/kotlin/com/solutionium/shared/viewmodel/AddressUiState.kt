@@ -1,9 +1,7 @@
-package com.solutionium.feature.address
+package com.solutionium.shared.viewmodel
 
 import com.solutionium.shared.data.model.Address
 
-
-// Field names for error mapping
 object AddressField {
     const val TITLE = "title"
     const val FIRST_NAME = "firstName"
@@ -15,13 +13,22 @@ object AddressField {
     const val PHONE_NUMBER = "phoneNumber"
 }
 
-// Data class to hold the UI state for the form
+enum class AddressValidationError {
+    FIRST_NAME_EMPTY,
+    LAST_NAME_EMPTY,
+    STATE_EMPTY,
+    CITY_EMPTY,
+    ADDRESS_LINE_EMPTY,
+    POSTAL_CODE_EMPTY,
+    INVALID_PHONE,
+}
+
 data class AddressUiState(
-    val addressId: Int? = null, // Null if adding new
+    val addressId: Int? = null,
     val title: String? = null,
     val firstName: String = "",
     val lastName: String = "",
-    val state: String = "", // Could be a dropdown in a real app
+    val state: String = "",
     val city: String = "",
     val addressLine1: String = "",
     val addressLine2: String? = null,
@@ -29,8 +36,8 @@ data class AddressUiState(
     val phoneNumber: String? = "",
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val errorMessages: Map<String, Int> = emptyMap(), // For field-specific errors
-    val generalError: String? = null
+    val errorMessages: Map<String, AddressValidationError> = emptyMap(),
+    val generalError: String? = null,
 )
 
 data class AddressListUiState(
@@ -38,6 +45,5 @@ data class AddressListUiState(
     val isLoading: Boolean = false,
     val generalError: String? = null,
     val showDeleteConfirmationDialog: Boolean = false,
-    val addressToDelete: Address? = null
-
+    val addressToDelete: Address? = null,
 )

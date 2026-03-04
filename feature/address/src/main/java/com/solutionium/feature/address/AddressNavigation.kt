@@ -5,10 +5,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
@@ -16,6 +17,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import com.solutionium.sharedui.common.DestinationRoute
+import com.solutionium.shared.viewmodel.AddressViewModel
+import org.koin.core.parameter.parametersOf
 
 private const val ROUTE_ADDRESS_SCREEN = "address_route"
 private const val ROUTE_ADDRESS_LIST_SCREEN = "address_list_route"
@@ -28,10 +31,16 @@ fun NavGraphBuilder.addressScreen(
     composable(
         route = "${rootRoute.route}/${ROUTE_ADDRESS_LIST_SCREEN}",
     ) {
+        val viewModel = koinInject<AddressViewModel>(
+            parameters = { parametersOf(emptyMap<String, String>()) },
+        )
+        DisposableEffect(viewModel) {
+            onDispose { viewModel.clear() }
+        }
         AddressListScreen(
             onNavigateToEditAddress = onAddEditAddress,
             onBackNavigation = onBack,
-            viewModel =koinViewModel()
+            viewModel = viewModel,
         )
     }
 
@@ -45,6 +54,17 @@ fun NavGraphBuilder.addressScreen(
             // securePolicy = SecureFlagPolicy.Inherit // Default
         )
     ) {
+        val addressId = it.arguments?.getInt("address_id_or_new") ?: -1
+        val viewModel = koinInject<AddressViewModel>(
+            parameters = {
+                parametersOf(
+                    mapOf("address_id_or_new" to addressId.toString()),
+                )
+            },
+        )
+        DisposableEffect(viewModel) {
+            onDispose { viewModel.clear() }
+        }
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.9f) // Example: 90% of screen width
@@ -58,7 +78,7 @@ fun NavGraphBuilder.addressScreen(
                 // ViewModel will get address_id_or_new from its SavedStateHandle
                 onSaved = onConfirm,
                 onBack = onBack,
-                viewModel =koinViewModel()
+                viewModel = viewModel,
             )
         }
     }
