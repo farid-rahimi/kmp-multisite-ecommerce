@@ -156,7 +156,7 @@ data class WooLineItem (
     val metaData: List<MetaDatum>,
 
     val sku: String,
-    val price: Long,
+    val price: Double,
     val image: ImageItem?
 )
 
@@ -189,11 +189,13 @@ data class ShippingLine (
     @SerialName("total_tax")
     val totalTax: String,
 
-    val taxes: List<TaxLine>?,
+    val taxes: List<SimpleTaxLine>?,
 
     @SerialName("meta_data")
     val metaData: List<MetaDatum>?
 )
+
+
 
 @Serializable
 data class TaxLine (
@@ -217,6 +219,14 @@ data class TaxLine (
     @SerialName("meta_data")
     val metaData: List<MetaDatum>?
 )
+
+@Serializable
+data class SimpleTaxLine (
+    val id: Int,
+    val total: String?,
+    val subtotal: String?
+)
+
 
 @Serializable
 data class Refund (

@@ -27,7 +27,9 @@ data class AppConfig (
 
     val appVersion: AppVersion? = null,
 
-    val contact: ContactInfo? = null
+    val contact: ContactInfo? = null,
+
+    val searchTabs: List<SearchTabConfig> = emptyList(),
 
 )
 
@@ -55,3 +57,31 @@ data class ContactInfo (
     val telegram: String,
     val email: String
 )
+
+data class SearchTabConfig(
+    val id: Int,
+    val enabled: Boolean,
+    val title: String,
+    val type: String,
+    val source: String,
+    val sourceSlug: String? = null,
+    val max: Int?,
+    val viewType: SearchTabViewType,
+    val more: SearchTabMore?,
+)
+
+data class SearchTabMore(
+    val title: String?,
+    val link: Link?,
+)
+
+enum class SearchTabViewType(val value: String) {
+    SPOTLIGHT("spotlight"),
+    CIRCLE_ROW("circle_row"),
+    GRID("grid");
+
+    companion object {
+        fun fromValue(value: String?): SearchTabViewType =
+            entries.firstOrNull { it.value == value?.trim()?.lowercase() } ?: CIRCLE_ROW
+    }
+}

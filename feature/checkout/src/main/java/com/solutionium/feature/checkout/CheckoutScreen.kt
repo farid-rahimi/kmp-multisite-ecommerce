@@ -74,9 +74,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.solutionium.core.ui.common.component.CartItemCard
-import com.solutionium.core.ui.common.component.CenteredCircularProgress
-import com.solutionium.core.ui.common.component.FormattedPriceV2
+import com.solutionium.sharedui.common.component.CartItemCard
+import com.solutionium.sharedui.common.component.CenteredCircularProgress
+import com.solutionium.sharedui.common.component.FormattedPriceV2
 import com.solutionium.shared.data.model.Address
 import com.solutionium.shared.data.model.CartItem
 import com.solutionium.shared.data.model.PaymentGateway

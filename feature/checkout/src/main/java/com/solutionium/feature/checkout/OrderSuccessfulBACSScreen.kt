@@ -41,7 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import com.solutionium.core.ui.common.component.FormattedPriceV2
+import com.solutionium.sharedui.common.component.FormattedPriceV2
 import com.solutionium.shared.data.model.BACSDetails
 import java.net.URLEncoder
 

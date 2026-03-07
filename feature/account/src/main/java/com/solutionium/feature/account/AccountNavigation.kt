@@ -1,14 +1,16 @@
 package com.solutionium.feature.account
 
-import org.koin.compose.viewmodel.koinViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
-import com.solutionium.core.ui.common.DestinationRoute
+import com.solutionium.sharedui.account.AccountScreen as SharedAccountScreen
+import com.solutionium.sharedui.common.DestinationRoute
 import com.solutionium.shared.data.model.PRODUCT_ARG_IDS
 import com.solutionium.shared.data.model.PRODUCT_ARG_TITLE
+import com.solutionium.shared.viewmodel.AccountViewModel
+import org.koin.compose.koinInject
 
 
 val GRAPH_ACCOUNT_ROUTE = DestinationRoute("account_graph_route")
@@ -30,7 +32,7 @@ fun NavGraphBuilder.accountScreen(
         composable(
             route = "${GRAPH_ACCOUNT_ROUTE.route}/$ROUTE_ACCOUNT_SCREEN",
         ) {
-            AccountScreen(
+            SharedAccountScreen(
                 onAddressClick = { onAddressClick(GRAPH_ACCOUNT_ROUTE) },
                 onFavoriteClick = { title, ids ->
                     navigateToProductList(
@@ -40,7 +42,7 @@ fun NavGraphBuilder.accountScreen(
                 },
                 onOrdersClick = { onOrdersClick(GRAPH_ACCOUNT_ROUTE) },
                 onOrderClick = { onOrderClick(GRAPH_ACCOUNT_ROUTE, it) },
-                viewModel = koinViewModel(),
+                viewModel = koinInject<AccountViewModel>(),
                 onBack = onBack
             )
         }

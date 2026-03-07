@@ -7,7 +7,7 @@ import com.solutionium.shared.data.model.Result
 
 interface WooConfigRemoteSource {
 
-    suspend fun getAppConfig(): Result<AppConfig, GeneralError>
+    suspend fun getAppConfig(languageCode: String? = null): Result<AppConfig, GeneralError>
 
     suspend fun getPrivacyPolicy(): Result<String, GeneralError>
 }

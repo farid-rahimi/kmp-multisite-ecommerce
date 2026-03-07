@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="all">#4B4B4B</color>
+    <color name="processing">#1D32E1</color>
+    <color name="awaiting">#5FB016</color>
+    <color name="on_hold">#B9A934</color>
+    <color name="completed">#337E36</color>
+    <color name="cancelled">#FF5722</color>
+    <color name="failed">#F44336</color>
+    <color name="refunded">#9C27B0</color>
+    <color name="pending">#818181</color>
+    <color name="unknown">#818181</color>
+</resources>

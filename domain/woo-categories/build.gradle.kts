@@ -8,6 +8,5 @@ android {
 
 dependencies {
 
-    implementation(project(":data:woo-categories"))
 
 }

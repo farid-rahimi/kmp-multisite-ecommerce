@@ -7,7 +7,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import com.solutionium.core.ui.common.DestinationRoute
+import com.solutionium.sharedui.common.DestinationRoute
 import com.solutionium.shared.data.model.StoryItem
 import com.solutionium.feature.account.accountScreen
 import com.solutionium.feature.account.navigateToAccount
@@ -19,7 +19,7 @@ import com.solutionium.feature.category.categoryScreen
 import com.solutionium.feature.checkout.checkoutScreen
 import com.solutionium.feature.checkout.navigateCheckout
 import com.solutionium.feature.home.GRAPH_HOME_ROUTE
-import com.solutionium.feature.home.HomeViewModel
+import com.solutionium.shared.viewmodel.HomeViewModel
 import com.solutionium.feature.home.homeScreen
 import com.solutionium.feature.orders.navigateOrdersList
 import com.solutionium.feature.orders.ordersListScreen

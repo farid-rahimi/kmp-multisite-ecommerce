@@ -8,7 +8,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":data:model"))
     implementation(project(":domain:cart"))
     implementation(project(":domain:checkout"))
     implementation(project(":domain:user"))

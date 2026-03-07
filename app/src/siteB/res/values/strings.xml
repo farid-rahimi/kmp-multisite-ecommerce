@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Site B Shop</string>
+    <string name="home">Discover</string>
+    <string name="category">Collections</string>
+    <string name="cart">Bag</string>
+    <string name="account">Profile</string>
+</resources>

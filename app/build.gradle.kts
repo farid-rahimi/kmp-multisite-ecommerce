@@ -14,6 +14,35 @@ android {
         //resourceConfigurations.addAll(listOf("fa", "en"))
     }
 
+    flavorDimensions += "site"
+    productFlavors {
+        create("siteA") {
+            dimension = "site"
+            applicationId = "com.solutionium.woo"
+            androidResources {
+                localeFilters += listOf("en", "fa")
+            }
+            buildConfigField("String", "SITE_BRAND", "\"SITE_A\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://qeshminora.com/\"")
+            buildConfigField("String", "API_SITE_HOST", "\"qeshminora.com\"")
+            buildConfigField("String", "API_CONSUMER_KEY", "\"${System.getenv("WOO_SITE_A_CONSUMER_KEY") ?: System.getenv("WOO_CONSUMER_KEY") ?: "fallback_key"}\"")
+            buildConfigField("String", "API_CONSUMER_SECRET", "\"${System.getenv("WOO_SITE_A_CONSUMER_SECRET") ?: System.getenv("WOO_CONSUMER_SECRET") ?: "fallback_secret"}\"")
+        }
+        create("siteB") {
+            dimension = "site"
+            applicationId = "ae.leparfum.shop"
+            androidResources {
+                localeFilters += listOf("en", "ar")
+            }
+            buildConfigField("String", "SITE_BRAND", "\"SITE_B\"")
+
+            buildConfigField("String", "API_BASE_URL", "\"https://leparfum.ae/\"")
+            buildConfigField("String", "API_SITE_HOST", "\"leparfum.ae\"")
+            buildConfigField("String", "API_CONSUMER_KEY", "\"${System.getenv("LEPARFUM_CK") ?: "fallback_key"}\"")
+            buildConfigField("String", "API_CONSUMER_SECRET", "\"${System.getenv("LEPARFUM_CS") ?: "fallback_secret"}\"")
+        }
+    }
+
     rootProject.extra.set("versionName", defaultConfig.versionName)
 
     packaging {
@@ -27,6 +56,10 @@ android {
             // All other languages will be stripped, which is what we want.
             enableSplit = false
         }
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
 
@@ -52,9 +85,7 @@ android {
 
 dependencies {
 
-    implementation(project(":data:model"))
-    implementation(project(":data:local"))
-    implementation(project(":core:ui:common"))
+    implementation(project(":shared-ui"))
     implementation(project(":feature:product-detail"))
     implementation(project(":feature:home"))
     implementation(project(":feature:product-list"))
@@ -65,8 +96,6 @@ dependencies {
     implementation(project(":feature:address"))
     implementation(project(":feature:orders"))
     implementation(project(":feature:review"))
-
-
     implementation(project(":shared"))
 
 

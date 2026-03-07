@@ -44,10 +44,7 @@ gradlePlugin {
             id = "com.s.gradle.android.feature"
             implementationClass = "com.s.gradle.plugins.FeaturePlugin"
         }
-        register("androidData") {
-            id = "com.s.gradle.android.data"
-            implementationClass = "com.s.gradle.plugins.DataPlugin"
-        }
+
         register("androidDomain") {
             id = "com.s.gradle.android.domain"
             implementationClass = "com.s.gradle.plugins.DomainPlugin"

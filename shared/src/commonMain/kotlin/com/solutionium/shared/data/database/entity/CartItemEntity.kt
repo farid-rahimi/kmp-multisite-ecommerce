@@ -2,11 +2,14 @@ package com.solutionium.shared.data.database.entity
 
 import androidx.room.Entity
 import com.solutionium.shared.data.model.ValidationInfo
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Entity class for cart item.
  */
 @Entity(tableName = "cart_item", primaryKeys = ["productId", "variationId"])
+@OptIn(ExperimentalTime::class)
 data class CartItemEntity(
     val productId: Int,
     val variationId: Int, // Use 0 for simple products, non-zero for variations
@@ -22,7 +25,7 @@ data class CartItemEntity(
     var regularPrice: Double? = null,
     val manageStock: Boolean = true,
     val stockStatus: String = "instock",
-    val addedAt: Long = System.currentTimeMillis(),
+    val addedAt: Long = Clock.System.now().toEpochMilliseconds(),
     // Optional: For more detailed info or if variations are complex
 
     val imageUrl: String,

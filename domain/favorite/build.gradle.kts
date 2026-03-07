@@ -8,9 +8,7 @@ android {
 
 dependencies {
 
-    implementation(project(":data:favorite"))
-    implementation(project(":data:woo-products"))
-    implementation(project(":data:woo-user"))
+
     implementation(project(":domain:user"))
 
 }

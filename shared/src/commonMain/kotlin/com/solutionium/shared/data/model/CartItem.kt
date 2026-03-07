@@ -1,6 +1,10 @@
 package com.solutionium.shared.data.model
 
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+
+@OptIn(ExperimentalTime::class)
 data class CartItem(
     val productId: Int,
     val variationId: Int = 0,
@@ -16,7 +20,7 @@ data class CartItem(
     var currentStock: Int?,      // Stock at the time of adding or last validation
     val manageStock: Boolean = true,
     val stockStatus: String = "instock",
-    val addedAt: Long = System.currentTimeMillis(),
+    val addedAt: Long = Clock.System.now().toEpochMilliseconds(),
     // Optional: For more detailed info or if variations are complex
 
     val imageUrl: String,

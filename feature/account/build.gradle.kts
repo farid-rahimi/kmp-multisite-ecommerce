@@ -8,8 +8,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":data:model"))
     implementation(project(":core:design-system"))
+    implementation(project(":shared-ui"))
     implementation(project(":domain:user"))
     implementation(project(":domain:favorite"))
     implementation(project(":domain:order"))

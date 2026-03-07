@@ -1,12 +1,15 @@
 package com.solutionium.feature.review
 
-import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.runtime.DisposableEffect
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.solutionium.core.ui.common.DestinationRoute
+import com.solutionium.sharedui.common.DestinationRoute
+import com.solutionium.sharedui.review.ReviewListScreen
+import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 
 
 fun NavGraphBuilder.reviewScreen(
@@ -26,9 +29,20 @@ fun NavGraphBuilder.reviewScreen(
             }
         ),
 
-        ) {
+        ) { navBackStackEntry ->
+        val args = buildMap {
+            put("productId", navBackStackEntry.arguments?.getInt("productId", -1).toString())
+            navBackStackEntry.arguments?.getString("categoryIds")?.let { put("categoryIds", it) }
+        }
+        val viewModel = koinInject<com.solutionium.shared.viewmodel.ReviewViewModel>(
+            parameters = { parametersOf(args) },
+        )
+        DisposableEffect(viewModel) {
+            onDispose { viewModel.clear() }
+        }
+
         ReviewListScreen(
-            viewModel =koinViewModel(),
+            viewModel = viewModel,
             onBackClick = onBackClick
         )
     }

@@ -17,7 +17,7 @@ class FeaturePlugin : Plugin<Project> {
 
             dependencies {
                 add("implementation", project(":shared"))
-                add("implementation", project(":core:ui:common"))
+                add("implementation", project(":shared-ui"))
                 add("implementation", project(":core:design-system"))
 
                 add("implementation", libs.findLibrary("androidx.navigation.compose").get())

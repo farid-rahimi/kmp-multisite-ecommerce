@@ -1,13 +1,12 @@
 package com.solutionium.feature.product.list
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.solutionium.core.ui.common.DestinationRoute
-import com.solutionium.shared.data.model.FilterCriterion
+import com.solutionium.sharedui.products.ProductListScreen
+import com.solutionium.sharedui.common.DestinationRoute
 import com.solutionium.shared.data.model.PRODUCT_ARG_ATTRIBUTE
 import com.solutionium.shared.data.model.PRODUCT_ARG_ATTRIBUTE_TERM
 import com.solutionium.shared.data.model.PRODUCT_ARG_BRAND_ID
@@ -18,8 +17,6 @@ import com.solutionium.shared.data.model.PRODUCT_ARG_ON_SALE
 import com.solutionium.shared.data.model.PRODUCT_ARG_SEARCH
 import com.solutionium.shared.data.model.PRODUCT_ARG_TAG
 import com.solutionium.shared.data.model.PRODUCT_ARG_TITLE
-import com.solutionium.shared.data.model.ProductFilterKey
-import com.solutionium.shared.data.model.ProductListType
 
 internal const val PRODUCT_LIST_ROUTE = "productList"
 internal const val PRODUCT_ARG_LIST_TYPE = "listType"
@@ -96,9 +93,23 @@ fun NavGraphBuilder.productListScreen(
             },
         )
     ) { navBack ->
+        val routeArgs = listOf(
+            PRODUCT_ARG_BRAND_ID,
+            PRODUCT_ARG_ATTRIBUTE,
+            PRODUCT_ARG_ATTRIBUTE_TERM,
+            PRODUCT_ARG_IDS,
+            PRODUCT_ARG_TITLE,
+            PRODUCT_ARG_CATEGORY,
+            PRODUCT_ARG_TAG,
+            PRODUCT_ARG_SEARCH,
+            PRODUCT_ARG_FEATURED,
+            PRODUCT_ARG_ON_SALE,
+        ).mapNotNull { key -> navBack.arguments?.getString(key)?.let { key to it } }.toMap()
+
         ProductListScreen(
             onProductClick = { onProductClick(rootRoute, it) },
             onBack = onBack,
+            args = routeArgs,
         )
     }
 }
@@ -126,44 +137,4 @@ fun NavController.navigateProductList(
     }
     navigate(route)
 }
-
-
-
-internal class ProductListFilters(
-    private val filters: MutableList<FilterCriterion> = mutableListOf<FilterCriterion>(),
-) {
-    fun buildFilterCriteria(savedStateHandle: SavedStateHandle) : MutableList<FilterCriterion> {
-        val brandId: String? = savedStateHandle.get<String>(PRODUCT_ARG_BRAND_ID)
-        brandId?.let { filters.add(FilterCriterion(ProductFilterKey.BRAND_ID.apiKey, it)) }
-        val attribute: String? = savedStateHandle.get<String>(PRODUCT_ARG_ATTRIBUTE)
-        val attributeTerm: String? = savedStateHandle.get<String>(PRODUCT_ARG_ATTRIBUTE_TERM)
-        if (attribute != null && attributeTerm != null) {
-            filters.add(FilterCriterion(ProductFilterKey.ATTRIBUTE.apiKey, attribute))
-            filters.add(FilterCriterion(ProductFilterKey.ATTRIBUTE_TERM.apiKey, attributeTerm))
-        }
-        val productIds: String? = savedStateHandle.get<String>(PRODUCT_ARG_IDS)
-        productIds?.let {
-            if (it.isNotEmpty()) {
-                filters.add(FilterCriterion(ProductFilterKey.INCLUDE_IDS.apiKey, it))
-            }
-        }
-        val categoryId: String? = savedStateHandle.get<String>(PRODUCT_ARG_CATEGORY)
-        categoryId?.let { filters.add(FilterCriterion(ProductFilterKey.CATEGORY_ID.apiKey, it)) }
-        val tagId: String? = savedStateHandle.get<String>(PRODUCT_ARG_TAG)
-        tagId?.let { filters.add(FilterCriterion(ProductFilterKey.TAG.apiKey, it)) }
-
-        val search: String? = savedStateHandle.get<String>(PRODUCT_ARG_SEARCH)
-        search?.let { filters.add(FilterCriterion(ProductFilterKey.SEARCH.apiKey, it)) }
-
-        val featured: String? = savedStateHandle.get<String>(PRODUCT_ARG_FEATURED)
-        featured?.let { filters.add(FilterCriterion(ProductFilterKey.FEATURED.apiKey, it)) }
-
-        val onSale: String? = savedStateHandle.get<String>(PRODUCT_ARG_ON_SALE)
-        onSale?.let { filters.add(FilterCriterion(ProductFilterKey.ON_SALE.apiKey, it)) }
-
-        return filters
-    }
-
-}
-
 

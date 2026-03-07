@@ -1,6 +1,6 @@
 package com.solutionium.woo.ui.navigation
 
-import com.solutionium.core.ui.common.DestinationRoute
+import com.solutionium.sharedui.common.DestinationRoute
 import com.solutionium.feature.account.GRAPH_ACCOUNT_ROUTE
 import com.solutionium.feature.cart.GRAPH_CART_ROUTE
 import com.solutionium.feature.category.GRAPH_CATEGORY_ROUTE

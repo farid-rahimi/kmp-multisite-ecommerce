@@ -50,6 +50,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -65,16 +66,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.solutionium.core.ui.common.DateHelper
-import com.solutionium.core.ui.common.component.ContactSupportDialog
-import com.solutionium.core.ui.common.component.FormattedPriceV2
-import com.solutionium.core.ui.common.component.LanguageSelectionScreen
-import com.solutionium.core.ui.common.component.OrderSummaryCard
+import com.solutionium.sharedui.common.DateHelper
+import com.solutionium.sharedui.common.component.ContactSupportDialog
+import com.solutionium.sharedui.common.component.FormattedPriceV2
+import com.solutionium.sharedui.common.component.LanguageSelectionScreen
+import com.solutionium.sharedui.common.component.OrderSummaryCard
 import com.solutionium.shared.data.model.Order
 import com.solutionium.shared.data.model.Transaction
 import com.solutionium.shared.data.model.Type
 import com.solutionium.shared.data.model.UserDetails
 import com.solutionium.shared.data.model.UserWallet
+import com.solutionium.shared.viewmodel.AccountStage
+import com.solutionium.shared.viewmodel.AccountViewModel
 
 
 @Composable
@@ -88,6 +91,9 @@ fun AccountScreen(
     onBack: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.clear() }
+    }
 //    val phoneNumber by viewModel.phoneNumber.collectAsState()
 //    val otp by viewModel.otp.collectAsState()
 //    val name by viewModel.name.collectAsState()

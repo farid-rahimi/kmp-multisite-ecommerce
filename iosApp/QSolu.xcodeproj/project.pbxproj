@@ -1,0 +1,819 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		C62CE3A02F576D5E00314D6E /* vazir_light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF32F4E5276002A6B2F /* vazir_light.ttf */; };
+		C62CE3A12F576D5E00314D6E /* vazir_medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF42F4E5276002A6B2F /* vazir_medium.ttf */; };
+		C62CE3A22F576D5E00314D6E /* vazir_regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF52F4E5276002A6B2F /* vazir_regular.ttf */; };
+		C62CE3A32F576D5E00314D6E /* vazir_bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF62F4E5276002A6B2F /* vazir_bold.ttf */; };
+		C62CE3A42F576D5E00314D6E /* vazir_black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF72F4E5276002A6B2F /* vazir_black.ttf */; };
+		C62CE3A52F576D5E00314D6E /* vazir_thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF82F4E5276002A6B2F /* vazir_thin.ttf */; };
+		C6CBFDF92F4E5276002A6B2F /* vazir_light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF32F4E5276002A6B2F /* vazir_light.ttf */; };
+		C6CBFDFA2F4E5276002A6B2F /* vazir_medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF42F4E5276002A6B2F /* vazir_medium.ttf */; };
+		C6CBFDFB2F4E5276002A6B2F /* vazir_regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF52F4E5276002A6B2F /* vazir_regular.ttf */; };
+		C6CBFDFC2F4E5276002A6B2F /* vazir_bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF62F4E5276002A6B2F /* vazir_bold.ttf */; };
+		C6CBFDFD2F4E5276002A6B2F /* vazir_black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF72F4E5276002A6B2F /* vazir_black.ttf */; };
+		C6CBFDFE2F4E5276002A6B2F /* vazir_thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF82F4E5276002A6B2F /* vazir_thin.ttf */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C669B5B52F4E3F6100A15E5B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C669B59F2F4E3F6000A15E5B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C669B5A62F4E3F6000A15E5B;
+			remoteInfo = QSolu;
+		};
+		C669B5BF2F4E3F6100A15E5B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C669B59F2F4E3F6000A15E5B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C669B5A62F4E3F6000A15E5B;
+			remoteInfo = QSolu;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		C62CE3A92F576D5E00314D6E /* QSoluSiteB.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QSoluSiteB.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C62CE3AB2F576D5E00314D6E /* Info-SiteB.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.info; name = "Info-SiteB.plist"; path = "Info-SiteB.plist"; sourceTree = "<group>"; };
+		C669B5A72F4E3F6000A15E5B /* QSolu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QSolu.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C669B5B42F4E3F6100A15E5B /* QSoluTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QSoluTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C669B5BE2F4E3F6100A15E5B /* QSoluUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QSoluUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6CBFDF32F4E5276002A6B2F /* vazir_light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = vazir_light.ttf; path = "../../shared-ui/src/androidMain/res/font/vazir_light.ttf"; sourceTree = "<group>"; };
+		C6CBFDF42F4E5276002A6B2F /* vazir_medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = vazir_medium.ttf; path = "../../shared-ui/src/androidMain/res/font/vazir_medium.ttf"; sourceTree = "<group>"; };
+		C6CBFDF52F4E5276002A6B2F /* vazir_regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = vazir_regular.ttf; path = "../../shared-ui/src/androidMain/res/font/vazir_regular.ttf"; sourceTree = "<group>"; };
+		C6CBFDF62F4E5276002A6B2F /* vazir_bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = vazir_bold.ttf; path = "../../shared-ui/src/androidMain/res/font/vazir_bold.ttf"; sourceTree = "<group>"; };
+		C6CBFDF72F4E5276002A6B2F /* vazir_black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = vazir_black.ttf; path = "../../shared-ui/src/androidMain/res/font/vazir_black.ttf"; sourceTree = "<group>"; };
+		C6CBFDF82F4E5276002A6B2F /* vazir_thin.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = vazir_thin.ttf; path = "../../shared-ui/src/androidMain/res/font/vazir_thin.ttf"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C62CE3AA2F576D5E00314D6E /* Exceptions for "QSolu" folder in "QSoluSiteB" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C62CE39B2F576D5E00314D6E /* QSoluSiteB */;
+		};
+		C62CE3C72F577CD300314D6E /* Exceptions for "QSolu" folder in "QSolu" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C669B5A62F4E3F6000A15E5B /* QSolu */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		C669B5A92F4E3F6000A15E5B /* QSolu */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C62CE3C72F577CD300314D6E /* Exceptions for "QSolu" folder in "QSolu" target */,
+				C62CE3AA2F576D5E00314D6E /* Exceptions for "QSolu" folder in "QSoluSiteB" target */,
+			);
+			path = QSolu;
+			sourceTree = "<group>";
+		};
+		C669B5B72F4E3F6100A15E5B /* QSoluTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = QSoluTests;
+			sourceTree = "<group>";
+		};
+		C669B5C12F4E3F6100A15E5B /* QSoluUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = QSoluUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C62CE39E2F576D5E00314D6E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C669B5A42F4E3F6000A15E5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C669B5B12F4E3F6100A15E5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C669B5BB2F4E3F6100A15E5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C669B59E2F4E3F6000A15E5B = {
+			isa = PBXGroup;
+			children = (
+				C6CBFDFF2F4E5286002A6B2F /* fonts */,
+				C669B5A92F4E3F6000A15E5B /* QSolu */,
+				C669B5B72F4E3F6100A15E5B /* QSoluTests */,
+				C669B5C12F4E3F6100A15E5B /* QSoluUITests */,
+				C62CE3AB2F576D5E00314D6E /* Info-SiteB.plist */,
+				C669B5A82F4E3F6000A15E5B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C669B5A82F4E3F6000A15E5B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C669B5A72F4E3F6000A15E5B /* QSolu.app */,
+				C669B5B42F4E3F6100A15E5B /* QSoluTests.xctest */,
+				C669B5BE2F4E3F6100A15E5B /* QSoluUITests.xctest */,
+				C62CE3A92F576D5E00314D6E /* QSoluSiteB.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C6CBFDFF2F4E5286002A6B2F /* fonts */ = {
+			isa = PBXGroup;
+			children = (
+				C6CBFDF72F4E5276002A6B2F /* vazir_black.ttf */,
+				C6CBFDF62F4E5276002A6B2F /* vazir_bold.ttf */,
+				C6CBFDF32F4E5276002A6B2F /* vazir_light.ttf */,
+				C6CBFDF42F4E5276002A6B2F /* vazir_medium.ttf */,
+				C6CBFDF52F4E5276002A6B2F /* vazir_regular.ttf */,
+				C6CBFDF82F4E5276002A6B2F /* vazir_thin.ttf */,
+			);
+			path = fonts;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C62CE39B2F576D5E00314D6E /* QSoluSiteB */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C62CE3A62F576D5E00314D6E /* Build configuration list for PBXNativeTarget "QSoluSiteB" */;
+			buildPhases = (
+				C62CE39C2F576D5E00314D6E /* Run Script */,
+				C62CE39D2F576D5E00314D6E /* Sources */,
+				C62CE39E2F576D5E00314D6E /* Frameworks */,
+				C62CE39F2F576D5E00314D6E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C669B5A92F4E3F6000A15E5B /* QSolu */,
+			);
+			name = QSoluSiteB;
+			packageProductDependencies = (
+			);
+			productName = QSoluSiteB;
+			productReference = C62CE3A92F576D5E00314D6E /* QSoluSiteB.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C669B5A62F4E3F6000A15E5B /* QSolu */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C669B5C82F4E3F6100A15E5B /* Build configuration list for PBXNativeTarget "QSolu" */;
+			buildPhases = (
+				C6E17E002F4E414F00369EAB /* Run Script */,
+				C669B5A32F4E3F6000A15E5B /* Sources */,
+				C669B5A42F4E3F6000A15E5B /* Frameworks */,
+				C669B5A52F4E3F6000A15E5B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C669B5A92F4E3F6000A15E5B /* QSolu */,
+			);
+			name = QSolu;
+			packageProductDependencies = (
+			);
+			productName = QSolu;
+			productReference = C669B5A72F4E3F6000A15E5B /* QSolu.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C669B5B32F4E3F6100A15E5B /* QSoluTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C669B5CB2F4E3F6100A15E5B /* Build configuration list for PBXNativeTarget "QSoluTests" */;
+			buildPhases = (
+				C669B5B02F4E3F6100A15E5B /* Sources */,
+				C669B5B12F4E3F6100A15E5B /* Frameworks */,
+				C669B5B22F4E3F6100A15E5B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C669B5B62F4E3F6100A15E5B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C669B5B72F4E3F6100A15E5B /* QSoluTests */,
+			);
+			name = QSoluTests;
+			packageProductDependencies = (
+			);
+			productName = QSoluTests;
+			productReference = C669B5B42F4E3F6100A15E5B /* QSoluTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C669B5BD2F4E3F6100A15E5B /* QSoluUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C669B5CE2F4E3F6100A15E5B /* Build configuration list for PBXNativeTarget "QSoluUITests" */;
+			buildPhases = (
+				C669B5BA2F4E3F6100A15E5B /* Sources */,
+				C669B5BB2F4E3F6100A15E5B /* Frameworks */,
+				C669B5BC2F4E3F6100A15E5B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C669B5C02F4E3F6100A15E5B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C669B5C12F4E3F6100A15E5B /* QSoluUITests */,
+			);
+			name = QSoluUITests;
+			packageProductDependencies = (
+			);
+			productName = QSoluUITests;
+			productReference = C669B5BE2F4E3F6100A15E5B /* QSoluUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C669B59F2F4E3F6000A15E5B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					C669B5A62F4E3F6000A15E5B = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					C669B5B32F4E3F6100A15E5B = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = C669B5A62F4E3F6000A15E5B;
+					};
+					C669B5BD2F4E3F6100A15E5B = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = C669B5A62F4E3F6000A15E5B;
+					};
+				};
+			};
+			buildConfigurationList = C669B5A22F4E3F6000A15E5B /* Build configuration list for PBXProject "QSolu" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C669B59E2F4E3F6000A15E5B;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = C669B5A82F4E3F6000A15E5B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C669B5A62F4E3F6000A15E5B /* QSolu */,
+				C669B5B32F4E3F6100A15E5B /* QSoluTests */,
+				C669B5BD2F4E3F6100A15E5B /* QSoluUITests */,
+				C62CE39B2F576D5E00314D6E /* QSoluSiteB */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C62CE39F2F576D5E00314D6E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C62CE3A02F576D5E00314D6E /* vazir_light.ttf in Resources */,
+				C62CE3A12F576D5E00314D6E /* vazir_medium.ttf in Resources */,
+				C62CE3A22F576D5E00314D6E /* vazir_regular.ttf in Resources */,
+				C62CE3A32F576D5E00314D6E /* vazir_bold.ttf in Resources */,
+				C62CE3A42F576D5E00314D6E /* vazir_black.ttf in Resources */,
+				C62CE3A52F576D5E00314D6E /* vazir_thin.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C669B5A52F4E3F6000A15E5B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C6CBFDF92F4E5276002A6B2F /* vazir_light.ttf in Resources */,
+				C6CBFDFA2F4E5276002A6B2F /* vazir_medium.ttf in Resources */,
+				C6CBFDFB2F4E5276002A6B2F /* vazir_regular.ttf in Resources */,
+				C6CBFDFC2F4E5276002A6B2F /* vazir_bold.ttf in Resources */,
+				C6CBFDFD2F4E5276002A6B2F /* vazir_black.ttf in Resources */,
+				C6CBFDFE2F4E5276002A6B2F /* vazir_thin.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C669B5B22F4E3F6100A15E5B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C669B5BC2F4E3F6100A15E5B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		C62CE39C2F576D5E00314D6E /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :shared-ui:embedAndSignAppleFrameworkForXcode\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
+		};
+		C6E17E002F4E414F00369EAB /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :shared-ui:embedAndSignAppleFrameworkForXcode\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C62CE39D2F576D5E00314D6E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C669B5A32F4E3F6000A15E5B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C669B5B02F4E3F6100A15E5B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C669B5BA2F4E3F6100A15E5B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C669B5B62F4E3F6100A15E5B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C669B5A62F4E3F6000A15E5B /* QSolu */;
+			targetProxy = C669B5B52F4E3F6100A15E5B /* PBXContainerItemProxy */;
+		};
+		C669B5C02F4E3F6100A15E5B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C669B5A62F4E3F6000A15E5B /* QSolu */;
+			targetProxy = C669B5BF2F4E3F6100A15E5B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		C62CE3A72F576D5E00314D6E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				API_BASE_URL = "https://leparfum.ae/";
+				API_SITE_HOST = leparfum.ae;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Info-SiteB.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ae.leparfum.shop;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SITE_BRAND = SITE_B;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C62CE3A82F576D5E00314D6E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				API_BASE_URL = "https://leparfum.ae/";
+				API_SITE_HOST = leparfum.ae;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Info-SiteB.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ae.leparfum.shop;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SITE_BRAND = SITE_B;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C669B5C62F4E3F6100A15E5B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		C669B5C72F4E3F6100A15E5B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C669B5C92F4E3F6100A15E5B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = QSolu/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.solutionium.QSolu;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C669B5CA2F4E3F6100A15E5B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = QSolu/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.solutionium.QSolu;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C669B5CC2F4E3F6100A15E5B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.solutionium.QSoluTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/QSolu.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/QSolu";
+			};
+			name = Debug;
+		};
+		C669B5CD2F4E3F6100A15E5B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.solutionium.QSoluTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/QSolu.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/QSolu";
+			};
+			name = Release;
+		};
+		C669B5CF2F4E3F6100A15E5B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.solutionium.QSoluUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = QSolu;
+			};
+			name = Debug;
+		};
+		C669B5D02F4E3F6100A15E5B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.solutionium.QSoluUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = QSolu;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C62CE3A62F576D5E00314D6E /* Build configuration list for PBXNativeTarget "QSoluSiteB" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C62CE3A72F576D5E00314D6E /* Debug */,
+				C62CE3A82F576D5E00314D6E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C669B5A22F4E3F6000A15E5B /* Build configuration list for PBXProject "QSolu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C669B5C62F4E3F6100A15E5B /* Debug */,
+				C669B5C72F4E3F6100A15E5B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C669B5C82F4E3F6100A15E5B /* Build configuration list for PBXNativeTarget "QSolu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C669B5C92F4E3F6100A15E5B /* Debug */,
+				C669B5CA2F4E3F6100A15E5B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C669B5CB2F4E3F6100A15E5B /* Build configuration list for PBXNativeTarget "QSoluTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C669B5CC2F4E3F6100A15E5B /* Debug */,
+				C669B5CD2F4E3F6100A15E5B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C669B5CE2F4E3F6100A15E5B /* Build configuration list for PBXNativeTarget "QSoluUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C669B5CF2F4E3F6100A15E5B /* Debug */,
+				C669B5D02F4E3F6100A15E5B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C669B59F2F4E3F6000A15E5B /* Project object */;
+}

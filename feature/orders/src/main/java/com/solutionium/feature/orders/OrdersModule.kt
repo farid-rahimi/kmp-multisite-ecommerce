@@ -1,11 +1,5 @@
 package com.solutionium.feature.orders
 
-import com.solutionium.shared.domain.order.getOrderDomainModules
-import org.koin.core.module.dsl.viewModel
-import org.koin.dsl.module
+import com.solutionium.shared.viewmodel.getOrderListModules
 
-fun getOrdersModules() = setOf(ordersModule) + getOrderDomainModules()
-
-val ordersModule = module {
-    viewModel { OrderListViewModel(get()) }
-}
+fun getOrdersModules() = getOrderListModules()

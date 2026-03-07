@@ -14,5 +14,5 @@ interface ProductDetailDao {
     fun getProductDetails(productId: Int): Flow<ProductDetailEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertProductDetail(productDetail: ProductDetailEntity)
+    suspend fun insertProductDetail(productDetail: ProductDetailEntity)
 }

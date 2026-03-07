@@ -8,15 +8,8 @@ android {
 }
 
 dependencies {
-
-    implementation(project(":domain:woo-products"))
-    implementation(project(":domain:woo-categories"))
-    implementation(project(":domain:cart"))
-    implementation(project(":domain:favorite"))
-    implementation(project(":domain:config"))
-    implementation(project(":domain:user"))
-
-    implementation(project(":data:model"))
+    implementation(project(":shared"))
+    implementation(project(":shared-ui"))
 
     api(libs.androidx.material3)
 }

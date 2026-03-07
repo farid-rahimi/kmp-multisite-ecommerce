@@ -27,7 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.solutionium.core.ui.common.component.FormattedPriceV2
+import com.solutionium.sharedui.common.component.FormattedPriceV2
 
 // In a new file, e.g., OrderSuccessfulScreen.kt
 @Composable

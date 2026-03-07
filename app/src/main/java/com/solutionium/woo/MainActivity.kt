@@ -9,7 +9,6 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,10 +27,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.solutionium.core.designsystem.theme.WooTheme
-import com.solutionium.core.ui.common.component.LanguageSelectionScreen
-import com.solutionium.shared.data.local.AppPreferencesImpl
+import com.solutionium.sharedui.designsystem.theme.WooBrand
+import com.solutionium.sharedui.designsystem.theme.WooTheme
+import com.solutionium.sharedui.common.component.LanguageSelectionScreen
 import com.solutionium.feature.home.GRAPH_HOME_ROUTE
 import com.solutionium.feature.home.navigateToHome
 import com.solutionium.feature.product.detail.navigateProductDetail
@@ -68,10 +66,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-
         val appPreferences: AppPreferences = getKoin().get()
         val lang = appPreferences.getLanguage()
-        val localeToSet = Locale.forLanguageTag(lang ?: "fa")
+        val localeToSet = Locale.forLanguageTag(lang ?: defaultLanguageForBrand())
         val config = Configuration(newBase.resources.configuration)
         Locale.setDefault(localeToSet)
         config.setLocale(localeToSet)
@@ -105,29 +102,25 @@ class MainActivity : ComponentActivity() {
                 return@setContent
             }
 
-            val layoutDirection = if (uiState.languageCode == "fa") {
+            val currentLanguage = uiState.languageCode ?: defaultLanguageForBrand()
+            val layoutDirection = if (isRtlLanguage(currentLanguage)) {
                 LayoutDirection.Rtl
             } else {
                 LayoutDirection.Ltr
             }
+            val brand = when (BuildConfig.SITE_BRAND) {
+                "SITE_B" -> WooBrand.SiteB
+                else -> WooBrand.SiteA
+            }
 
             CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-                WooTheme {
+                WooTheme(brand = brand) {
                     if (uiState.showLanguageScreen) {
                         LanguageSelectionScreen(
                             onLanguageSelected = viewModel::onLanguageSelected,
                         )
                     } else {
-                        val navController = rememberNavController()
-                        WooApp(navController = navController)
-
-                        DeepLinkHandler(
-                            navController = navController,
-                            deepLinkData = pendingDeepLink.value,
-                            onDeepLinkConsumed = {
-                                pendingDeepLink.value = null
-                            }
-                        )
+                        WooApp()
                     }
                 }
             }
@@ -144,6 +137,14 @@ class MainActivity : ComponentActivity() {
             pendingDeepLink.value = DeepLinkData(uri = intent.data!!)
         }
     }
+
+    private fun isRtlLanguage(languageCode: String): Boolean {
+        return languageCode == "fa" || languageCode == "ar"
+    }
+
+    private fun defaultLanguageForBrand(): String {
+        return if (BuildConfig.SITE_BRAND == "SITE_B") "ar" else "fa"
+    }
 }
 
 @Composable
@@ -156,7 +157,7 @@ fun DeepLinkHandler(
         if (deepLinkData == null) return@LaunchedEffect
 
         val uri = deepLinkData.uri
-        if (uri.scheme == "https" && uri.host == "qeshminora.com" && uri.pathSegments.firstOrNull() == "product") {
+        if (uri.scheme == "https" && uri.host == BuildConfig.API_SITE_HOST && uri.pathSegments.firstOrNull() == "product") {
             val productSlug = uri.pathSegments.getOrNull(1)
 
             if (!productSlug.isNullOrBlank()) {

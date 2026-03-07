@@ -1,14 +1,15 @@
 package com.solutionium.feature.product.detail
 
-import android.content.Intent
-import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.runtime.DisposableEffect
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import androidx.navigation.navDeepLink
-import com.solutionium.core.ui.common.DestinationRoute
+import com.solutionium.sharedui.common.DestinationRoute
+import com.solutionium.sharedui.products.ProductDetailScreen as SharedProductDetailScreen
+import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 
 const val GRAPH_PRODUCT_ROUTE = "product_graph_route"
 fun NavGraphBuilder.productDetailScreen(
@@ -31,9 +32,20 @@ fun NavGraphBuilder.productDetailScreen(
             }
         ),
 
-    ) {
-        ProductDetailScreen(
-            viewModel =koinViewModel(),
+    ) { navBackStackEntry ->
+        val args = buildMap {
+            put("productId", navBackStackEntry.arguments?.getInt("productId", -1).toString())
+            navBackStackEntry.arguments?.getString("productSlug")?.let { put("productSlug", it) }
+        }
+        val viewModel = koinInject<com.solutionium.shared.viewmodel.ProductDetailViewModel>(
+            parameters = { parametersOf(args) },
+        )
+        DisposableEffect(viewModel) {
+            onDispose { viewModel.clear() }
+        }
+
+        SharedProductDetailScreen(
+            viewModel = viewModel,
             onAllReviewClicked = { id, catIds -> onAllReviewClicked(rootRoute, id, catIds) },
             navigateToProductList = { params -> navigateToProductList(rootRoute, params) },
             onBackClick = onBackClick

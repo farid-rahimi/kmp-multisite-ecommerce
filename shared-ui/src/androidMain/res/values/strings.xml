@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="login_required">Login Required</string>
+    <string name="Login_required_text">You need to be logged in to proceed to checkout.</string>
+    <string name="go_to_login">Go to Login</string>
+    <string name="cancel">Cancel</string>
+    <string name="order">Order %1$s</string>
+    <string name="search_anything">Search anything…</string>
+    <string name="out_of_stock">Sold Out</string>
+    <string name="in_stock">Available</string>
+    <string name="in_stock_count">In Stock: %1$s</string>
+    <string name="show_more">Show More</string>
+    <string name="feature_free_shipping">Free Shipping</string>
+    <string name="feature_fast_selling">Fast Selling</string>
+    <string name="feature_authentic">Authentic Product</string>
+    <string name="feature_size_exchange">Easy Size Exchange</string>
+    <string name="feature_high_quality">High Quality</string>
+    <string name="feature_team_choice">Our Team Choice</string>
+    <string name="installment_pay">Installment</string>
+    <string name="full_pay">Full Pay</string>
+    <!-- ... other strings ... -->
+
+    <!-- Relative Time Strings -->
+    <string name="relative_time_today">Today</string>
+    <string name="relative_time_yesterday">Yesterday</string>
+    <string name="verified_purchase">Verified Purchase</string>
+    <string name="shop_manager">%1$s (Shop Manager)</string>
+    <string name="contact_support">Contact Support</string>
+    <string name="call_us">Call Us</string>
+    <string name="whatsapp">Whatsapp</string>
+    <string name="telegram">Telegram</string>
+    <string name="instagram">Instagram</string>
+    <string name="email">Email</string>
+    <string name="back">Back</string>
+    <plurals name="relative_time_days_ago">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
+    <plurals name="relative_time_weeks_ago">
+        <item quantity="one">%d week ago</item>
+        <item quantity="other">%d weeks ago</item>
+    </plurals>
+    <plurals name="relative_time_months_ago">
+        <item quantity="one">%d month ago</item>
+        <item quantity="other">%d months ago</item>
+    </plurals>
+    <plurals name="relative_time_years_ago">
+        <item quantity="one">%d year ago</item>
+        <item quantity="other">%d years ago</item>
+    </plurals>
+
+
+    <string name="all">All</string>
+    <string name="processing">Processing</string>
+    <string name="awaiting">awaiting</string>
+    <string name="on_hold">On Hold</string>
+    <string name="completed">Completed</string>
+    <string name="cancelled">cancelled</string>
+    <string name="failed">failed</string>
+    <string name="refunded">Refunded</string>
+    <string name="pending">Pending</string>
+    <string name="unknown_order_status">Unknown Status</string>
+
+</resources>

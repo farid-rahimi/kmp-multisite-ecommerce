@@ -17,3 +17,8 @@ local.properties
 /gradle/build-logic/convention/build
 /.kotlin
 /gradle/build-logic/.kotlin
+/app/src/siteB/google-services.json
+
+# iOS local plist
+iosApp/QSolu/Info.plist
+iosApp/Info-SiteB.plist

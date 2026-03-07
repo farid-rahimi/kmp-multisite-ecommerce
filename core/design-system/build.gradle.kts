@@ -9,7 +9,6 @@ android {
 
 dependencies {
 
-    implementation(project(":data:model"))
     implementation(libs.androidx.material3)
 
     api(libs.icons.extended)

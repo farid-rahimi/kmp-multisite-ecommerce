@@ -8,7 +8,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":data:model"))
     implementation(project(":domain:order"))
 
     implementation(libs.paging.compose)

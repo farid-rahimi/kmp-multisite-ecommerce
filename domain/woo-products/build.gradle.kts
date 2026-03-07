@@ -8,7 +8,6 @@ android {
 
 dependencies {
 
-    implementation(project(":data:woo-products"))
 
     api(libs.paging.runtime)
 

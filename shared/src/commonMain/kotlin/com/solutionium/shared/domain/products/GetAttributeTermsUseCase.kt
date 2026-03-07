@@ -9,5 +9,9 @@ import kotlinx.coroutines.flow.Flow
 interface GetAttributeTermsUseCase {
 
     suspend operator fun invoke(listType: AttributeTermsListType): Flow<Result<List<AttributeTerm>, GeneralError>>
+    suspend operator fun invoke(
+        attributeId: Int,
+        queries: Map<String, String>,
+    ): Flow<Result<List<AttributeTerm>, GeneralError>>
 
 }

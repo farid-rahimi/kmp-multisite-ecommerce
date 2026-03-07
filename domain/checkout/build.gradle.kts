@@ -8,7 +8,5 @@ android {
 
 dependencies {
 
-    implementation(project(":data:woo-checkout"))
-    implementation(project(":data:woo-orders"))
 
 }

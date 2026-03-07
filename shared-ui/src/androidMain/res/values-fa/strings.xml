@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="login_required">ورود به حساب</string>
+    <string name="Login_required_text">ابتدا به حساب کاربری وارد شوید.</string>
+    <string name="go_to_login">رفتن به حساب</string>
+    <string name="cancel">لغو</string>
+    <string name="order">شناسه سفارش %1$s</string>
+    <string name="search_anything">جستجو…</string>
+    <string name="out_of_stock">اتمام موجودی</string>
+    <string name="in_stock">موجود</string>
+    <string name="in_stock_count">موجودی انبار: %1$s</string>
+    <string name="show_more">مشاهده</string>
+    <string name="feature_free_shipping">ارسال رایگان</string>
+    <string name="feature_fast_selling">پرفروش</string>
+    <string name="feature_authentic">تضمین اصالت</string>
+    <string name="feature_size_exchange">تعوبض سایز آسان</string>
+    <string name="feature_high_quality">بالاترین کیفیت</string>
+    <string name="feature_team_choice">پیشنهاد تیم قشم‌اینورا</string>
+    <string name="installment_pay">قسطی</string>
+    <string name="full_pay">نقدی</string>
+    <string name="verified_purchase">خریدار کالا</string>
+
+
+    <string name="relative_time_today">امروز</string>
+    <string name="relative_time_yesterday">دیروز</string>
+    <string name="shop_manager">%1$s (مدیر فروشگاه)</string>
+    <string name="contact_support">ارتباط با پشتیبانی</string>
+    <string name="call_us">تماس</string>
+    <string name="whatsapp">واتساپ</string>
+    <string name="telegram">تلگرام</string>
+    <string name="instagram">اینستاگرام</string>
+    <string name="email">ایمیل</string>
+    <string name="back">بازگشت</string>
+    <plurals name="relative_time_days_ago">
+        <item quantity="one">%d روز قبل</item>
+        <item quantity="other">%d روز قبل</item>
+    </plurals>
+    <plurals name="relative_time_weeks_ago">
+        <item quantity="one">%d هفته قبل</item>
+        <item quantity="other">%d هفته قبل</item>
+    </plurals>
+    <plurals name="relative_time_months_ago">
+        <item quantity="one">%d ماه قبل</item>
+        <item quantity="other">%d ماه قبل</item>
+    </plurals>
+    <plurals name="relative_time_years_ago">
+        <item quantity="one">%d سال قبل</item>
+        <item quantity="other">%d سال قبل</item>
+    </plurals>
+
+
+    <string name="all">همه</string>
+    <string name="processing">درحال پردازش</string>
+    <string name="awaiting">بسته‌بندی</string>
+    <string name="on_hold">در انتظار پرداخت به کارت</string>
+    <string name="completed">ارسال شده</string>
+    <string name="cancelled">لغو شده</string>
+    <string name="failed">ناموفق</string>
+    <string name="refunded">مرجوع</string>
+    <string name="pending">در انتظار پرداخت</string>
+    <string name="unknown_order_status">Unknown Status</string>
+
+
+</resources>

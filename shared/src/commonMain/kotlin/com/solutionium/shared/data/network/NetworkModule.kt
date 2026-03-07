@@ -11,6 +11,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -23,9 +26,27 @@ import com.solutionium.shared.BuildKonfig
 
 fun getNetworkDataModules() = setOf(networkModule)
 
+data class NetworkConfig(
+    val baseUrl: String,
+    val consumerKey: String,
+    val consumerSecret: String,
+    val passwordLoginPath: String = "wp-json/digits/v1/login_user",
+    val enableNetworkLogs: Boolean = true,
+)
+
+fun interface NetworkConfigProvider {
+    fun get(): NetworkConfig
+}
+
+private fun defaultNetworkConfig() = NetworkConfig(
+    baseUrl = BuildKonfig.BASE_URL,
+    consumerKey = BuildKonfig.CONSUMER_KEY,
+    consumerSecret = BuildKonfig.CONSUMER_SECRET,
+    enableNetworkLogs = true,
+)
+
 
 expect val platformEngine: HttpClientEngine
-val baseUrl: String = BuildKonfig.BASE_URL
 
 val networkModule = module {
 
@@ -36,15 +57,26 @@ val networkModule = module {
     // --- HTTP CLIENTS ---
 
     single(named("BasicAuthKtorClient")) {
+        val networkConfig = getOrNull<NetworkConfigProvider>()?.get() ?: defaultNetworkConfig()
         HttpClient(platformEngine) {
             install(ContentNegotiation) { json(get()) }
-            //install(Logging) { level = if (BuildConfig.DEBUG) LogLevel.BODY else LogLevel.NONE }
+            install(Logging) {
+                logger = object : Logger {
+                    override fun log(message: String) {
+                        println("Network: Ktor: $message")
+                    }
+                }
+                level = if (networkConfig.enableNetworkLogs) LogLevel.BODY else LogLevel.NONE
+                sanitizeHeader { header -> header == HttpHeaders.Authorization }
+            }
             install(DefaultRequest) {
-                url(baseUrl)
+                url(networkConfig.baseUrl)
                 header(HttpHeaders.ContentType, ContentType.Application.Json)
-                val auth = "${BuildKonfig.CONSUMER_KEY}:${BuildKonfig.CONSUMER_SECRET}"
+                val auth = "${networkConfig.consumerKey}:${networkConfig.consumerSecret}"
                     .encodeToByteArray()
-                    .encodeBase64() // This replaces Base64.encodeToString(it, Base64.NO_WRAP)
+                    .encodeBase64()
+
+                println("Network: Ktor: $auth")
 
 //                val auth = "${consumerKey}:${consumerSecret}"
 //                    .encodeToByteArray().let { Base64.encodeToString(it, Base64.NO_WRAP) }
@@ -54,11 +86,20 @@ val networkModule = module {
     }
 
     single(named("BearerAuthKtorClient")) {
+        val networkConfig = getOrNull<NetworkConfigProvider>()?.get() ?: defaultNetworkConfig()
         HttpClient(platformEngine) {
             install(ContentNegotiation) { json(get()) }
-            //install(Logging) { level = if (BuildConfig.DEBUG) LogLevel.BODY else LogLevel.NONE }
+            install(Logging) {
+                logger = object : Logger {
+                    override fun log(message: String) {
+                        println("Network: Ktor: $message")
+                    }
+                }
+                level = if (networkConfig.enableNetworkLogs) LogLevel.BODY else LogLevel.NONE
+                sanitizeHeader { header -> header == HttpHeaders.Authorization }
+            }
             install(DefaultRequest) {
-                url(baseUrl)
+                url(networkConfig.baseUrl)
                 header(HttpHeaders.ContentType, ContentType.Application.Json)
                 // Inject TokenStore here if needed for dynamic Bearer tokens
             }
@@ -66,11 +107,20 @@ val networkModule = module {
     }
 
     single(named("NoAuthKtorClient")) {
+        val networkConfig = getOrNull<NetworkConfigProvider>()?.get() ?: defaultNetworkConfig()
         HttpClient(platformEngine) {
             install(ContentNegotiation) { json(get()) }
-            //install(Logging) { level = if (BuildConfig.DEBUG) LogLevel.BODY else LogLevel.NONE }
+            install(Logging) {
+                logger = object : Logger {
+                    override fun log(message: String) {
+                        println("Network: Ktor: $message")
+                    }
+                }
+                level = if (networkConfig.enableNetworkLogs) LogLevel.BODY else LogLevel.NONE
+                sanitizeHeader { header -> header == HttpHeaders.Authorization }
+            }
             install(DefaultRequest) {
-                url(baseUrl)
+                url(networkConfig.baseUrl)
                 header(HttpHeaders.ContentType, ContentType.Application.Json)
             }
         }
@@ -83,7 +133,13 @@ val networkModule = module {
     single { WooCheckoutOrderClient(get(named("BasicAuthKtorClient"))) }
     single { WooOrderClient(get(named("BasicAuthKtorClient"))) }
     
-    single { DigitsClient(get(named("NoAuthKtorClient"))) }
+    single {
+        val networkConfig = getOrNull<NetworkConfigProvider>()?.get() ?: defaultNetworkConfig()
+        DigitsClient(
+            client = get(named("NoAuthKtorClient")),
+            passwordLoginPath = networkConfig.passwordLoginPath,
+        )
+    }
     single { UserClient(get(named("NoAuthKtorClient"))) }
 
     // --- OTHER ---

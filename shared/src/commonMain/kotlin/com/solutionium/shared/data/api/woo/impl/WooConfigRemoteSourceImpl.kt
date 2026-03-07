@@ -12,10 +12,10 @@ import com.solutionium.shared.data.model.Result
 internal class WooConfigRemoteSourceImpl(
     private val userService: UserClient,
 ) : WooConfigRemoteSource {
-    override suspend fun getAppConfig(): Result<AppConfig, GeneralError> =
+    override suspend fun getAppConfig(languageCode: String?): Result<AppConfig, GeneralError> =
         handleNetworkResponse(
             networkCall = { userService.getAppConfig() },
-            mapper = { it.toModel() }
+            mapper = { it.toModel(languageCode) }
         )
 
     override suspend fun getPrivacyPolicy(): Result<String, GeneralError> =

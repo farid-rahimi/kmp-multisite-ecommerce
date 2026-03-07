@@ -4,8 +4,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import androidx.navigation.navDeepLink
-import com.solutionium.core.ui.common.DestinationRoute
+import com.solutionium.sharedui.common.DestinationRoute
 
 private const val ROUTE_CHECKOUT_SCREEN = "checkout"
 

@@ -2,6 +2,7 @@ package com.solutionium.shared.domain.config
 
 import com.solutionium.shared.data.config.appConfigDataModule
 import com.solutionium.shared.domain.config.impl.GetPrivacyPolicyUseCaseImpl
+import com.solutionium.shared.domain.config.impl.GetSearchTabsUseCaseImpl
 import com.solutionium.shared.domain.config.impl.ForcedEnabledPaymentUseCaseImpl
 import com.solutionium.shared.domain.config.impl.GetAppImagesImpl
 import com.solutionium.shared.domain.config.impl.GetBACSDetailsUseCaseImpl
@@ -29,4 +30,5 @@ val configDomainModule = module {
     factory<ForcedEnabledPaymentUseCase> { ForcedEnabledPaymentUseCaseImpl(get()) }
     factory<GetVersionsUseCase> { GetVersionsUseCaseImpl(get()) }
     factory<GetContactInfoUseCase> { GetContactInfoUseCaseImpl(get()) }
+    factory<GetSearchTabsUseCase> { GetSearchTabsUseCaseImpl(get()) }
 }
