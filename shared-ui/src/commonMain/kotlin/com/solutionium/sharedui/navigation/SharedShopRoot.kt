@@ -1,5 +1,6 @@
 package com.solutionium.sharedui.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -23,8 +24,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.zIndex
 import com.solutionium.sharedui.account.AccountScreen
 import com.solutionium.sharedui.address.AddEditAddressScreen
 import com.solutionium.sharedui.address.AddressListScreen
@@ -109,23 +112,23 @@ fun SharedShopRoot() {
         onDispose { accountViewModel.clear() }
     }
 
-    fun currentStack() = when (activeTab) {
+    fun stackFor(tab: MainTab) = when (tab) {
         MainTab.Home -> homeStack
         MainTab.Category -> categoryStack
         MainTab.Cart -> cartStack
         MainTab.Account -> accountStack
     }
 
-    fun push(route: TabRoute) {
-        currentStack().add(route)
+    fun pushToTab(tab: MainTab, route: TabRoute) {
+        stackFor(tab).add(route)
     }
 
-    fun pop() {
-        val stack = currentStack()
+    fun popFromTab(tab: MainTab) {
+        val stack = stackFor(tab)
         if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex)
     }
 
-    val topRoute = currentStack().lastOrNull()
+    val topRoute = stackFor(activeTab).lastOrNull()
     val isFirstLoading = activeTab == MainTab.Home &&
         topRoute == null &&
         homeState.storiesLoading &&
@@ -139,7 +142,8 @@ fun SharedShopRoot() {
         homeViewModel.navigationEvent.collect { event ->
             when (event) {
                 is HomeNavigationEvent.ToProduct -> {
-                    push(
+                    pushToTab(
+                        MainTab.Home,
                         TabRoute.ProductDetail(
                             productId = event.productId,
                             fromListArgs = null,
@@ -148,7 +152,7 @@ fun SharedShopRoot() {
                 }
 
                 is HomeNavigationEvent.ToProductList -> {
-                    push(TabRoute.ProductList(event.params))
+                    pushToTab(MainTab.Home, TabRoute.ProductList(event.params))
                 }
 
                 is HomeNavigationEvent.ToExternalLink -> {
@@ -196,184 +200,200 @@ fun SharedShopRoot() {
                 .padding(paddingValues),
             color = MaterialTheme.colorScheme.background,
         ) {
-            when (val route = topRoute) {
-                null -> {
-                    when (activeTab) {
-                        MainTab.Home -> {
-                            HomeScreen(
-                                onProductClick = { productId ->
-                                    push(
-                                        TabRoute.ProductDetail(
-                                            productId = productId,
-                                            fromListArgs = null,
-                                        ),
-                                    )
-                                },
-                                navigateToProductList = { args -> push(TabRoute.ProductList(args)) },
-                                onStoryClick = { clickedStory ->
-                                    val index = homeState.storyItems.indexOf(clickedStory)
-                                    storyStartIndex = if (index >= 0) index else 0
-                                    showStoryViewer = true
-                                },
-                                viewModel = homeViewModel,
-                            )
+            Box(modifier = Modifier.fillMaxSize()) {
+                MainTab.entries.forEach { tab ->
+                    val route = stackFor(tab).lastOrNull()
+                    val isTabActive = tab == activeTab
+                    val layerModifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(if (isTabActive) 1f else 0f)
+                        .alpha(if (isTabActive) 1f else 0f)
+
+                    Box(modifier = layerModifier) {
+                        fun push(routeToPush: TabRoute) = pushToTab(tab, routeToPush)
+                        fun pop() = popFromTab(tab)
+
+                        when (route) {
+                            null -> {
+                                when (tab) {
+                                    MainTab.Home -> {
+                                        HomeScreen(
+                                            onProductClick = { productId ->
+                                                push(
+                                                    TabRoute.ProductDetail(
+                                                        productId = productId,
+                                                        fromListArgs = null,
+                                                    ),
+                                                )
+                                            },
+                                            navigateToProductList = { args -> push(TabRoute.ProductList(args)) },
+                                            onStoryClick = { clickedStory ->
+                                                val index = homeState.storyItems.indexOf(clickedStory)
+                                                storyStartIndex = if (index >= 0) index else 0
+                                                showStoryViewer = true
+                                            },
+                                            viewModel = homeViewModel,
+                                        )
+                                    }
+
+                                    MainTab.Category -> {
+                                        CategoryScreen(
+                                            navigateToProductList = { args -> push(TabRoute.ProductList(args)) },
+                                            onProductClick = { productId ->
+                                                push(
+                                                    TabRoute.ProductDetail(
+                                                        productId = productId,
+                                                        fromListArgs = null,
+                                                    ),
+                                                )
+                                            },
+                                            onNavigateBack = {},
+                                            viewModel = categoryViewModel,
+                                        )
+                                    }
+
+                                    MainTab.Cart -> {
+                                        CartScreen(
+                                            viewModel = cartViewModel,
+                                            onCheckoutClick = {},
+                                            onProductClick = { productId ->
+                                                push(
+                                                    TabRoute.ProductDetail(
+                                                        productId = productId,
+                                                        fromListArgs = null,
+                                                    ),
+                                                )
+                                            },
+                                            onNavigateToAccount = { activeTab = MainTab.Account },
+                                        )
+                                    }
+
+                                    MainTab.Account -> {
+                                        AccountScreen(
+                                            onAddressClick = { push(TabRoute.AddressList) },
+                                            onFavoriteClick = { title, ids ->
+                                                push(TabRoute.ProductList(mapOf("title" to title, "ids" to ids)))
+                                            },
+                                            onOrdersClick = { push(TabRoute.OrderList) },
+                                            onOrderClick = { push(TabRoute.OrderList) },
+                                            viewModel = accountViewModel,
+                                            onBack = {},
+                                        )
+                                    }
+                                }
+                            }
+
+                            is TabRoute.ProductList -> {
+                                ProductListScreen(
+                                    onProductClick = { productId ->
+                                        push(
+                                            TabRoute.ProductDetail(
+                                                productId = productId,
+                                                fromListArgs = route.args,
+                                            ),
+                                        )
+                                    },
+                                    onBack = { pop() },
+                                    args = route.args,
+                                )
+                            }
+
+                            is TabRoute.ProductDetail -> {
+                                val viewModel = koinInject<ProductDetailViewModel>(
+                                    parameters = { parametersOf(mapOf("productId" to route.productId.toString())) },
+                                )
+                                DisposableEffect(viewModel) {
+                                    onDispose { viewModel.clear() }
+                                }
+                                ProductDetailScreen(
+                                    viewModel = viewModel,
+                                    onBackClick = { pop() },
+                                    navigateToProductList = { args -> push(TabRoute.ProductList(args)) },
+                                    onAllReviewClicked = { productId, categoryIds ->
+                                        push(
+                                            TabRoute.Review(
+                                                productId = productId,
+                                                categoryIds = categoryIds,
+                                                fromListArgs = route.fromListArgs,
+                                            ),
+                                        )
+                                    },
+                                )
+                            }
+
+                            is TabRoute.Review -> {
+                                val viewModel = koinInject<ReviewViewModel>(
+                                    parameters = {
+                                        parametersOf(
+                                            mapOf(
+                                                "productId" to route.productId.toString(),
+                                                "categoryIds" to route.categoryIds.joinToString(","),
+                                            ),
+                                        )
+                                    },
+                                )
+                                DisposableEffect(viewModel) {
+                                    onDispose { viewModel.clear() }
+                                }
+                                ReviewListScreen(
+                                    viewModel = viewModel,
+                                    onBackClick = { pop() },
+                                )
+                            }
+
+                            TabRoute.OrderList -> {
+                                val viewModel = koinInject<OrderListViewModel>()
+                                DisposableEffect(viewModel) {
+                                    onDispose { viewModel.clear() }
+                                }
+                                OrderListScreen(
+                                    onOrderClick = {},
+                                    onBack = { pop() },
+                                    viewModel = viewModel,
+                                )
+                            }
+
+                            TabRoute.AddressList -> {
+                                val viewModel = koinInject<AddressViewModel>(
+                                    parameters = { parametersOf(emptyMap<String, String>()) },
+                                )
+                                DisposableEffect(viewModel) {
+                                    onDispose { viewModel.clear() }
+                                }
+                                AddressListScreen(
+                                    onNavigateToEditAddress = { addressId ->
+                                        push(TabRoute.AddressEdit(addressId ?: -1))
+                                    },
+                                    onBackNavigation = { pop() },
+                                    viewModel = viewModel,
+                                )
+                            }
+
+                            is TabRoute.AddressEdit -> {
+                                val viewModel = koinInject<AddressViewModel>(
+                                    parameters = {
+                                        parametersOf(
+                                            mapOf("address_id_or_new" to route.addressIdOrNew.toString()),
+                                        )
+                                    },
+                                )
+                                DisposableEffect(viewModel) {
+                                    onDispose { viewModel.clear() }
+                                }
+                                AddEditAddressScreen(
+                                    onSaved = { pop() },
+                                    onBack = { pop() },
+                                    viewModel = viewModel,
+                                )
+                            }
                         }
-
-                        MainTab.Category -> {
-                            CategoryScreen(
-                                navigateToProductList = { args -> push(TabRoute.ProductList(args)) },
-                                onProductClick = { productId ->
-                                    push(
-                                        TabRoute.ProductDetail(
-                                            productId = productId,
-                                            fromListArgs = null,
-                                        ),
-                                    )
-                                },
-                                onNavigateBack = {},
-                                viewModel = categoryViewModel,
-                            )
-                        }
-
-                        MainTab.Cart -> {
-                            CartScreen(
-                                viewModel = cartViewModel,
-                                onCheckoutClick = {},
-                                onProductClick = { productId ->
-                                    push(
-                                        TabRoute.ProductDetail(
-                                            productId = productId,
-                                            fromListArgs = null,
-                                        ),
-                                    )
-                                },
-                                onNavigateToAccount = { activeTab = MainTab.Account },
-                            )
-                        }
-
-                        MainTab.Account -> {
-                            AccountScreen(
-                                onAddressClick = { push(TabRoute.AddressList) },
-                                onFavoriteClick = { title, ids ->
-                                    push(TabRoute.ProductList(mapOf("title" to title, "ids" to ids)))
-                                },
-                                onOrdersClick = { push(TabRoute.OrderList) },
-                                onOrderClick = { push(TabRoute.OrderList) },
-                                viewModel = accountViewModel,
-                                onBack = {},
-                            )
-                        }
                     }
-                }
-
-                is TabRoute.ProductList -> {
-                    ProductListScreen(
-                        onProductClick = { productId ->
-                            push(
-                                TabRoute.ProductDetail(
-                                    productId = productId,
-                                    fromListArgs = route.args,
-                                ),
-                            )
-                        },
-                        onBack = { pop() },
-                        args = route.args,
-                    )
-                }
-
-                is TabRoute.ProductDetail -> {
-                    val viewModel = koinInject<ProductDetailViewModel>(
-                        parameters = { parametersOf(mapOf("productId" to route.productId.toString())) },
-                    )
-                    DisposableEffect(viewModel) {
-                        onDispose { viewModel.clear() }
-                    }
-                    ProductDetailScreen(
-                        viewModel = viewModel,
-                        onBackClick = { pop() },
-                        navigateToProductList = { args -> push(TabRoute.ProductList(args)) },
-                        onAllReviewClicked = { productId, categoryIds ->
-                            push(
-                                TabRoute.Review(
-                                    productId = productId,
-                                    categoryIds = categoryIds,
-                                    fromListArgs = route.fromListArgs,
-                                ),
-                            )
-                        },
-                    )
-                }
-
-                is TabRoute.Review -> {
-                    val viewModel = koinInject<ReviewViewModel>(
-                        parameters = {
-                            parametersOf(
-                                mapOf(
-                                    "productId" to route.productId.toString(),
-                                    "categoryIds" to route.categoryIds.joinToString(","),
-                                ),
-                            )
-                        },
-                    )
-                    DisposableEffect(viewModel) {
-                        onDispose { viewModel.clear() }
-                    }
-                    ReviewListScreen(
-                        viewModel = viewModel,
-                        onBackClick = { pop() },
-                    )
-                }
-
-                TabRoute.OrderList -> {
-                    val viewModel = koinInject<OrderListViewModel>()
-                    DisposableEffect(viewModel) {
-                        onDispose { viewModel.clear() }
-                    }
-                    OrderListScreen(
-                        onOrderClick = {},
-                        onBack = { pop() },
-                        viewModel = viewModel,
-                    )
-                }
-
-                TabRoute.AddressList -> {
-                    val viewModel = koinInject<AddressViewModel>(
-                        parameters = { parametersOf(emptyMap<String, String>()) },
-                    )
-                    DisposableEffect(viewModel) {
-                        onDispose { viewModel.clear() }
-                    }
-                    AddressListScreen(
-                        onNavigateToEditAddress = { addressId ->
-                            push(TabRoute.AddressEdit(addressId ?: -1))
-                        },
-                        onBackNavigation = { pop() },
-                        viewModel = viewModel,
-                    )
-                }
-
-                is TabRoute.AddressEdit -> {
-                    val viewModel = koinInject<AddressViewModel>(
-                        parameters = {
-                            parametersOf(
-                                mapOf("address_id_or_new" to route.addressIdOrNew.toString()),
-                            )
-                        },
-                    )
-                    DisposableEffect(viewModel) {
-                        onDispose { viewModel.clear() }
-                    }
-                    AddEditAddressScreen(
-                        onSaved = { pop() },
-                        onBack = { pop() },
-                        viewModel = viewModel,
-                    )
                 }
             }
         }
     }
 
-    if (showStoryViewer && homeState.storyItems.isNotEmpty() && topRoute == null && activeTab == MainTab.Home) {
+    if (showStoryViewer && homeState.storyItems.isNotEmpty() && homeStack.lastOrNull() == null && activeTab == MainTab.Home) {
         PlatformStoryViewer(
             stories = homeState.storyItems,
             startIndex = storyStartIndex,
