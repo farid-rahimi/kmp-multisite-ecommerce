@@ -27,7 +27,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.solutionium.sharedui.designsystem.theme.WooBrand
 import com.solutionium.sharedui.designsystem.theme.WooTheme
 import com.solutionium.sharedui.common.component.LanguageSelectionScreen
@@ -121,16 +120,7 @@ class MainActivity : ComponentActivity() {
                             onLanguageSelected = viewModel::onLanguageSelected,
                         )
                     } else {
-                        val navController = rememberNavController()
-                        WooApp(navController = navController)
-
-                        DeepLinkHandler(
-                            navController = navController,
-                            deepLinkData = pendingDeepLink.value,
-                            onDeepLinkConsumed = {
-                                pendingDeepLink.value = null
-                            }
-                        )
+                        WooApp()
                     }
                 }
             }

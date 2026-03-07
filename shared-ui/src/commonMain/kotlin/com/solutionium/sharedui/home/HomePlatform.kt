@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,29 +16,43 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import coil3.compose.AsyncImage
 import com.solutionium.shared.data.model.BannerItem
 import com.solutionium.shared.data.model.ContactInfo
+import com.solutionium.shared.data.model.Link
 import com.solutionium.shared.data.model.StoryItem
 import com.solutionium.sharedui.common.component.BannerSlider
+import kotlinx.coroutines.launch
 
 @Composable
 fun PlatformHeaderLogo(
@@ -179,4 +194,103 @@ fun PlatformContactSupportDialog(
             }
         },
     )
+}
+
+@Composable
+fun PlatformStoryViewer(
+    stories: List<StoryItem>,
+    startIndex: Int,
+    onClose: () -> Unit,
+    onLinkClick: (Link) -> Unit,
+    onStoryViewed: (storyId: Int) -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(
+        initialPage = startIndex.coerceIn(0, (stories.lastIndex).coerceAtLeast(0)),
+        pageCount = { stories.size },
+    )
+
+    LaunchedEffect(pagerState.currentPage, stories) {
+        stories.getOrNull(pagerState.currentPage)?.let { onStoryViewed(it.id) }
+    }
+
+    if (stories.isEmpty()) return
+
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = Color.Black,
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp, end = 8.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                IconButton(onClick = onClose) {
+                    Icon(Icons.Filled.Close, contentDescription = "Close", tint = Color.White)
+                }
+            }
+        },
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+            ) { index ->
+                val story = stories[index]
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(index) {
+                            detectTapGestures(
+                                onTap = { offset ->
+                                    when {
+                                        offset.x < size.width * 0.2f -> {
+                                            if (pagerState.currentPage > 0) {
+                                                scope.launch {
+                                                    pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                                }
+                                            }
+                                        }
+
+                                        offset.x > size.width * 0.8f -> {
+                                            if (pagerState.currentPage < stories.lastIndex) {
+                                                scope.launch {
+                                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                                }
+                                            } else {
+                                                onClose()
+                                            }
+                                        }
+                                    }
+                                },
+                            )
+                        },
+                ) {
+                    AsyncImage(
+                        model = story.mediaUrl,
+                        contentDescription = story.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
+                    story.link?.let { link ->
+                        val ctaLabel = link.title?.takeIf { it.isNotBlank() } ?: "Open"
+                        TextButton(
+                            onClick = { onLinkClick(link) },
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 24.dp),
+                        ) {
+                            Text(text = ctaLabel, color = Color.White)
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

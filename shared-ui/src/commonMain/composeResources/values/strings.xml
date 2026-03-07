@@ -191,5 +191,9 @@
     <string name="address_line_cannot_be_empty">Address line 1 cannot be empty.</string>
     <string name="postal_code_cannot_be_empty">Postal code cannot be empty.</string>
     <string name="enter_a_valid_phone_number">Enter a valid phone number.</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_category">Category</string>
+    <string name="tab_cart">Cart</string>
+    <string name="tab_account">Account</string>
 
 </resources>
