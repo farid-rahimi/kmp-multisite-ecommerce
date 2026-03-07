@@ -64,8 +64,16 @@ data class PaymentDiscount (
 data class HomeBanner (
     val id: Int? = null,
     val title: String? = null,
+    @SerialName("title_ar")
+    val titleAr: String? = null,
+    @SerialName("title_fa")
+    val titleFa: String? = null,
     @SerialName("subtitle")
     val subTitle: String? = null,
+    @SerialName("subtitle_ar")
+    val subTitleAr: String? = null,
+    @SerialName("subtitle_fa")
+    val subTitleFa: String? = null,
     val link: ConfigLink? = null,
     val src: String? = null
 )
@@ -73,6 +81,10 @@ data class HomeBanner (
 @Serializable
 data class ConfigLink (
     val title: String? = null,
+    @SerialName("title_ar")
+    val titleAr: String? = null,
+    @SerialName("title_fa")
+    val titleFa: String? = null,
     val type: String? = null,
     val target: String? = null
 )
@@ -81,7 +93,15 @@ data class ConfigLink (
 data class StoryItemR (
     val id: Int,
     val title: String? = null,
+    @SerialName("title_ar")
+    val titleAr: String? = null,
+    @SerialName("title_fa")
+    val titleFa: String? = null,
     val subtitle: String? = null,
+    @SerialName("subtitle_ar")
+    val subtitleAr: String? = null,
+    @SerialName("subtitle_fa")
+    val subtitleFa: String? = null,
     @SerialName("media_url")
     val mediaUrl: String? = null,
     val link: ConfigLink? = null
@@ -107,7 +127,11 @@ data class ReviewCriteriaResponse (
     @SerialName("cat_id")
     val catID: Int,
 
-    val criteria: List<String>
+    val criteria: List<String>? = null,
+    @SerialName("criteria_ar")
+    val criteriaAr: List<String>? = null,
+    @SerialName("criteria_fa")
+    val criteriaFa: List<String>? = null,
 )
 
 @Serializable
@@ -134,6 +158,10 @@ data class SearchTabResponse(
     val id: Int,
     val enabled: Boolean? = null,
     val title: String? = null,
+    @SerialName("title_ar")
+    val titleAr: String? = null,
+    @SerialName("title_fa")
+    val titleFa: String? = null,
     val type: String? = null,
     val source: String? = null,
     val max: Int? = null,
@@ -147,5 +175,9 @@ data class SearchTabResponse(
 @Serializable
 data class SearchTabMoreResponse(
     val title: String? = null,
+    @SerialName("title_ar")
+    val titleAr: String? = null,
+    @SerialName("title_fa")
+    val titleFa: String? = null,
     val link: ConfigLink? = null,
 )

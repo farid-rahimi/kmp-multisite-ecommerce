@@ -38,6 +38,7 @@ val homeModule = module {
             getVersionsUseCase = get(),
             getContactInfoUseCase = get(),
             appVersionProvider = get(),
+            observeLanguageUseCase = get(),
         )
     }
 }

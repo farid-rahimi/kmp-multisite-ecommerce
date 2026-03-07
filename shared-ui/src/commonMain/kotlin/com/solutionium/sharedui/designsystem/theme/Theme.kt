@@ -5,12 +5,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 enum class WooBrand {
     SiteA,
     SiteB,
 }
+
+val LocalWooBrand = staticCompositionLocalOf { WooBrand.SiteA }
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -123,9 +127,11 @@ fun WooTheme(
         WooBrand.SiteB -> if (darkTheme) siteBDarkScheme else siteBLightScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = wooTypography(),
-        content = content,
-    )
+    CompositionLocalProvider(LocalWooBrand provides brand) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = wooTypography(),
+            content = content,
+        )
+    }
 }

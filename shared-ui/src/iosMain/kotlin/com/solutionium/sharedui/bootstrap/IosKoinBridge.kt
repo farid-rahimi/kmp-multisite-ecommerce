@@ -1,6 +1,7 @@
 package com.solutionium.sharedui.bootstrap
 
 import com.solutionium.shared.data.api.woo.getApiModule
+import com.solutionium.shared.data.local.applyPlatformLanguage
 import com.solutionium.shared.data.local.iosLocalModule
 import com.solutionium.shared.data.network.NetworkConfig
 import com.solutionium.shared.data.network.NetworkConfigProvider
@@ -17,6 +18,7 @@ import com.solutionium.shared.viewmodel.iosAppModule
 import com.solutionium.sharedui.designsystem.theme.WooBrand
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
+import platform.Foundation.NSUserDefaults
 
 object IosRuntimeConfig {
     var brand: WooBrand = WooBrand.SiteA
@@ -30,6 +32,9 @@ class IosKoinBridge {
         consumerSecret: String,
     ) {
         IosRuntimeConfig.brand = if (siteBrand.uppercase() == "SITE_B") WooBrand.SiteB else WooBrand.SiteA
+        val defaultLanguage = if (siteBrand.uppercase() == "SITE_B") "ar" else "fa"
+        val savedLanguage = NSUserDefaults.standardUserDefaults.stringForKey("app_language")
+        applyPlatformLanguage(savedLanguage ?: defaultLanguage)
 
         val networkConfigModule = module {
             single<NetworkConfigProvider> {

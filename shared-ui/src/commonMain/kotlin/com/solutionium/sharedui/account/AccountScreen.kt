@@ -74,6 +74,7 @@ import com.solutionium.sharedui.resources.debit_prefix
 import com.solutionium.sharedui.resources.edit_profile
 import com.solutionium.sharedui.resources.feature_account_title
 import com.solutionium.sharedui.resources.latest_order_title
+import com.solutionium.sharedui.resources.language_menu
 import com.solutionium.sharedui.resources.logout
 import com.solutionium.sharedui.resources.logout_confirmation_message
 import com.solutionium.sharedui.resources.logout_confirmation_title
@@ -168,7 +169,7 @@ fun AccountScreen(
                             onDismissRequest = { menuExpanded = false },
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Language / زبان") },
+                                text = { Text(stringResource(Res.string.language_menu)) },
                                 onClick = {
                                     menuExpanded = false
                                     viewModel.onNavigateToLanguage()

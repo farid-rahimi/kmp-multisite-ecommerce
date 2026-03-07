@@ -45,6 +45,7 @@ class AppPreferencesImpl(
 
     override fun setLanguage(languageCode: String) {
         settings.putString(KEY_LANGUAGE, languageCode)
+        applyPlatformLanguage(languageCode)
     }
 
     override fun getFcmToken(): String? {

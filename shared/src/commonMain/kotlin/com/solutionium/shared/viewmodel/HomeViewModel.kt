@@ -22,6 +22,7 @@ import com.solutionium.shared.domain.user.AddStoryViewUseCase
 import com.solutionium.shared.domain.user.CheckLoginUserUseCase
 import com.solutionium.shared.domain.user.CheckSuperUserUseCase
 import com.solutionium.shared.domain.user.GetAllStoryViewUseCase
+import com.solutionium.shared.domain.user.ObserveLanguageUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -69,6 +70,7 @@ class HomeViewModel(
     private val getVersionsUseCase: GetVersionsUseCase,
     private val getContactInfoUseCase: GetContactInfoUseCase,
     private val appVersionProvider: AppVersionProvider,
+    private val observeLanguageUseCase: ObserveLanguageUseCase,
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -89,6 +91,22 @@ class HomeViewModel(
 
     init {
         fetchData()
+        observeLanguageChanges()
+    }
+
+    private fun observeLanguageChanges() {
+        scope.launch {
+            var isFirstEmission = true
+            observeLanguageUseCase().collect {
+                if (isFirstEmission) {
+                    isFirstEmission = false
+                    return@collect
+                }
+                loadStories()
+                loadBanners()
+                loadContactInfo()
+            }
+        }
     }
 
     private fun fetchData() {

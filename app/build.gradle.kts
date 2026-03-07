@@ -19,6 +19,9 @@ android {
         create("siteA") {
             dimension = "site"
             applicationId = "com.solutionium.woo"
+            androidResources {
+                localeFilters += listOf("en", "fa")
+            }
             buildConfigField("String", "SITE_BRAND", "\"SITE_A\"")
             buildConfigField("String", "API_BASE_URL", "\"https://qeshminora.com/\"")
             buildConfigField("String", "API_SITE_HOST", "\"qeshminora.com\"")
@@ -28,6 +31,9 @@ android {
         create("siteB") {
             dimension = "site"
             applicationId = "ae.leparfum.shop"
+            androidResources {
+                localeFilters += listOf("en", "ar")
+            }
             buildConfigField("String", "SITE_BRAND", "\"SITE_B\"")
 
             buildConfigField("String", "API_BASE_URL", "\"https://leparfum.ae/\"")

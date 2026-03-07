@@ -20,6 +20,7 @@ val categoryModule = module {
             getSearchTabs = get(),
             searchProducts = get(),
             checkSuperUserUserCase = get(),
+            observeLanguageUseCase = get(),
         )
     }
 }

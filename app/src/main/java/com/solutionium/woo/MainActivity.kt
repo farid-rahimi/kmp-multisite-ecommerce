@@ -66,10 +66,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-
         val appPreferences: AppPreferences = getKoin().get()
         val lang = appPreferences.getLanguage()
-        val localeToSet = Locale.forLanguageTag(lang ?: "fa")
+        val localeToSet = Locale.forLanguageTag(lang ?: defaultLanguageForBrand())
         val config = Configuration(newBase.resources.configuration)
         Locale.setDefault(localeToSet)
         config.setLocale(localeToSet)
@@ -103,7 +102,8 @@ class MainActivity : ComponentActivity() {
                 return@setContent
             }
 
-            val layoutDirection = if (uiState.languageCode == "fa") {
+            val currentLanguage = uiState.languageCode ?: defaultLanguageForBrand()
+            val layoutDirection = if (isRtlLanguage(currentLanguage)) {
                 LayoutDirection.Rtl
             } else {
                 LayoutDirection.Ltr
@@ -136,6 +136,14 @@ class MainActivity : ComponentActivity() {
         if (intent?.action == Intent.ACTION_VIEW && intent.data != null) {
             pendingDeepLink.value = DeepLinkData(uri = intent.data!!)
         }
+    }
+
+    private fun isRtlLanguage(languageCode: String): Boolean {
+        return languageCode == "fa" || languageCode == "ar"
+    }
+
+    private fun defaultLanguageForBrand(): String {
+        return if (BuildConfig.SITE_BRAND == "SITE_B") "ar" else "fa"
     }
 }
 

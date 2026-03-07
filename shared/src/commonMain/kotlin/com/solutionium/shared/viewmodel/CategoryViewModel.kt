@@ -21,6 +21,7 @@ import com.solutionium.shared.domain.products.GetAttributeTermsUseCase
 import com.solutionium.shared.domain.products.GetBrandsUseCase
 import com.solutionium.shared.domain.products.SearchProductsUseCase
 import com.solutionium.shared.domain.user.CheckSuperUserUseCase
+import com.solutionium.shared.domain.user.ObserveLanguageUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -91,6 +92,7 @@ class CategoryViewModel(
     private val getSearchTabs: GetSearchTabsUseCase,
     private val searchProducts: SearchProductsUseCase,
     private val checkSuperUserUserCase: CheckSuperUserUseCase,
+    private val observeLanguageUseCase: ObserveLanguageUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -105,6 +107,7 @@ class CategoryViewModel(
 
     init {
         fetchData()
+        observeLanguageChanges()
     }
 
     private fun fetchData() {
@@ -112,6 +115,19 @@ class CategoryViewModel(
         loadImages()
         observeSearchQuery()
         loadDynamicSections()
+    }
+
+    private fun observeLanguageChanges() {
+        scope.launch {
+            var isFirstEmission = true
+            observeLanguageUseCase().collect {
+                if (isFirstEmission) {
+                    isFirstEmission = false
+                    return@collect
+                }
+                loadDynamicSections()
+            }
+        }
     }
 
     fun refresh() {

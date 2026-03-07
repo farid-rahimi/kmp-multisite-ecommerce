@@ -22,52 +22,60 @@ import com.solutionium.shared.data.network.response.SearchTabMoreResponse
 import com.solutionium.shared.data.network.response.SearchTabResponse
 import com.solutionium.shared.data.network.response.StoryItemR
 
-fun AppConfigResponse.toModel() = AppConfig(
-    message = message,
+fun AppConfigResponse.toModel(language: String?): AppConfig {
+    val selectedLanguage = language.orEmpty().ifBlank { "en" }
+    return AppConfig(
+        message = message,
 
-    headerLogoUrl = headerLogo,
+        headerLogoUrl = headerLogo,
 
-    stories = stories?.map { it.toModel() } ?: emptyList(),
+        stories = stories?.map { it.toModel(selectedLanguage) } ?: emptyList(),
 
-    homeBanners = homeBanners?.map { it.toModel() } ?: emptyList(),
+        homeBanners = homeBanners?.map { it.toModel(selectedLanguage) } ?: emptyList(),
 
-    paymentDiscount = paymentDiscount?.associate { it.methodID.orEmpty() to (it.amount ?: 0.0) }
-        ?: emptyMap(),
-    paymentForceEnabled = paymentForceEnabled ?: emptyList(),
-    bacsDetails = bacsDetailsResponse?.toModel(),
-    images = images?.associate { it.termID to (it.src.orEmpty()) } ?: emptyMap(),
-    freeShippingMethodID = freeShippingMethodID,
-    reviewCriteria = reviewCriteria?.map {
-        ReviewCriteria(
-            catID = it.catID,
-            criteria = it.criteria
-        )
-    } ?: emptyList(),
-    appVersion = appVersion?.toModel(),
-    contact = contact?.toModel(),
-    searchTabs = searchTabs?.map { it.toModel() } ?: emptyList(),
-)
+        paymentDiscount = paymentDiscount?.associate { it.methodID.orEmpty() to (it.amount ?: 0.0) }
+            ?: emptyMap(),
+        paymentForceEnabled = paymentForceEnabled ?: emptyList(),
+        bacsDetails = bacsDetailsResponse?.toModel(),
+        images = images?.associate { it.termID to (it.src.orEmpty()) } ?: emptyMap(),
+        freeShippingMethodID = freeShippingMethodID,
+        reviewCriteria = reviewCriteria?.map {
+            ReviewCriteria(
+                catID = it.catID,
+                criteria = localizeList(
+                    language = selectedLanguage,
+                    en = it.criteria,
+                    ar = it.criteriaAr,
+                    fa = it.criteriaFa,
+                ),
+            )
+        } ?: emptyList(),
+        appVersion = appVersion?.toModel(),
+        contact = contact?.toModel(),
+        searchTabs = searchTabs?.map { it.toModel(selectedLanguage) } ?: emptyList(),
+    )
+}
 
-fun HomeBanner.toModel() = BannerItem(
+fun HomeBanner.toModel(language: String) = BannerItem(
     id = id ?: 0,
-    title = title.orEmpty(),
-    subTitle = subTitle,
-    link = link?.toModel(),
-    imageUrl = src.orEmpty()
+    title = localizeText(language, en = title, ar = titleAr, fa = titleFa),
+    subTitle = localizeTextOrNull(language, en = subTitle, ar = subTitleAr, fa = subTitleFa),
+    link = link?.toModel(language),
+    imageUrl = src.orEmpty(),
 )
 
-fun ConfigLink.toModel() = Link(
-    title = title,
+fun ConfigLink.toModel(language: String) = Link(
+    title = localizeTextOrNull(language, en = title, ar = titleAr, fa = titleFa),
     type = LinkType.fromValue(type.orEmpty()) ?: LinkType.EXTERNAL,
-    target = target.orEmpty()
+    target = target.orEmpty(),
 )
 
-fun StoryItemR.toModel() = StoryItem(
+fun StoryItemR.toModel(language: String) = StoryItem(
     id = id,
-    title = title.orEmpty(),
-    subtitle = subtitle,
+    title = localizeText(language, en = title, ar = titleAr, fa = titleFa),
+    subtitle = localizeTextOrNull(language, en = subtitle, ar = subtitleAr, fa = subtitleFa),
     mediaUrl = mediaUrl.orEmpty(),
-    link = link?.toModel()
+    link = link?.toModel(language),
 )
 
 fun BACSDetailsResponse.toModel() = BACSDetails(
@@ -90,18 +98,45 @@ fun ContactResponse.toModel() = ContactInfo(
     email = email.orEmpty()
 )
 
-fun SearchTabResponse.toModel() = SearchTabConfig(
+fun SearchTabResponse.toModel(language: String) = SearchTabConfig(
     id = id,
     enabled = enabled == true,
-    title = title.orEmpty(),
+    title = localizeText(language, en = title, ar = titleAr, fa = titleFa),
     type = type.orEmpty().trim().lowercase(),
     source = source.orEmpty(),
     max = max,
     viewType = SearchTabViewType.fromValue(viewType ?: viewTypeTypo),
-    more = more?.toModel(),
+    more = more?.toModel(language),
 )
 
-fun SearchTabMoreResponse.toModel() = SearchTabMore(
-    title = title,
-    link = link?.toModel(),
+fun SearchTabMoreResponse.toModel(language: String) = SearchTabMore(
+    title = localizeTextOrNull(language, en = title, ar = titleAr, fa = titleFa),
+    link = link?.toModel(language),
 )
+
+private fun localizeText(language: String, en: String?, ar: String?, fa: String?): String {
+    return when (language.lowercase()) {
+        "ar" -> ar?.takeIf { it.isNotBlank() } ?: en.orEmpty()
+        "fa" -> fa?.takeIf { it.isNotBlank() } ?: en.orEmpty()
+        else -> en.orEmpty()
+    }
+}
+
+private fun localizeTextOrNull(language: String, en: String?, ar: String?, fa: String?): String? {
+    val value = localizeText(language, en = en, ar = ar, fa = fa)
+    return value.takeIf { it.isNotBlank() }
+}
+
+private fun localizeList(
+    language: String,
+    en: List<String>?,
+    ar: List<String>?,
+    fa: List<String>?,
+): List<String> {
+    val byLanguage = when (language.lowercase()) {
+        "ar" -> ar
+        "fa" -> fa
+        else -> en
+    }
+    return if (!byLanguage.isNullOrEmpty()) byLanguage else en.orEmpty()
+}

@@ -4,5 +4,5 @@ import com.solutionium.shared.data.config.impl.AppConfigRepositoryImpl
 import org.koin.dsl.module
 
 val appConfigDataModule = module {
-    single<AppConfigRepository> { AppConfigRepositoryImpl(get()) }
+    single<AppConfigRepository> { AppConfigRepositoryImpl(get(), get()) }
 }
