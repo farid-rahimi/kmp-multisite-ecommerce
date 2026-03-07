@@ -32,6 +32,7 @@ import com.solutionium.shared.viewmodel.AccountViewModel
 import com.solutionium.shared.viewmodel.AddressViewModel
 import com.solutionium.shared.viewmodel.CartViewModel
 import com.solutionium.shared.viewmodel.CategoryViewModel
+import com.solutionium.shared.viewmodel.CheckoutViewModel
 import com.solutionium.shared.viewmodel.HomeNavigationEvent
 import com.solutionium.shared.viewmodel.HomeViewModel
 import com.solutionium.shared.viewmodel.OrderListViewModel
@@ -42,6 +43,7 @@ import com.solutionium.sharedui.address.AddEditAddressScreen
 import com.solutionium.sharedui.address.AddressListScreen
 import com.solutionium.sharedui.cart.CartScreen
 import com.solutionium.sharedui.category.CategoryScreen
+import com.solutionium.sharedui.checkout.CheckoutScreen
 import com.solutionium.sharedui.home.HomeScreen
 import com.solutionium.sharedui.home.PlatformStoryViewer
 import com.solutionium.sharedui.orders.OrderListScreen
@@ -79,6 +81,10 @@ private sealed interface TabRoute {
     data object OrderList : TabRoute
     data object AddressList : TabRoute
     data class AddressEdit(val addressIdOrNew: Int) : TabRoute
+    data class Checkout(
+        val paymentReturnStatus: String? = null,
+        val paymentReturnOrderId: Int? = null,
+    ) : TabRoute
 }
 
 @Composable
@@ -254,7 +260,7 @@ fun SharedShopRoot() {
                                     MainTab.Cart -> {
                                         CartScreen(
                                             viewModel = cartViewModel,
-                                            onCheckoutClick = {},
+                                            onCheckoutClick = { push(TabRoute.Checkout()) },
                                             onProductClick = { productId ->
                                                 push(
                                                     TabRoute.ProductDetail(
@@ -382,6 +388,30 @@ fun SharedShopRoot() {
                                 AddEditAddressScreen(
                                     onSaved = { pop() },
                                     onBack = { pop() },
+                                    viewModel = viewModel,
+                                )
+                            }
+
+                            is TabRoute.Checkout -> {
+                                val viewModel = koinInject<CheckoutViewModel>()
+                                DisposableEffect(viewModel) {
+                                    onDispose { viewModel.clear() }
+                                }
+                                CheckoutScreen(
+                                    onBack = {
+                                        viewModel.resetOrderStatus()
+                                        pop()
+                                    },
+                                    onAddEditAddressClick = { addressId ->
+                                        push(TabRoute.AddressEdit(addressId ?: -1))
+                                    },
+                                    onContinueShopping = {
+                                        viewModel.resetOrderStatus()
+                                        cartStack.clear()
+                                        activeTab = MainTab.Home
+                                    },
+                                    paymentReturnStatus = route.paymentReturnStatus,
+                                    paymentReturnOrderId = route.paymentReturnOrderId,
                                     viewModel = viewModel,
                                 )
                             }

@@ -1,4 +1,6 @@
-package com.solutionium.feature.checkout
+package com.solutionium.sharedui.checkout
+
+import com.solutionium.sharedui.resources.*
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -23,11 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.solutionium.sharedui.common.component.FormattedPriceV2
+import com.solutionium.sharedui.common.component.FormattedPriceV3
 
 // In a new file, e.g., OrderSuccessfulScreen.kt
 @Composable
@@ -53,13 +55,13 @@ fun OrderSuccessfulScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = stringResource(R.string.thank_you),
+            text = stringResource(Res.string.thank_you),
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = stringResource(R.string.order_successfull_msg),
+            text = stringResource(Res.string.order_successfull_msg),
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -77,7 +79,7 @@ fun OrderSuccessfulScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(stringResource(R.string.order_number), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(Res.string.order_number), style = MaterialTheme.typography.bodyLarge)
                     Text(
                         "#$orderId",
                         style = MaterialTheme.typography.bodyLarge,
@@ -89,8 +91,8 @@ fun OrderSuccessfulScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(stringResource(R.string.total_paid), style = MaterialTheme.typography.bodyLarge)
-                    FormattedPriceV2(amount = orderTotal.toDoubleOrNull()?.toLong() ?: 0L)
+                    Text(stringResource(Res.string.total_paid), style = MaterialTheme.typography.bodyLarge)
+                    FormattedPriceV3(amount = orderTotal.toDoubleOrNull()?.toLong() ?: 0L)
 //                    Text(
 //                        "€$orderTotal",
 //                        style = MaterialTheme.typography.bodyLarge,
@@ -108,7 +110,7 @@ fun OrderSuccessfulScreen(
                 .fillMaxWidth()
                 .height(50.dp)
         ) {
-            Text(stringResource(R.string.continue_shopping))
+            Text(stringResource(Res.string.continue_shopping))
         }
     }
 }

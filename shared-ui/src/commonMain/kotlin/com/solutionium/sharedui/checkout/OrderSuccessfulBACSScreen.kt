@@ -1,6 +1,7 @@
-package com.solutionium.feature.checkout
+package com.solutionium.sharedui.checkout
 
-import android.content.Intent
+import com.solutionium.sharedui.resources.*
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,17 +34,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalUriHandler
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
-import com.solutionium.sharedui.common.component.FormattedPriceV2
+import com.solutionium.sharedui.common.component.FormattedPriceV3
 import com.solutionium.shared.data.model.BACSDetails
-import java.net.URLEncoder
+import io.ktor.http.encodeURLParameter
 
 // In a new file, e.g., OrderSuccessfulScreen.kt
 @Composable
@@ -60,7 +60,7 @@ fun OrderSuccessfulBACSScreen(
     val accountHolder = bacsDetails?.accountHolder ?: ""
 
     val clipboardManager = LocalClipboardManager.current
-    val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
 
     Column(
         modifier = Modifier
@@ -80,14 +80,14 @@ fun OrderSuccessfulBACSScreen(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = stringResource(R.string.order_on_hold),
+            text = stringResource(Res.string.order_on_hold),
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = stringResource(R.string.bacs_instruction_message),
+            text = stringResource(Res.string.bacs_instruction_message),
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -107,7 +107,7 @@ fun OrderSuccessfulBACSScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.bacs_bank_details_title),
+                    text = stringResource(Res.string.bacs_bank_details_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -143,7 +143,7 @@ fun OrderSuccessfulBACSScreen(
                 }
 
                 Text(
-                    text = stringResource(R.string.bacs_iban_details_title),
+                    text = stringResource(Res.string.bacs_iban_details_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -175,7 +175,7 @@ fun OrderSuccessfulBACSScreen(
                 }
                 // Important Note
                 Text(
-                    text = stringResource(R.string.bacs_reference_note, accountHolder),
+                    text = stringResource(Res.string.bacs_reference_note, accountHolder),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -196,14 +196,11 @@ fun OrderSuccessfulBACSScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // WhatsApp Button
-            val whatsappMessage = stringResource(R.string.whatsapp_message, orderId)
+            val whatsappMessage = stringResource(Res.string.whatsapp_message, orderId)
             Button(
                 onClick = {
-                    val encodedMessage = URLEncoder.encode(whatsappMessage, "UTF-8")
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = "https://api.whatsapp.com/send?phone=$whatsappNumber&text=$encodedMessage".toUri()
-                    }
-                    context.startActivity(intent)
+                    val encodedMessage = whatsappMessage.encodeURLParameter(spaceToPlus = false)
+                    uriHandler.openUri("https://api.whatsapp.com/send?phone=$whatsappNumber&text=$encodedMessage")
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -212,7 +209,7 @@ fun OrderSuccessfulBACSScreen(
             ) {
                 Icon(Icons.Default.Whatsapp, contentDescription = "WhatsApp")
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(stringResource(R.string.contact_via_whatsapp))
+                Text(stringResource(Res.string.contact_via_whatsapp))
             }
             // Continue Shopping Button
             OutlinedButton(
@@ -222,7 +219,7 @@ fun OrderSuccessfulBACSScreen(
                     .height(50.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text(stringResource(R.string.continue_shopping))
+                Text(stringResource(Res.string.continue_shopping))
             }
         }
     }
@@ -240,7 +237,7 @@ private fun OrderSummary(orderId: Int, orderTotal: String) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(stringResource(R.string.order_number), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(Res.string.order_number), style = MaterialTheme.typography.bodyLarge)
                 Text(
                     "$orderId",
                     style = MaterialTheme.typography.bodyLarge,
@@ -252,8 +249,8 @@ private fun OrderSummary(orderId: Int, orderTotal: String) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(stringResource(R.string.order_total), style = MaterialTheme.typography.bodyLarge)
-                FormattedPriceV2(orderTotal.toLong())
+                Text(stringResource(Res.string.order_total), style = MaterialTheme.typography.bodyLarge)
+                FormattedPriceV3(orderTotal.toLong())
             }
         }
     }

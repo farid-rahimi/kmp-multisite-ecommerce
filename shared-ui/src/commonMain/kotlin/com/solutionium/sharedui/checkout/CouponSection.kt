@@ -1,6 +1,7 @@
-package com.solutionium.feature.checkout
+package com.solutionium.sharedui.checkout
 
-import androidx.compose.animation.core.copy
+import com.solutionium.sharedui.resources.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -50,14 +51,14 @@ fun CouponSection(
     var couponCode by remember { mutableStateOf("") }
 
     Column {
-        SectionTitle(stringResource(R.string.discount_section_title))
+        SectionTitle(stringResource(Res.string.discount_section_title))
 
         // Input field for applying a new coupon
         OutlinedTextField(
             value = couponCode,
             onValueChange = { couponCode = it },
             modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.enter_coupon_code)) },
+            label = { Text(stringResource(Res.string.enter_coupon_code)) },
             shape = MaterialTheme.shapes.medium,
             singleLine = true,
             isError = hasError,

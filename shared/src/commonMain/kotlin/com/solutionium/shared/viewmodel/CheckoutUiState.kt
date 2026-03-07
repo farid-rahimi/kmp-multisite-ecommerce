@@ -1,6 +1,5 @@
-package com.solutionium.feature.checkout
+package com.solutionium.shared.viewmodel
 
-import androidx.annotation.StringRes
 import com.solutionium.shared.data.model.Address
 import com.solutionium.shared.data.model.BACSDetails
 import com.solutionium.shared.data.model.CartItem
@@ -11,23 +10,24 @@ import com.solutionium.shared.data.model.UserWallet
 import com.solutionium.shared.domain.checkout.CouponError
 
 sealed class PlaceOrderStatus {
-    data object Idle : PlaceOrderStatus() // Initial state
-    data object InProgress : PlaceOrderStatus() // Loading
+    data object Idle : PlaceOrderStatus()
+    data object InProgress : PlaceOrderStatus()
     data class AwaitingPayment(val paymentUrl: String, val orderId: Int) : PlaceOrderStatus()
-    data class Success(val orderId: Int, val orderTotal: String) : PlaceOrderStatus() // Success
+    data class Success(val orderId: Int, val orderTotal: String) : PlaceOrderStatus()
     data class BACSSuccess(
         val orderId: Int,
         val orderTotal: String,
-        val bacsDetails: BACSDetails?
-    ) : PlaceOrderStatus() // Success
-    data class Failed(val errorMessage: String, val canRetry: Boolean = false) : PlaceOrderStatus() // Failure
+        val bacsDetails: BACSDetails?,
+    ) : PlaceOrderStatus()
+
+    data class Failed(val errorMessage: String, val canRetry: Boolean = false) : PlaceOrderStatus()
 }
 
 data class CheckoutUiState(
     val isUserLoggedIn: Boolean? = null,
-    val cartItems:List<CartItem> = emptyList(),
-    val addressId: String? = null, // For editing/selection
-    var shippingAddress: Address? = null, // Current selected/default address
+    val cartItems: List<CartItem> = emptyList(),
+    val addressId: String? = null,
+    var shippingAddress: Address? = null,
     val isLoadingAddress: Boolean = false,
     val subTotal: Double = 0.0,
     val shippingCost: Double = 0.0,
@@ -53,43 +53,36 @@ data class CheckoutUiState(
     val couponError: CouponError? = null,
     val appliedCoupons: List<Coupon> = emptyList(),
     val paymentMethodDiscounts: Map<String, Double> = emptyMap(),
-
-    val availableAddresses: List<Address> = emptyList(), // <-- Add this
-    val isAddressListExpanded: Boolean = false,         // <-- Add this to control the dropdown
-
+    val availableAddresses: List<Address> = emptyList(),
+    val isAddressListExpanded: Boolean = false,
     val userWallet: UserWallet? = null,
     val loadingWallet: Boolean = false,
     val useWallet: Boolean = false,
-    val paidByWallet: Double = 0.0
-
+    val paidByWallet: Double = 0.0,
 )
 
-/**
- * Represents specific, translatable errors that can occur on the checkout screen.
- * Each error state holds a string resource ID for its message.
- */
-sealed class CheckoutError(@StringRes open val messageResId: Int) {
-
+sealed class CheckoutError(open val messageKey: String) {
     data class EmptyCart(
-        @StringRes override val messageResId: Int = R.string.empty_cart_error
-    ) : CheckoutError(messageResId)
+        override val messageKey: String = "empty_cart_error",
+    ) : CheckoutError(messageKey)
 
     data class AddressNotSelected(
-        @StringRes override val messageResId: Int = R.string.error_address_not_selected
-    ) : CheckoutError(messageResId)
+        override val messageKey: String = "error_address_not_selected",
+    ) : CheckoutError(messageKey)
 
     data class ShippingMethodNotSelected(
-        @StringRes override val messageResId: Int = R.string.error_shipping_method_not_selected
-    ) : CheckoutError(messageResId)
+        override val messageKey: String = "error_shipping_method_not_selected",
+    ) : CheckoutError(messageKey)
 
     data class PaymentMethodNotSelected(
-        @StringRes override val messageResId: Int = R.string.error_payment_method_not_selected
-    ) : CheckoutError(messageResId)
+        override val messageKey: String = "error_payment_method_not_selected",
+    ) : CheckoutError(messageKey)
 
     data class GeneralLoadingError(
-        @StringRes override val messageResId: Int = R.string.error_general_checkout
-    ) : CheckoutError(messageResId)
+        override val messageKey: String = "error_general_checkout",
+    ) : CheckoutError(messageKey)
 }
 
-
-
+object FeeKeys {
+    const val PAYMENT_DISCOUNT = "payment_discount"
+}

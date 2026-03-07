@@ -86,7 +86,6 @@ android {
 dependencies {
 
     implementation(project(":shared-ui"))
-    implementation(project(":feature:checkout"))
     implementation(project(":feature:orders"))
     implementation(project(":shared"))
 

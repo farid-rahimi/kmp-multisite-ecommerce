@@ -1,4 +1,6 @@
-package com.solutionium.feature.checkout
+package com.solutionium.sharedui.checkout
+
+import com.solutionium.sharedui.resources.*
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.RepeatMode
@@ -26,7 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,13 +52,13 @@ fun PlacingOrderScreen() {
             PulsingLoadingIndicator()
             Spacer(modifier = Modifier.height(48.dp))
             Text(
-                text = stringResource(R.string.placing_order_title),
+                text = stringResource(Res.string.placing_order_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = stringResource(R.string.placing_order_content),
+                text = stringResource(Res.string.placing_order_content),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant

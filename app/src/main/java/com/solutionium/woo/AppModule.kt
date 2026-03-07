@@ -4,15 +4,15 @@ package com.solutionium.woo
 import com.solutionium.shared.data.local.localModule
 import com.solutionium.shared.data.network.NetworkConfig
 import com.solutionium.shared.data.network.NetworkConfigProvider
-import com.solutionium.feature.checkout.getCheckoutModules
-import com.solutionium.feature.orders.getOrdersModules
 import com.solutionium.shared.data.local.androidLocalModule
 import com.solutionium.shared.viewmodel.AppVersionProvider
 import com.solutionium.shared.viewmodel.getAccountModules
 import com.solutionium.shared.viewmodel.getAddressModules
 import com.solutionium.shared.viewmodel.getCartModules
 import com.solutionium.shared.viewmodel.getCategoryModules
+import com.solutionium.shared.viewmodel.getCheckoutModules
 import com.solutionium.shared.viewmodel.getHomeModules
+import com.solutionium.shared.viewmodel.getOrderListModules
 import com.solutionium.shared.viewmodel.getProductListModules
 import com.solutionium.shared.viewmodel.getProductDetailModules
 import com.solutionium.shared.viewmodel.getReviewModules
@@ -55,7 +55,7 @@ val allModules = (
     getCategoryModules() +
     getCheckoutModules() +
     getHomeModules() +
-    getOrdersModules() +
+    getOrderListModules() +
     getProductDetailModules() +
     getProductListModules() +
     getReviewModules()

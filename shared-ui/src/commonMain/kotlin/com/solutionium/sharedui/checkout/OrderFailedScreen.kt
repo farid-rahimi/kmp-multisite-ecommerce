@@ -1,4 +1,6 @@
-package com.solutionium.feature.checkout
+package com.solutionium.sharedui.checkout
+
+import com.solutionium.sharedui.resources.*
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -49,14 +51,14 @@ fun OrderFailedScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = stringResource(R.string.something_went_wrong),
+            text = stringResource(Res.string.something_went_wrong),
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.error
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = stringResource(R.string.order_failed_message),
+            text = stringResource(Res.string.order_failed_message),
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -86,7 +88,7 @@ fun OrderFailedScreen(
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text(stringResource(R.string.retry_button))
+                Text(stringResource(Res.string.retry_button))
             }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -96,7 +98,7 @@ fun OrderFailedScreen(
                 .fillMaxWidth()
                 .height(50.dp)
         ) {
-            Text(stringResource(R.string.back_to_cart))
+            Text(stringResource(Res.string.back_to_cart))
         }
     }
 }

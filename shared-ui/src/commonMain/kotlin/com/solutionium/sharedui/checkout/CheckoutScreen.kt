@@ -1,7 +1,7 @@
-package com.solutionium.feature.checkout
+package com.solutionium.sharedui.checkout
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
+import com.solutionium.sharedui.resources.*
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
@@ -49,8 +49,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,27 +62,27 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalUriHandler
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solutionium.sharedui.common.component.CartItemCard
 import com.solutionium.sharedui.common.component.CenteredCircularProgress
-import com.solutionium.sharedui.common.component.FormattedPriceV2
+import com.solutionium.sharedui.common.component.FormattedPriceV3
 import com.solutionium.shared.data.model.Address
 import com.solutionium.shared.data.model.CartItem
 import com.solutionium.shared.data.model.PaymentGateway
 import com.solutionium.shared.data.model.ShippingMethod
 import com.solutionium.shared.domain.checkout.CouponError
 import com.solutionium.shared.domain.checkout.CouponErrorType
+import com.solutionium.shared.viewmodel.CheckoutError
+import com.solutionium.shared.viewmodel.CheckoutUiState
+import com.solutionium.shared.viewmodel.CheckoutViewModel
+import com.solutionium.shared.viewmodel.FeeKeys
+import com.solutionium.shared.viewmodel.PlaceOrderStatus
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.absoluteValue
 
@@ -96,10 +96,8 @@ fun CheckoutScreen(
     paymentReturnOrderId: Int?, // Order ID returned from the payment gateway
     viewModel: CheckoutViewModel
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val state by viewModel.state.collectAsState()
+    val uriHandler = LocalUriHandler.current
 
     LaunchedEffect(paymentReturnStatus) {
         if (paymentReturnStatus != null) {
@@ -113,32 +111,9 @@ fun CheckoutScreen(
     LaunchedEffect(state.placeOrderStatus) {
         val status = state.placeOrderStatus
         if (status is PlaceOrderStatus.AwaitingPayment) {
-            val intent = Intent(Intent.ACTION_VIEW, status.paymentUrl.toUri())
-            try {
-                context.startActivity(intent)
-            } catch (e: ActivityNotFoundException) {
-                // Handle case where no browser is available
-                viewModel.resetOrderStatus() // Or go to a specific error state
-            }
+            uriHandler.openUri(status.paymentUrl)
         }
     }
-
-    // This effect listens for the app coming back to the foreground
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                // App has resumed, check if we were waiting for payment.
-                if (state.placeOrderStatus is PlaceOrderStatus.AwaitingPayment) {
-                    viewModel.verifyOrderStatusAfterPayment()
-                }
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
 
     when (val status = state.placeOrderStatus) {
         is PlaceOrderStatus.Idle -> {
@@ -309,9 +284,9 @@ fun CheckoutFormScreen(
                                 state.placeOrderStatus == PlaceOrderStatus.Idle // Use new state
                     ) {
                         Text(
-                            stringResource(R.string.confirm_order_button),
+                            stringResource(Res.string.confirm_order_button),
 //                            state.selectedPaymentGateway?.title
-//                                ?: stringResource(R.string.confirm_order_button),
+//                                ?: stringResource(Res.string.confirm_order_button),
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
@@ -336,9 +311,10 @@ fun CheckoutFormScreen(
 //                SectionTitle("Review Your Order")
 //            }
 
-            if (state.error != null) {
+            val checkoutError = state.error
+            if (checkoutError != null) {
                 item {
-                    ErrorDisplay(errorMessage = stringResource( state.error.messageResId) )
+                    ErrorDisplay(errorMessage = checkoutErrorToText(checkoutError))
                 }
             }
 
@@ -361,8 +337,10 @@ fun CheckoutFormScreen(
                     onRemoveCoupon = viewModel::removeCoupon,
                     hasError = state.couponError != null,
                     errorText = {
-                        if (state.couponError != null)
-                            MapCouponErrorToText(state.couponError)
+                        val couponError = state.couponError
+                        if (couponError != null) {
+                            MapCouponErrorToText(couponError)
+                        }
                     }
                 )
             }
@@ -472,7 +450,7 @@ fun WalletPaymentSection(
     orderTotal: Double
 ) {
     Column {
-        SectionTitle(stringResource(R.string.wallet_title))
+        SectionTitle(stringResource(Res.string.wallet_title))
         Spacer(modifier = Modifier.height(8.dp))
         Row(
             modifier = Modifier
@@ -485,10 +463,10 @@ fun WalletPaymentSection(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.use_wallet_balance),
+                    text = stringResource(Res.string.use_wallet_balance),
                     style = MaterialTheme.typography.bodyLarge
                 )
-                FormattedPriceV2(
+                FormattedPriceV3(
                     amount = walletBalance.toLong(),
                     mainStyle = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -506,13 +484,13 @@ fun WalletPaymentSection(
             Row {
                 Text(
                     text = stringResource(
-                        R.string.wallet_deduction_message
+                        Res.string.wallet_deduction_message
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 4.dp, top = 4.dp)
                 )
-                FormattedPriceV2(amountToUse.toLong())
+                FormattedPriceV3(amountToUse.toLong())
             }
 
         }
@@ -532,9 +510,9 @@ fun PaymentMethodSection(
 ) {
 
     val title = if (showAsRemainingPayment) {
-        stringResource(R.string.pay_remaining_amount_title)
+        stringResource(Res.string.pay_remaining_amount_title)
     } else {
-        stringResource(R.string.payment_methods_section_title)
+        stringResource(Res.string.payment_methods_section_title)
     }
 
     SectionTitle(title)
@@ -543,7 +521,7 @@ fun PaymentMethodSection(
         CenteredCircularProgress()
     } else if (gateways.isEmpty()) {
         Text(
-            stringResource(R.string.no_payment_methods_available),
+            stringResource(Res.string.no_payment_methods_available),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -558,7 +536,7 @@ fun PaymentMethodSection(
                     if (discount > 0) {
 
                         Row {
-                            FormattedPriceV2(
+                            FormattedPriceV3(
                                 discount.toLong(),
                                 currency = "",
                                 mainStyle = MaterialTheme.typography.bodyMedium.copy(
@@ -567,10 +545,10 @@ fun PaymentMethodSection(
                                     )
                                 )
                             )
-                            Text(stringResource(R.string.discount), color = Color(0xFF0A7F52))
+                            Text(stringResource(Res.string.discount), color = Color(0xFF0A7F52))
                         }
 //                        Text(
-//                            stringResource(R.string.discount, "%${discount.toInt()}"),
+//                            stringResource(Res.string.discount, "%${discount.toInt()}"),
 //                            color = Color(0xFF0A7F52),
 //                        ) // Green color for free shipping
                     } else {
@@ -591,13 +569,13 @@ fun ShippingMethodSection(
     subTotal: Double,
     isLoading: Boolean
 ) {
-    SectionTitle(stringResource(R.string.shipping_methods_section_title))
+    SectionTitle(stringResource(Res.string.shipping_methods_section_title))
     Spacer(modifier = Modifier.height(8.dp))
     if (isLoading) {
         CenteredCircularProgress()
     } else if (methods.isEmpty()) {
         Text(
-            stringResource(R.string.no_shipping_methods_available),
+            stringResource(Res.string.no_shipping_methods_available),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -607,19 +585,19 @@ fun ShippingMethodSection(
             SelectableOptionRow(
                 text = method.title,
                 // You might want to display method.cost here too
-                // e.g., "${method.title} (${FormattedPriceV2(method.cost, "USD")})"
+                // e.g., "${method.title} (${FormattedPriceV3(method.cost, "USD")})"
                 secondaryText = {
                     if (shippingCost > 0)
-                        FormattedPriceV2(
+                        FormattedPriceV3(
                             amount = shippingCost, // Assuming cost is in dollars, convert to cents
                             currency = "ت" // Replace with your actual currency
                         )
 //                    else
 //                        Text(
-//                            stringResource(R.string.free_shipping),
+//                            stringResource(Res.string.free_shipping),
 //                            color = Color(0xFF0A7F52),
 //                        ) // Green color for free shipping
-                }, // FormattedPriceV2 should ideally return AnnotatedString
+                }, // FormattedPriceV3 should ideally return AnnotatedString
                 isSelected = method == selectedMethod,
                 onClick = { onMethodSelected(method) }
             )
@@ -639,7 +617,7 @@ fun ReviewOrderSection(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        SectionTitle(stringResource(R.string.review_order_section_title))
+        SectionTitle(stringResource(Res.string.review_order_section_title))
 
         val itemsToShow = if (showAllItems) cartItems else cartItems.take(3)
         itemsToShow.forEach { cartItem ->
@@ -651,7 +629,7 @@ fun ReviewOrderSection(
             TextButton(onClick = onToggleShowAll, modifier = Modifier.align(CenterHorizontally)) {
                 Text(
                     stringResource(
-                        R.string.more_item,
+                        Res.string.more_item,
                         remainingItemCount
                     )
                 )
@@ -660,9 +638,9 @@ fun ReviewOrderSection(
             TextButton(onClick = onToggleShowAll, modifier = Modifier.align(CenterHorizontally)) {
                 Icon(
                     Icons.Default.KeyboardArrowUp,
-                    contentDescription = stringResource(R.string.show_less)
+                    contentDescription = stringResource(Res.string.show_less)
                 )
-                Text(stringResource(R.string.show_less))
+                Text(stringResource(Res.string.show_less))
             }
         }
     }
@@ -769,7 +747,7 @@ fun OrderSummaryCard(
 
                 // The "Total" label is now part of the header
                 Text(
-                    text = stringResource(R.string.total),
+                    text = stringResource(Res.string.total),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
@@ -786,7 +764,7 @@ fun OrderSummaryCard(
                 )
 
                 // The total amount is also always visible
-                FormattedPriceV2(
+                FormattedPriceV3(
                     amount = state.total.toLong(),
                     mainStyle = TextStyle(
                         fontSize = 20.sp,
@@ -815,7 +793,7 @@ fun OrderSummaryCard(
 
                     // The "Total" label is now part of the header
                     Text(
-                        text = stringResource(R.string.due_today),
+                        text = stringResource(Res.string.due_today),
                         style = MaterialTheme.typography.titleSmall,
                     )
 
@@ -824,7 +802,7 @@ fun OrderSummaryCard(
                     )
 
                     // The total amount is also always visible
-                    FormattedPriceV2(
+                    FormattedPriceV3(
                         amount = state.total.toLong() / 4,
                         mainStyle = TextStyle(
                             fontSize = 15.sp,
@@ -851,14 +829,14 @@ fun OrderSummaryCard(
                 ) {
 
                     SummaryRow(
-                        stringResource(R.string.subtotal),
-                        valueComposable = { FormattedPriceV2(state.subTotal.toLong()) }) // Pass Long or adapt
+                        stringResource(Res.string.subtotal),
+                        valueComposable = { FormattedPriceV3(state.subTotal.toLong()) }) // Pass Long or adapt
                     SummaryRow(
-                        label = stringResource(R.string.shipping),
+                        label = stringResource(Res.string.shipping),
                         valueComposable = {
-                            if (state.shippingCost > 0) FormattedPriceV2(state.shippingCost.toLong())
+                            if (state.shippingCost > 0) FormattedPriceV3(state.shippingCost.toLong())
                             else Text(
-                                stringResource(R.string.free),
+                                stringResource(Res.string.free),
                                 color = Color(0xFF0A7F52)
                             ) // Green color for free shipping
                         }
@@ -866,9 +844,9 @@ fun OrderSummaryCard(
                     if (state.fees.isNotEmpty()) {
                         state.fees.forEach { (feeName, feeAmount) ->
                             SummaryRow(
-                                label = if (feeName == FeeKeys.PAYMENT_DISCOUNT ) stringResource(R.string.payment_discount) else feeName,
+                                label = if (feeName == FeeKeys.PAYMENT_DISCOUNT ) stringResource(Res.string.payment_discount) else feeName,
                                 valueComposable = {
-                                    FormattedPriceV2(
+                                    FormattedPriceV3(
                                         //amount = feeAmount.toLong().times(-1L), // Assuming feeAmount is in smallest unit
                                         amount = feeAmount.toLong().absoluteValue,
                                         mainStyle = TextStyle(
@@ -883,8 +861,8 @@ fun OrderSummaryCard(
                     }
 
                     if (state.useWallet) {
-                        SummaryRow(stringResource(R.string.paid_by_wallet), valueComposable = {
-                            FormattedPriceV2(
+                        SummaryRow(stringResource(Res.string.paid_by_wallet), valueComposable = {
+                            FormattedPriceV3(
                                 state.paidByWallet.toLong(),
                                 mainStyle = TextStyle(
                                     fontSize = 16.sp,
@@ -896,8 +874,8 @@ fun OrderSummaryCard(
                     }
 
                     if (state.totalDiscount > 0) {
-                        SummaryRow(stringResource(R.string.discounts), valueComposable = {
-                            FormattedPriceV2(
+                        SummaryRow(stringResource(Res.string.discounts), valueComposable = {
+                            FormattedPriceV3(
                                 state.totalDiscount.toLong(),
                                 mainStyle = TextStyle(
                                     fontSize = 16.sp,
@@ -916,9 +894,9 @@ fun OrderSummaryCard(
 
             }
 //            SummaryRow(
-//                label = stringResource(R.string.total),
+//                label = stringResource(Res.string.total),
 //                valueComposable = {
-//                    FormattedPriceV2(
+//                    FormattedPriceV3(
 //                        amount = state.total.toLong(), // Assuming state.total is Long in smallest unit
 //                        mainStyle = TextStyle(
 //                            fontSize = 20.sp,
@@ -942,12 +920,12 @@ fun SummaryRow(
     labelStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     valueStyle: TextStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
 ) {
-    // Overload or generic way to display value, assuming FormattedPriceV2 returns AnnotatedString
-    // This simple version assumes 'value' is an AnnotatedString from FormattedPriceV2 or similar
+    // Overload or generic way to display value, assuming FormattedPriceV3 returns AnnotatedString
+    // This simple version assumes 'value' is an AnnotatedString from FormattedPriceV3 or similar
     Row {
         Text(label, style = labelStyle, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.weight(1f))
-        if (value is AnnotatedString) { // Adapt if FormattedPriceV2 returns something else
+        if (value is AnnotatedString) { // Adapt if FormattedPriceV3 returns something else
             Text(value, style = valueStyle, color = MaterialTheme.colorScheme.onSurface)
         } else {
             Text(value.toString(), style = valueStyle, color = MaterialTheme.colorScheme.onSurface)
@@ -1050,15 +1028,15 @@ fun AddressSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             SectionTitle(
-                stringResource(R.string.shipping_address_section_title),
+                stringResource(Res.string.shipping_address_section_title),
                 modifier = Modifier.weight(1f)
             )
             if (selectedAddress != null && availableAddresses.size > 1) {
                 TextButton(onClick = onToggleAddressList) {
-                    Text(selectedAddress.title ?: stringResource(R.string.change))
+                    Text(selectedAddress.title ?: stringResource(Res.string.change))
                     Icon(
                         imageVector = if (isAddressListExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = stringResource(R.string.change)
+                        contentDescription = stringResource(Res.string.change)
                     )
                 }
             }
@@ -1119,14 +1097,14 @@ fun AddressSection(
                             Text(
                                 modifier = Modifier.weight(1f),
                                 text = stringResource(
-                                    R.string.postal_code,
+                                    Res.string.postal_code,
                                     selectedAddress.postcode
                                 ),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                             Text(
                                 modifier = Modifier.weight(1f),
-                                text = stringResource(R.string.phone, selectedAddress.phone ?: ""),
+                                text = stringResource(Res.string.phone, selectedAddress.phone ?: ""),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }
@@ -1162,7 +1140,7 @@ fun AddressSection(
         ) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.add_new_address))
+            Text(stringResource(Res.string.add_new_address))
         }
     }
 }
@@ -1211,35 +1189,43 @@ fun AddressDisplayCard(
 }
 
 @Composable
+private fun checkoutErrorToText(error: CheckoutError): String {
+    return when (error) {
+        is CheckoutError.EmptyCart -> stringResource(Res.string.empty_cart_error)
+        is CheckoutError.AddressNotSelected -> stringResource(Res.string.error_address_not_selected)
+        is CheckoutError.ShippingMethodNotSelected -> stringResource(Res.string.error_shipping_method_not_selected)
+        is CheckoutError.PaymentMethodNotSelected -> stringResource(Res.string.error_payment_method_not_selected)
+        is CheckoutError.GeneralLoadingError -> stringResource(Res.string.error_general_checkout)
+    }
+}
+
+@Composable
 fun MapCouponErrorToText(error: CouponError) {
 
     when (error.errorType) {
-        CouponErrorType.Expired -> Text(stringResource(R.string.coupon_error_expired))
-        CouponErrorType.AlreadyApplied -> Text(stringResource(R.string.coupon_error_already_applied))
-        CouponErrorType.NotExist -> Text(stringResource(R.string.coupon_error_not_exist))
+        CouponErrorType.Expired -> Text(stringResource(Res.string.coupon_error_expired))
+        CouponErrorType.AlreadyApplied -> Text(stringResource(Res.string.coupon_error_already_applied))
+        CouponErrorType.NotExist -> Text(stringResource(Res.string.coupon_error_not_exist))
         CouponErrorType.MinSpend -> Text(
             stringResource(
-                R.string.coupon_error_min_spend,
+                Res.string.coupon_error_min_spend,
                 error.arg ?: ""
             )
         )
 
         CouponErrorType.MaxSpend -> Text(
             stringResource(
-                R.string.coupon_error_max_spend,
+                Res.string.coupon_error_max_spend,
                 error.arg ?: ""
             )
         )
 
-        CouponErrorType.IndividualUse -> Text(stringResource(R.string.coupon_error_individual_use))
-        CouponErrorType.IndividualAlready -> Text(stringResource(R.string.coupon_error_individual_use_already_applied))
-        CouponErrorType.UsageLimit -> Text(stringResource(R.string.coupon_error_usage_limit))
-        CouponErrorType.Include -> Text(stringResource(R.string.coupon_error_includes))
-        CouponErrorType.Exclude -> Text(stringResource(R.string.coupon_error_excludes))
-        CouponErrorType.OnSalesLimit -> Text(stringResource(R.string.coupon_error_on_sale_items))
+        CouponErrorType.IndividualUse -> Text(stringResource(Res.string.coupon_error_individual_use))
+        CouponErrorType.IndividualAlready -> Text(stringResource(Res.string.coupon_error_individual_use_already_applied))
+        CouponErrorType.UsageLimit -> Text(stringResource(Res.string.coupon_error_usage_limit))
+        CouponErrorType.Include -> Text(stringResource(Res.string.coupon_error_includes))
+        CouponErrorType.Exclude -> Text(stringResource(Res.string.coupon_error_excludes))
+        CouponErrorType.OnSalesLimit -> Text(stringResource(Res.string.coupon_error_on_sale_items))
     }
 
 }
-
-
-

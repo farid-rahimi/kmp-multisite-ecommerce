@@ -1,4 +1,6 @@
-package com.solutionium.feature.checkout
+package com.solutionium.sharedui.checkout
+
+import com.solutionium.sharedui.resources.*
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,19 +41,19 @@ fun AwaitingPaymentScreen(onVerifyPaymentClicked: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.OpenInBrowser, // Or a clock icon
-                contentDescription = stringResource(R.string.awaiting_payment),
+                contentDescription = stringResource(Res.string.awaiting_payment),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(100.dp)
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = stringResource(R.string.finalize_your_payment),
+                text = stringResource(Res.string.finalize_your_payment),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = stringResource(R.string.awaiting_payment_description),
+                text = stringResource(Res.string.awaiting_payment_description),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -60,7 +62,7 @@ fun AwaitingPaymentScreen(onVerifyPaymentClicked: () -> Unit) {
             CircularProgressIndicator() // Show that we are waiting
             Spacer(modifier = Modifier.height(32.dp))
             OutlinedButton(onClick = onVerifyPaymentClicked) {
-                Text(stringResource(R.string.check_payment_button))
+                Text(stringResource(Res.string.check_payment_button))
             }
         }
     }
