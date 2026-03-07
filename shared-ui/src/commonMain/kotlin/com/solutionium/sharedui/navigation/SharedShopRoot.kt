@@ -65,25 +65,27 @@ private enum class MainTab(
     Account(Res.string.tab_account),
 }
 
-private sealed interface OverlayRoute {
-    data class ProductList(val args: Map<String, String>) : OverlayRoute
-    data class ProductDetail(val productId: Int, val fromListArgs: Map<String, String>?) : OverlayRoute
+private sealed interface TabRoute {
+    data class ProductList(val args: Map<String, String>) : TabRoute
+    data class ProductDetail(val productId: Int, val fromListArgs: Map<String, String>?) : TabRoute
     data class Review(
         val productId: Int,
         val categoryIds: List<Int>,
         val fromListArgs: Map<String, String>?,
-    ) : OverlayRoute
+    ) : TabRoute
 
-    data object OrderList : OverlayRoute
-    data object AddressList : OverlayRoute
-    data class AddressEdit(val addressIdOrNew: Int) : OverlayRoute
+    data object OrderList : TabRoute
+    data object AddressList : TabRoute
+    data class AddressEdit(val addressIdOrNew: Int) : TabRoute
 }
 
 @Composable
 fun SharedShopRoot() {
     var activeTab by remember { mutableStateOf(MainTab.Home) }
-    val overlays = remember { mutableStateListOf<OverlayRoute>() }
-    val topOverlay = overlays.lastOrNull()
+    val homeStack = remember { mutableStateListOf<TabRoute>() }
+    val categoryStack = remember { mutableStateListOf<TabRoute>() }
+    val cartStack = remember { mutableStateListOf<TabRoute>() }
+    val accountStack = remember { mutableStateListOf<TabRoute>() }
     var showStoryViewer by remember { mutableStateOf(false) }
     var storyStartIndex by remember { mutableStateOf(0) }
     val uriHandler = LocalUriHandler.current
@@ -91,6 +93,8 @@ fun SharedShopRoot() {
     val homeViewModel = koinInject<HomeViewModel>()
     val homeState by homeViewModel.state.collectAsState()
     val categoryViewModel = koinInject<CategoryViewModel>()
+    val cartViewModel = koinInject<CartViewModel>()
+    val accountViewModel = koinInject<AccountViewModel>()
 
     DisposableEffect(homeViewModel) {
         onDispose { homeViewModel.clear() }
@@ -98,21 +102,45 @@ fun SharedShopRoot() {
     DisposableEffect(categoryViewModel) {
         onDispose { categoryViewModel.clear() }
     }
+    DisposableEffect(cartViewModel) {
+        onDispose { cartViewModel.clear() }
+    }
+    DisposableEffect(accountViewModel) {
+        onDispose { accountViewModel.clear() }
+    }
 
-    fun push(route: OverlayRoute) {
-        overlays.add(route)
+    fun currentStack() = when (activeTab) {
+        MainTab.Home -> homeStack
+        MainTab.Category -> categoryStack
+        MainTab.Cart -> cartStack
+        MainTab.Account -> accountStack
+    }
+
+    fun push(route: TabRoute) {
+        currentStack().add(route)
     }
 
     fun pop() {
-        if (overlays.isNotEmpty()) overlays.removeAt(overlays.lastIndex)
+        val stack = currentStack()
+        if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex)
     }
+
+    val topRoute = currentStack().lastOrNull()
+    val isFirstLoading = activeTab == MainTab.Home &&
+        topRoute == null &&
+        homeState.storiesLoading &&
+        homeState.newArrivalsLoading &&
+        homeState.appOffersLoading &&
+        homeState.featuredLoading &&
+        homeState.onSalesLoading
+    val shouldShowBottomBar = !isFirstLoading
 
     LaunchedEffect(homeViewModel, uriHandler) {
         homeViewModel.navigationEvent.collect { event ->
             when (event) {
                 is HomeNavigationEvent.ToProduct -> {
                     push(
-                        OverlayRoute.ProductDetail(
+                        TabRoute.ProductDetail(
                             productId = event.productId,
                             fromListArgs = null,
                         ),
@@ -120,7 +148,7 @@ fun SharedShopRoot() {
                 }
 
                 is HomeNavigationEvent.ToProductList -> {
-                    push(OverlayRoute.ProductList(event.params))
+                    push(TabRoute.ProductList(event.params))
                 }
 
                 is HomeNavigationEvent.ToExternalLink -> {
@@ -132,7 +160,7 @@ fun SharedShopRoot() {
 
     Scaffold(
         bottomBar = {
-            if (topOverlay == null) {
+            if (shouldShowBottomBar) {
                 NavigationBar {
                     NavigationBarItem(
                         selected = activeTab == MainTab.Home,
@@ -168,20 +196,20 @@ fun SharedShopRoot() {
                 .padding(paddingValues),
             color = MaterialTheme.colorScheme.background,
         ) {
-            when (val route = topOverlay) {
+            when (val route = topRoute) {
                 null -> {
                     when (activeTab) {
                         MainTab.Home -> {
                             HomeScreen(
                                 onProductClick = { productId ->
                                     push(
-                                        OverlayRoute.ProductDetail(
+                                        TabRoute.ProductDetail(
                                             productId = productId,
                                             fromListArgs = null,
                                         ),
                                     )
                                 },
-                                navigateToProductList = { args -> push(OverlayRoute.ProductList(args)) },
+                                navigateToProductList = { args -> push(TabRoute.ProductList(args)) },
                                 onStoryClick = { clickedStory ->
                                     val index = homeState.storyItems.indexOf(clickedStory)
                                     storyStartIndex = if (index >= 0) index else 0
@@ -193,10 +221,10 @@ fun SharedShopRoot() {
 
                         MainTab.Category -> {
                             CategoryScreen(
-                                navigateToProductList = { args -> push(OverlayRoute.ProductList(args)) },
+                                navigateToProductList = { args -> push(TabRoute.ProductList(args)) },
                                 onProductClick = { productId ->
                                     push(
-                                        OverlayRoute.ProductDetail(
+                                        TabRoute.ProductDetail(
                                             productId = productId,
                                             fromListArgs = null,
                                         ),
@@ -208,13 +236,12 @@ fun SharedShopRoot() {
                         }
 
                         MainTab.Cart -> {
-                            val viewModel = koinInject<CartViewModel>()
                             CartScreen(
-                                viewModel = viewModel,
+                                viewModel = cartViewModel,
                                 onCheckoutClick = {},
                                 onProductClick = { productId ->
                                     push(
-                                        OverlayRoute.ProductDetail(
+                                        TabRoute.ProductDetail(
                                             productId = productId,
                                             fromListArgs = null,
                                         ),
@@ -225,29 +252,25 @@ fun SharedShopRoot() {
                         }
 
                         MainTab.Account -> {
-                            val viewModel = koinInject<AccountViewModel>()
-                            DisposableEffect(viewModel) {
-                                onDispose { viewModel.clear() }
-                            }
                             AccountScreen(
-                                onAddressClick = { push(OverlayRoute.AddressList) },
+                                onAddressClick = { push(TabRoute.AddressList) },
                                 onFavoriteClick = { title, ids ->
-                                    push(OverlayRoute.ProductList(mapOf("title" to title, "ids" to ids)))
+                                    push(TabRoute.ProductList(mapOf("title" to title, "ids" to ids)))
                                 },
-                                onOrdersClick = { push(OverlayRoute.OrderList) },
-                                onOrderClick = { push(OverlayRoute.OrderList) },
-                                viewModel = viewModel,
+                                onOrdersClick = { push(TabRoute.OrderList) },
+                                onOrderClick = { push(TabRoute.OrderList) },
+                                viewModel = accountViewModel,
                                 onBack = {},
                             )
                         }
                     }
                 }
 
-                is OverlayRoute.ProductList -> {
+                is TabRoute.ProductList -> {
                     ProductListScreen(
                         onProductClick = { productId ->
                             push(
-                                OverlayRoute.ProductDetail(
+                                TabRoute.ProductDetail(
                                     productId = productId,
                                     fromListArgs = route.args,
                                 ),
@@ -258,7 +281,7 @@ fun SharedShopRoot() {
                     )
                 }
 
-                is OverlayRoute.ProductDetail -> {
+                is TabRoute.ProductDetail -> {
                     val viewModel = koinInject<ProductDetailViewModel>(
                         parameters = { parametersOf(mapOf("productId" to route.productId.toString())) },
                     )
@@ -268,10 +291,10 @@ fun SharedShopRoot() {
                     ProductDetailScreen(
                         viewModel = viewModel,
                         onBackClick = { pop() },
-                        navigateToProductList = { args -> push(OverlayRoute.ProductList(args)) },
+                        navigateToProductList = { args -> push(TabRoute.ProductList(args)) },
                         onAllReviewClicked = { productId, categoryIds ->
                             push(
-                                OverlayRoute.Review(
+                                TabRoute.Review(
                                     productId = productId,
                                     categoryIds = categoryIds,
                                     fromListArgs = route.fromListArgs,
@@ -281,7 +304,7 @@ fun SharedShopRoot() {
                     )
                 }
 
-                is OverlayRoute.Review -> {
+                is TabRoute.Review -> {
                     val viewModel = koinInject<ReviewViewModel>(
                         parameters = {
                             parametersOf(
@@ -301,7 +324,7 @@ fun SharedShopRoot() {
                     )
                 }
 
-                OverlayRoute.OrderList -> {
+                TabRoute.OrderList -> {
                     val viewModel = koinInject<OrderListViewModel>()
                     DisposableEffect(viewModel) {
                         onDispose { viewModel.clear() }
@@ -313,7 +336,7 @@ fun SharedShopRoot() {
                     )
                 }
 
-                OverlayRoute.AddressList -> {
+                TabRoute.AddressList -> {
                     val viewModel = koinInject<AddressViewModel>(
                         parameters = { parametersOf(emptyMap<String, String>()) },
                     )
@@ -322,14 +345,14 @@ fun SharedShopRoot() {
                     }
                     AddressListScreen(
                         onNavigateToEditAddress = { addressId ->
-                            push(OverlayRoute.AddressEdit(addressId ?: -1))
+                            push(TabRoute.AddressEdit(addressId ?: -1))
                         },
                         onBackNavigation = { pop() },
                         viewModel = viewModel,
                     )
                 }
 
-                is OverlayRoute.AddressEdit -> {
+                is TabRoute.AddressEdit -> {
                     val viewModel = koinInject<AddressViewModel>(
                         parameters = {
                             parametersOf(
@@ -350,7 +373,7 @@ fun SharedShopRoot() {
         }
     }
 
-    if (showStoryViewer && homeState.storyItems.isNotEmpty() && topOverlay == null && activeTab == MainTab.Home) {
+    if (showStoryViewer && homeState.storyItems.isNotEmpty() && topRoute == null && activeTab == MainTab.Home) {
         PlatformStoryViewer(
             stories = homeState.storyItems,
             startIndex = storyStartIndex,
