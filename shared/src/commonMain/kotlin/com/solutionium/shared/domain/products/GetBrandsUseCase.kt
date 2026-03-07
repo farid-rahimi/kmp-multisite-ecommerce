@@ -8,4 +8,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface GetBrandsUseCase {
     suspend operator fun invoke(type: BrandListType): Flow<Result<List<Brand>, GeneralError>>
+    suspend operator fun invoke(queries: Map<String, String>): Flow<Result<List<Brand>, GeneralError>>
 }

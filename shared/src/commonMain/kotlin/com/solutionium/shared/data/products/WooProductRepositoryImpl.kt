@@ -113,8 +113,19 @@ internal class WooProductRepositoryImpl(
     override suspend fun getBrandList(type: BrandListType): Result<List<Brand>, GeneralError> =
         wooProductsRemoteSource.getBrandList(type.queries)
 
+    override suspend fun getBrandList(
+        queries: Map<String, String>,
+    ): Result<List<Brand>, GeneralError> =
+        wooProductsRemoteSource.getBrandList(queries)
+
     override suspend fun getAttributeTerms(listType: AttributeTermsListType): Result<List<AttributeTerm>, GeneralError> =
         wooProductsRemoteSource.getAttributeTerms(attributeId = listType.attributeId, queries = listType.queries)
+
+    override suspend fun getAttributeTerms(
+        attributeId: Int,
+        queries: Map<String, String>,
+    ): Result<List<AttributeTerm>, GeneralError> =
+        wooProductsRemoteSource.getAttributeTerms(attributeId = attributeId, queries = queries)
 
 //    override suspend fun getProductDetailsForValidation(productIds: List<Int>): Result<List<ProductDetail>, GeneralError> =
 //        wooProductsRemoteSource.getProductDetailsListById(productIds)

@@ -17,6 +17,7 @@ val categoryModule = module {
             getBrands = get(),
             getAttributeTerms = get(),
             getAppImages = get(),
+            getSearchTabs = get(),
             searchProducts = get(),
             checkSuperUserUserCase = get(),
         )

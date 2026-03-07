@@ -8,6 +8,9 @@ import com.solutionium.shared.data.model.ContactInfo
 import com.solutionium.shared.data.model.Link
 import com.solutionium.shared.data.model.LinkType
 import com.solutionium.shared.data.model.ReviewCriteria
+import com.solutionium.shared.data.model.SearchTabConfig
+import com.solutionium.shared.data.model.SearchTabMore
+import com.solutionium.shared.data.model.SearchTabViewType
 import com.solutionium.shared.data.model.StoryItem
 import com.solutionium.shared.data.network.response.AppConfigResponse
 import com.solutionium.shared.data.network.response.AppVersionResponse
@@ -15,6 +18,8 @@ import com.solutionium.shared.data.network.response.BACSDetailsResponse
 import com.solutionium.shared.data.network.response.ConfigLink
 import com.solutionium.shared.data.network.response.ContactResponse
 import com.solutionium.shared.data.network.response.HomeBanner
+import com.solutionium.shared.data.network.response.SearchTabMoreResponse
+import com.solutionium.shared.data.network.response.SearchTabResponse
 import com.solutionium.shared.data.network.response.StoryItemR
 
 fun AppConfigResponse.toModel() = AppConfig(
@@ -39,7 +44,8 @@ fun AppConfigResponse.toModel() = AppConfig(
         )
     } ?: emptyList(),
     appVersion = appVersion?.toModel(),
-    contact = contact?.toModel()
+    contact = contact?.toModel(),
+    searchTabs = searchTabs?.map { it.toModel() } ?: emptyList(),
 )
 
 fun HomeBanner.toModel() = BannerItem(
@@ -84,3 +90,18 @@ fun ContactResponse.toModel() = ContactInfo(
     email = email.orEmpty()
 )
 
+fun SearchTabResponse.toModel() = SearchTabConfig(
+    id = id,
+    enabled = enabled == true,
+    title = title.orEmpty(),
+    type = type.orEmpty().trim().lowercase(),
+    source = source.orEmpty(),
+    max = max,
+    viewType = SearchTabViewType.fromValue(viewType ?: viewTypeTypo),
+    more = more?.toModel(),
+)
+
+fun SearchTabMoreResponse.toModel() = SearchTabMore(
+    title = title,
+    link = link?.toModel(),
+)

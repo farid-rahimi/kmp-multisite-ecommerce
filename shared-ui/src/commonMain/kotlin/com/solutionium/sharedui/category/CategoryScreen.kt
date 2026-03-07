@@ -338,189 +338,110 @@ fun CategoryContent(
         )
     } else {
 
-        val allPerfumeTitle = stringResource(Res.string.all_perfumes_title)
-        val allShoesTitle = stringResource(Res.string.all_shoes_title)
-
-
         when (uiState.categoryDisplayType) {
             CategoryDisplayType.MAIN -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = 16.dp), // Only vertical, horizontal in sections
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                    contentPadding = PaddingValues(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp),
                 ) {
-
-
-                    // --- Perfume Spotlight Section ---
-                    item {
-                        PerfumeSpotlightSection(
-                            spotlightTerms = uiState.perfumeSpotlightTerms,
-                            title = stringResource(Res.string.discover_perfume_collections),
-                            imageFinder = { uiState.images[it] },
-                            onCategoryClick = { termId, title ->
-                                navigateToProductList(
-                                    mapOf(
-                                        PRODUCT_ARG_ATTRIBUTE to "pa_gender",
-                                        PRODUCT_ARG_ATTRIBUTE_TERM to termId.toString(),
-                                        PRODUCT_ARG_TITLE to title
-                                    )
-                                )
-                                //onNavigateToProductList(null, "pa_gender", termId, title)
-                            },
-                            onShopAllPerfumesClick = {
-                                navigateToProductList(
-                                    mapOf(
-                                        PRODUCT_ARG_CATEGORY to PERFUME_CAT_ID,
-                                        PRODUCT_ARG_TITLE to allPerfumeTitle
-                                    )
-                                )
+                    items(uiState.dynamicSections, key = { it.id }) { section ->
+                        val onItemClick = { id: Int, title: String ->
+                            val args = viewModel.toProductListArgsForItem(section, id, title)
+                            if (args != null) {
+                                navigateToProductList(args)
                             }
-                        )
-                    }
-
-                    // --- Perfume Brands ---
-                    item {
-                        SmallItemsSection(
-                            title = stringResource(Res.string.brands_title),
-                            items = uiState.perfumeBrands,
-                            onClick = { brandId, title ->
-                                navigateToProductList(
-                                    mapOf(
-                                        PRODUCT_ARG_BRAND_ID to brandId.toString(),
-                                        PRODUCT_ARG_TITLE to title,
-                                    )
-                                )
-                                //onNavigateToProductList(brandId, null, null, title)
-                            },
-                            onViewAllClick = {
-                                viewModel.goToAllBrands()
-                            },
-                            viewAllText = stringResource(Res.string.show_all_brands_text),
-                        )
-                    }
-
-                    // --- Top Scent Section ---
-                    item {
-                        ItemGridSection(
-                            title = stringResource(Res.string.scents_title),
-                            viewAllText = stringResource(Res.string.show_all_scents_text),
-                            items = uiState.topScentGroups,
-                            imageFinder = { uiState.images[it] },
-                            onClick = { termId, title ->
-                                navigateToProductList(
-                                    mapOf(
-                                        PRODUCT_ARG_ATTRIBUTE to "pa_scent-group",
-                                        PRODUCT_ARG_ATTRIBUTE_TERM to termId.toString(),
-                                        PRODUCT_ARG_TITLE to title
-                                    )
-                                )
-                                //onNavigateToProductList(null, "pa_scent-group", termId, title)
-                            },
-                            onShopAllClick = {
-                                viewModel.goToAllScentGroups()
+                        }
+                        val onMoreClick = {
+                            val moreLink = section.moreLink
+                            if (moreLink != null) {
+                                when (moreLink.type) {
+                                    com.solutionium.shared.data.model.LinkType.ALL_BRANDS,
+                                    com.solutionium.shared.data.model.LinkType.ATTRIBUTES -> viewModel.showAllItemsFromMore(section)
+                                    else -> {
+                                        val args = viewModel.toProductListArgsForMore(section)
+                                        if (args != null) {
+                                            navigateToProductList(args)
+                                        }
+                                    }
+                                }
                             }
-                        )
-                    }
-
-                    item {
-                        PerfumeSpotlightSection(
-                            spotlightTerms = uiState.perfumeSeasonTerms,
-                            title = stringResource(Res.string.seasons_title),
-                            imageFinder = { uiState.images[it] },
-                            onCategoryClick = { termId, title ->
-                                navigateToProductList(
-                                    mapOf(
-                                        PRODUCT_ARG_ATTRIBUTE to "pa_season",
-                                        PRODUCT_ARG_ATTRIBUTE_TERM to termId.toString(),
-                                        PRODUCT_ARG_TITLE to title
-                                    )
-                                )
-//                                onNavigateToProductList(null, "pa_season", termId, title)
-                            },
-                            onShopAllPerfumesClick = {
-                                navigateToProductList(
-                                    mapOf(
-                                        PRODUCT_ARG_CATEGORY to PERFUME_CAT_ID,
-                                        PRODUCT_ARG_TITLE to allPerfumeTitle
-                                    )
-                                )
-                            }
-                        )
-                    }
-
-                    item {
-                        HorizontalDivider(
-                            thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-                    }
-
-                    // --- Shoe Brands ---
-                    if (uiState.showShoes)
-                        item {
-                            SmallItemsSection(
-                                title = stringResource(Res.string.shoe_brands_title),
-                                items = uiState.shoeBrands,
-                                onClick = { brandId, title ->
-                                    navigateToProductList(
-                                        mapOf(
-                                            PRODUCT_ARG_BRAND_ID to brandId.toString(),
-                                            PRODUCT_ARG_TITLE to title,
-                                        )
-                                    )
-                                    //onNavigateToProductList(brandId, null, null, title)
-                                },
-                                onViewAllClick = {
-                                    navigateToProductList(
-                                        mapOf(
-                                            PRODUCT_ARG_CATEGORY to SHOES_CAT_ID,
-                                            PRODUCT_ARG_TITLE to allShoesTitle
-                                        )
-                                    )
-                                },
-                                viewAllText = allShoesTitle
-                            )
                         }
 
-                    item { Spacer(modifier = Modifier.height(16.dp)) } // Bottom padding
+                        when (section.viewType) {
+                            com.solutionium.shared.data.model.SearchTabViewType.SPOTLIGHT -> {
+                                PerfumeSpotlightSection(
+                                    spotlightTerms = section.items.filterIsInstance<AttributeTerm>(),
+                                    title = section.title,
+                                    imageFinder = { uiState.images[it] },
+                                    onCategoryClick = onItemClick,
+                                    onShopAllPerfumesClick = onMoreClick,
+                                )
+                            }
+
+                            com.solutionium.shared.data.model.SearchTabViewType.CIRCLE_ROW -> {
+                                SmallItemsSection(
+                                    title = section.title,
+                                    items = section.items,
+                                    imageFinder = { uiState.images[it] },
+                                    onClick = onItemClick,
+                                    onViewAllClick = onMoreClick,
+                                    viewAllText = section.moreTitle ?: section.moreLink?.title ?: "All",
+                                )
+                            }
+
+                            com.solutionium.shared.data.model.SearchTabViewType.GRID -> {
+                                ItemGridSection(
+                                    title = section.title,
+                                    viewAllText = section.moreTitle ?: section.moreLink?.title ?: "All",
+                                    items = section.items,
+                                    imageFinder = { uiState.images[it] },
+                                    onClick = onItemClick,
+                                    onShopAllClick = onMoreClick,
+                                )
+                            }
+                        }
+                    }
+
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
 
-            CategoryDisplayType.ALL_BRANDS -> {
-                AllItemsScreen(
-                    title = stringResource(Res.string.show_all_brands_text),
-                    items = uiState.allBrands,
-                    imageFinder = { uiState.images[it] },
-                    onItemClick = { brandId, title ->
-                        navigateToProductList(
-                            mapOf(
-                                PRODUCT_ARG_BRAND_ID to brandId.toString(),
-                                PRODUCT_ARG_TITLE to title,
-                            )
-                        )
-                    },
-                    onBack = { viewModel.backToMainDisplay() }
-                )
-            }
+            CategoryDisplayType.ALL_ITEMS -> {
+                val allItemsState = uiState.allItemsState
+                if (allItemsState == null) {
+                    viewModel.backToMainDisplay()
+                } else {
+                    AllItemsScreen(
+                        title = allItemsState.title,
+                        items = allItemsState.items,
+                        imageFinder = { uiState.images[it] },
+                        onItemClick = { id, title ->
+                            when (allItemsState.kind) {
+                                com.solutionium.shared.viewmodel.CategoryAllItemsKind.BRAND -> {
+                                    navigateToProductList(
+                                        mapOf(
+                                            PRODUCT_ARG_BRAND_ID to id.toString(),
+                                            PRODUCT_ARG_TITLE to title,
+                                        ),
+                                    )
+                                }
 
-            CategoryDisplayType.ALL_SCENT_GROUPS -> {
-                AllItemsScreen(
-                    title = stringResource(Res.string.show_all_scents_text),
-                    items = uiState.allScentGroups,
-                    imageFinder = { uiState.images[it] },
-                    onItemClick = { termId, title ->
-                        navigateToProductList(
-                            mapOf(
-                                PRODUCT_ARG_ATTRIBUTE to "pa_scent-group",
-                                PRODUCT_ARG_ATTRIBUTE_TERM to termId.toString(),
-                                PRODUCT_ARG_TITLE to title
-                            )
-                        )
-                    },
-                    onBack = { viewModel.backToMainDisplay() }
-
-                )
+                                com.solutionium.shared.viewmodel.CategoryAllItemsKind.ATTRIBUTE -> {
+                                    val attributeSource = allItemsState.attributeSource ?: return@AllItemsScreen
+                                    navigateToProductList(
+                                        mapOf(
+                                            PRODUCT_ARG_ATTRIBUTE to attributeSource,
+                                            PRODUCT_ARG_ATTRIBUTE_TERM to id.toString(),
+                                            PRODUCT_ARG_TITLE to title,
+                                        ),
+                                    )
+                                }
+                            }
+                        },
+                        onBack = { viewModel.backToMainDisplay() },
+                    )
+                }
             }
         }
 

@@ -12,4 +12,10 @@ internal class GetAttributeTermsUseCaseImpl(
         emit(wooProductRepository.getAttributeTerms(listType))
     }
 
+    override suspend fun invoke(
+        attributeId: Int,
+        queries: Map<String, String>,
+    ) = flow {
+        emit(wooProductRepository.getAttributeTerms(attributeId, queries))
+    }
 }

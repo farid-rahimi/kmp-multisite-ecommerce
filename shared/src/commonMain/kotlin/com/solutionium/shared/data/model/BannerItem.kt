@@ -22,7 +22,14 @@ data class Link(
         get() = type == LinkType.PRODUCT
 
     val isProductsLink: Boolean
-        get() = type in listOf( LinkType.PRODUCTS, LinkType.ATTRIBUTE_TERM, LinkType.BRAND, LinkType.CATEGORY, LinkType.TAG)
+        get() = type in listOf(
+            LinkType.PRODUCTS,
+            LinkType.ATTRIBUTE_TERM,
+            LinkType.BRAND,
+            LinkType.CATEGORY,
+            LinkType.TAG,
+            LinkType.ALL_PRODUCTS,
+        )
 
     val isExternalLink: Boolean
         get() = type == LinkType.EXTERNAL
@@ -35,6 +42,7 @@ data class Link(
             LinkType.BRAND -> mapOf(PRODUCT_ARG_TITLE to (title ?: ""), PRODUCT_ARG_BRAND_ID to target)
             LinkType.CATEGORY -> mapOf(PRODUCT_ARG_TITLE to (title ?: ""), PRODUCT_ARG_CATEGORY to target)
             LinkType.TAG -> mapOf(PRODUCT_ARG_TITLE to (title ?: ""), PRODUCT_ARG_TAG to target)
+            LinkType.ALL_PRODUCTS -> mapOf(PRODUCT_ARG_TITLE to (title ?: ""))
             //LinkType.EXTERNAL -> link.target // Direct URL for external links
             else -> emptyMap()
         }
@@ -48,6 +56,9 @@ enum class LinkType(val value: String) {
     BRAND("brand"),
     CATEGORY("category"),
     TAG("tag"),
+    ALL_PRODUCTS("all_products"),
+    ALL_BRANDS("all_brands"),
+    ATTRIBUTES("attributes"),
     EXTERNAL("external");
 
     companion object {

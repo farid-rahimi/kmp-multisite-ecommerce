@@ -38,7 +38,10 @@ data class AppConfigResponse (
     val appVersion: AppVersionResponse? = null,
 
     @SerialName("contact")
-    val contact: ContactResponse? = null
+    val contact: ContactResponse? = null,
+
+    @SerialName("search_tab")
+    val searchTabs: List<SearchTabResponse>? = null,
 )
 
 @Serializable
@@ -124,4 +127,25 @@ data class ContactResponse (
     val instagram: String?,
     val telegram: String?,
     val email: String?
+)
+
+@Serializable
+data class SearchTabResponse(
+    val id: Int,
+    val enabled: Boolean? = null,
+    val title: String? = null,
+    val type: String? = null,
+    val source: String? = null,
+    val max: Int? = null,
+    @SerialName("veiw_type")
+    val viewTypeTypo: String? = null,
+    @SerialName("view_type")
+    val viewType: String? = null,
+    val more: SearchTabMoreResponse? = null,
+)
+
+@Serializable
+data class SearchTabMoreResponse(
+    val title: String? = null,
+    val link: ConfigLink? = null,
 )

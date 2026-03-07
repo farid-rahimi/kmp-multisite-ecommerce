@@ -8,8 +8,11 @@ import kotlinx.coroutines.flow.flow
 internal class GetBrandsUseCaseImpl(
     private val wooProductRepository: WooProductRepository
 ) : GetBrandsUseCase {
-    override suspend fun invoke(type: BrandListType) = flow{
+    override suspend fun invoke(type: BrandListType) = flow {
         emit(wooProductRepository.getBrandList(type))
     }
 
+    override suspend fun invoke(queries: Map<String, String>) = flow {
+        emit(wooProductRepository.getBrandList(queries))
+    }
 }
