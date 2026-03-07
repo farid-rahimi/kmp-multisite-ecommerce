@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "610162042648",
+    "project_id": "leparfum-ae",
+    "storage_bucket": "leparfum-ae.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:610162042648:android:756ec3625d8628354b606d",
+        "android_client_info": {
+          "package_name": "ae.leparfum.shop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8hWcvcnKfxAOI1Mw4MMGj5x9scI7VgN4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
