@@ -90,9 +90,13 @@ fun SharedShopRoot() {
 
     val homeViewModel = koinInject<HomeViewModel>()
     val homeState by homeViewModel.state.collectAsState()
+    val categoryViewModel = koinInject<CategoryViewModel>()
 
     DisposableEffect(homeViewModel) {
         onDispose { homeViewModel.clear() }
+    }
+    DisposableEffect(categoryViewModel) {
+        onDispose { categoryViewModel.clear() }
     }
 
     fun push(route: OverlayRoute) {
@@ -188,10 +192,6 @@ fun SharedShopRoot() {
                         }
 
                         MainTab.Category -> {
-                            val viewModel = koinInject<CategoryViewModel>()
-                            DisposableEffect(viewModel) {
-                                onDispose { viewModel.clear() }
-                            }
                             CategoryScreen(
                                 navigateToProductList = { args -> push(OverlayRoute.ProductList(args)) },
                                 onProductClick = { productId ->
@@ -203,7 +203,7 @@ fun SharedShopRoot() {
                                     )
                                 },
                                 onNavigateBack = {},
-                                viewModel = viewModel,
+                                viewModel = categoryViewModel,
                             )
                         }
 
