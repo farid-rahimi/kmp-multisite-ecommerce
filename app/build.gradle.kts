@@ -86,16 +86,8 @@ android {
 dependencies {
 
     implementation(project(":shared-ui"))
-    implementation(project(":feature:product-detail"))
-    implementation(project(":feature:home"))
-    implementation(project(":feature:product-list"))
-    implementation(project(":feature:category"))
-    implementation(project(":feature:cart"))
     implementation(project(":feature:checkout"))
-    implementation(project(":feature:account"))
-    implementation(project(":feature:address"))
     implementation(project(":feature:orders"))
-    implementation(project(":feature:review"))
     implementation(project(":shared"))
 
 
@@ -106,9 +98,7 @@ dependencies {
     implementation(libs.firebase.crashlytics)
 
 
-    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.material3)
     implementation(libs.lifecycle.runtime.compose)

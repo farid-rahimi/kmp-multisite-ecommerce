@@ -10,11 +10,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// In your main app module
-
-
-
-
 class MainViewModel(
     private val appPreferences: AppPreferences
 ) : ViewModel() {

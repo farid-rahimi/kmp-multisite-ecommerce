@@ -1,7 +1,3 @@
 <resources>
     <string name="app_name">قشم‌اینورا</string>
-    <string name="home">خانه</string>
-    <string name="category">جستجو</string>
-    <string name="cart">سبد خرید</string>
-    <string name="account">حساب من</string>
 </resources>

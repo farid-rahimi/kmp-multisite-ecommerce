@@ -1,7 +1,3 @@
 <resources>
     <string name="app_name">Qeshminora</string>
-    <string name="home">Home</string>
-    <string name="category">Category</string>
-    <string name="cart">Cart</string>
-    <string name="account">Account</string>
 </resources>

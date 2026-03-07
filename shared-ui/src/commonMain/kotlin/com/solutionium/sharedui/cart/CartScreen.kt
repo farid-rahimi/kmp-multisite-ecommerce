@@ -1,6 +1,5 @@
 package com.solutionium.sharedui.cart
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +20,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,10 +30,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.solutionium.shared.data.model.CartItem
+import com.solutionium.shared.data.model.ChangeType
+import com.solutionium.shared.data.model.ValidationInfo
+import com.solutionium.shared.viewmodel.CartScreenUiState
+import com.solutionium.shared.viewmodel.CartViewModel
 import com.solutionium.sharedui.common.LoginPromptDialog
 import com.solutionium.sharedui.common.component.CartItemCard
 import com.solutionium.sharedui.common.component.InfoBox
@@ -54,11 +56,6 @@ import com.solutionium.sharedui.resources.empty_cart
 import com.solutionium.sharedui.resources.proceed_to_checkout
 import com.solutionium.sharedui.resources.review_the_changes_before_proceeding
 import com.solutionium.sharedui.resources.validating_cart_items
-import com.solutionium.shared.data.model.CartItem
-import com.solutionium.shared.data.model.ChangeType
-import com.solutionium.shared.data.model.ValidationInfo
-import com.solutionium.shared.viewmodel.CartScreenUiState
-import com.solutionium.shared.viewmodel.CartViewModel
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

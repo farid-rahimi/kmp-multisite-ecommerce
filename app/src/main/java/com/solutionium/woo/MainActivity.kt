@@ -3,10 +3,8 @@ package com.solutionium.woo
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -15,39 +13,25 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import com.solutionium.sharedui.designsystem.theme.WooBrand
 import com.solutionium.sharedui.designsystem.theme.WooTheme
 import com.solutionium.sharedui.common.component.LanguageSelectionScreen
-import com.solutionium.feature.home.GRAPH_HOME_ROUTE
-import com.solutionium.feature.home.navigateToHome
-import com.solutionium.feature.product.detail.navigateProductDetail
 import com.solutionium.shared.data.local.AppPreferences
 import com.solutionium.woo.ui.WooApp
-import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.java.KoinJavaComponent.getKoin
 import java.util.Locale
 
-data class DeepLinkData(val uri: Uri)
-
 //@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    //private val viewModel: MainViewModel by viewModels()
-
-    private val pendingDeepLink = mutableStateOf<DeepLinkData?>(null)
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -82,7 +66,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        parseIntentForDeepLink(intent)
         askNotificationPermission()
         enableEdgeToEdge()
 
@@ -127,17 +110,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        parseIntentForDeepLink(intent)
-    }
-
-    private fun parseIntentForDeepLink(intent: Intent?) {
-        if (intent?.action == Intent.ACTION_VIEW && intent.data != null) {
-            pendingDeepLink.value = DeepLinkData(uri = intent.data!!)
-        }
-    }
-
     private fun isRtlLanguage(languageCode: String): Boolean {
         return languageCode == "fa" || languageCode == "ar"
     }
@@ -145,35 +117,4 @@ class MainActivity : ComponentActivity() {
     private fun defaultLanguageForBrand(): String {
         return if (BuildConfig.SITE_BRAND == "SITE_B") "ar" else "fa"
     }
-}
-
-@Composable
-fun DeepLinkHandler(
-    navController: NavHostController,
-    deepLinkData: DeepLinkData?,
-    onDeepLinkConsumed: () -> Unit
-) {
-    LaunchedEffect(deepLinkData) {
-        if (deepLinkData == null) return@LaunchedEffect
-
-        val uri = deepLinkData.uri
-        if (uri.scheme == "https" && uri.host == BuildConfig.API_SITE_HOST && uri.pathSegments.firstOrNull() == "product") {
-            val productSlug = uri.pathSegments.getOrNull(1)
-
-            if (!productSlug.isNullOrBlank()) {
-                delay(300)
-                navController.navigateToHome()
-                delay(200)
-                navController.navigateProductDetail(
-                    rootRoute = GRAPH_HOME_ROUTE,
-                    productSlug = productSlug
-                )
-            }
-        }
-        onDeepLinkConsumed()
-    }
-}
-
-fun NavController.navigateProductDetailBySlug(productSlug: String) {
-    navigate("product_root/product?slug=$productSlug")
 }

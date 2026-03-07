@@ -38,17 +38,8 @@
             <option value="$PROJECT_DIR$/domain/woo-categories" />
             <option value="$PROJECT_DIR$/domain/woo-products" />
             <option value="$PROJECT_DIR$/feature" />
-            <option value="$PROJECT_DIR$/feature/account" />
-            <option value="$PROJECT_DIR$/feature/address" />
-            <option value="$PROJECT_DIR$/feature/cart" />
-            <option value="$PROJECT_DIR$/feature/category" />
             <option value="$PROJECT_DIR$/feature/checkout" />
-            <option value="$PROJECT_DIR$/feature/home" />
-            <option value="$PROJECT_DIR$/feature/login" />
             <option value="$PROJECT_DIR$/feature/orders" />
-            <option value="$PROJECT_DIR$/feature/product-detail" />
-            <option value="$PROJECT_DIR$/feature/product-list" />
-            <option value="$PROJECT_DIR$/feature/review" />
             <option value="$PROJECT_DIR$/gradle/build-logic" />
             <option value="$PROJECT_DIR$/gradle/build-logic/convention" />
             <option value="$PROJECT_DIR$/shared" />
