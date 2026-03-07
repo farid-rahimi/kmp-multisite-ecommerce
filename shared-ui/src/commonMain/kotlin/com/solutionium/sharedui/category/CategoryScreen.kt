@@ -428,10 +428,12 @@ fun CategoryContent(
                                 }
 
                                 com.solutionium.shared.viewmodel.CategoryAllItemsKind.ATTRIBUTE -> {
-                                    val attributeSource = allItemsState.attributeSource ?: return@AllItemsScreen
+                                    val attributeFilterKey = allItemsState.attributeFilterKey
+                                        ?: allItemsState.attributeSource
+                                        ?: return@AllItemsScreen
                                     navigateToProductList(
                                         mapOf(
-                                            PRODUCT_ARG_ATTRIBUTE to attributeSource,
+                                            PRODUCT_ARG_ATTRIBUTE to attributeFilterKey,
                                             PRODUCT_ARG_ATTRIBUTE_TERM to id.toString(),
                                             PRODUCT_ARG_TITLE to title,
                                         ),

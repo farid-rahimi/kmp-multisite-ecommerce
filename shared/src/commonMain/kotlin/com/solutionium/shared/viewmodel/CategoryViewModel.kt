@@ -59,6 +59,7 @@ data class CategoryDynamicSection(
     val title: String,
     val type: String,
     val source: String,
+    val sourceSlug: String?,
     val viewType: SearchTabViewType,
     val items: List<DisplayableTerm>,
     val moreTitle: String?,
@@ -70,6 +71,7 @@ data class CategoryAllItemsState(
     val title: String,
     val items: List<DisplayableTerm>,
     val attributeSource: String? = null,
+    val attributeFilterKey: String? = null,
 )
 
 data class CategoryScreenState(
@@ -207,6 +209,7 @@ class CategoryViewModel(
                             title = config.title,
                             type = config.type,
                             source = config.source,
+                            sourceSlug = config.sourceSlug,
                             viewType = config.viewType,
                             items = items,
                             moreTitle = config.more?.title,
@@ -310,7 +313,10 @@ class CategoryViewModel(
             )
 
             "attribute", "attributes" -> mapOf(
-                PRODUCT_ARG_ATTRIBUTE to section.source,
+                PRODUCT_ARG_ATTRIBUTE to buildAttributeQueryKey(
+                    attributeSource = section.source,
+                    attributeSlug = section.sourceSlug,
+                ),
                 PRODUCT_ARG_ATTRIBUTE_TERM to id.toString(),
                 PRODUCT_ARG_TITLE to title,
             )
@@ -337,6 +343,10 @@ class CategoryViewModel(
                     title = section.moreTitle ?: section.title,
                     attributeId = attributeId,
                     attributeSource = source,
+                    attributeFilterKey = buildAttributeQueryKey(
+                        attributeSource = section.source,
+                        attributeSlug = section.sourceSlug,
+                    ),
                 )
             }
 
@@ -363,6 +373,7 @@ class CategoryViewModel(
         title: String,
         attributeId: Int,
         attributeSource: String,
+        attributeFilterKey: String,
     ) {
         scope.launch {
             val terms = loadAttributeTermsBySource(attributeId = attributeId, maxItems = 100)
@@ -373,11 +384,21 @@ class CategoryViewModel(
                         title = title,
                         items = terms,
                         attributeSource = attributeSource,
+                        attributeFilterKey = attributeFilterKey,
                     ),
                     categoryDisplayType = CategoryDisplayType.ALL_ITEMS,
                 )
             }
         }
+    }
+
+    private fun buildAttributeQueryKey(attributeSource: String, attributeSlug: String?): String {
+        val slug = attributeSlug
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: attributeSource.trim().takeIf { value -> value.isNotEmpty() && value.toIntOrNull() == null }
+        if (slug == null) return attributeSource
+        return if (slug.startsWith("pa_")) slug else "pa_$slug"
     }
 
     fun backToMainDisplay() {

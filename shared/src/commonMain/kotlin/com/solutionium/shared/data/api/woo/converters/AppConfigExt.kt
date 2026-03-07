@@ -104,6 +104,7 @@ fun SearchTabResponse.toModel(language: String) = SearchTabConfig(
     title = localizeText(language, en = title, ar = titleAr, fa = titleFa),
     type = type.orEmpty().trim().lowercase(),
     source = source.orEmpty(),
+    sourceSlug = sourceSlug?.trim()?.takeIf { it.isNotEmpty() },
     max = max,
     viewType = SearchTabViewType.fromValue(viewType ?: viewTypeTypo),
     more = more?.toModel(language),

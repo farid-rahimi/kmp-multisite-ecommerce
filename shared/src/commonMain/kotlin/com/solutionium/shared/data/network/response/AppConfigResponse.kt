@@ -164,6 +164,8 @@ data class SearchTabResponse(
     val titleFa: String? = null,
     val type: String? = null,
     val source: String? = null,
+    @SerialName("source_slug")
+    val sourceSlug: String? = null,
     val max: Int? = null,
     @SerialName("veiw_type")
     val viewTypeTypo: String? = null,

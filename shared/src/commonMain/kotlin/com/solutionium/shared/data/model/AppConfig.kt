@@ -64,6 +64,7 @@ data class SearchTabConfig(
     val title: String,
     val type: String,
     val source: String,
+    val sourceSlug: String? = null,
     val max: Int?,
     val viewType: SearchTabViewType,
     val more: SearchTabMore?,
