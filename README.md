@@ -1,6 +1,6 @@
-# Woo Mobile (KMP)
+# kmp-multisite-ecommerce
 
-A Kotlin Multiplatform (KMP) WooCommerce mobile app with shared business logic and shared Compose UI for Android and iOS.
+A Kotlin Multiplatform (KMP) mobile e-commerce codebase with shared business logic and shared Compose UI for Android and iOS.
 
 ## Overview
 
@@ -13,6 +13,15 @@ This repository contains:
 
 The project is structured to keep feature behavior and navigation consistent across platforms while still allowing brand-specific configuration (API base URL, auth flow, theme, app id/bundle id, and language set).
 
+## Top Engineering Features
+
+- **Single shared codebase for business logic + UI across Android and iOS** (faster feature delivery, lower regression risk)
+- **Multisite/flavor-ready architecture** (independent branding, API, auth, language, and app identifiers from one codebase)
+- **Backend adapters are decoupled from domain and UI** (current WooCommerce integration can be replaced with other e-commerce APIs)
+- **Shared navigation with per-tab back stacks and state retention** (better UX and less reloading)
+- **Clear layering (`data -> domain -> viewmodel -> UI`) with DI** (maintainable and testable)
+- **Production-oriented build and release support** (Firebase integrations + CI pipeline)
+
 ## Key Features
 
 - Multi-brand build variants:
@@ -22,7 +31,7 @@ The project is structured to keep feature behavior and navigation consistent acr
 - Home, Category, Cart, Account, Order List, Address, Product List/Detail, Review, Checkout flows in shared UI
 - Dynamic home/category content from server config
 - Story and banner deeplink handling
-- WooCommerce integrations:
+- WooCommerce integrations (current adapter):
   - Products, categories, attributes, brands
   - Cart and checkout
   - Orders and reviews
@@ -46,6 +55,27 @@ High-level layering:
   - Android host app, flavor wiring, Firebase config
 - `iosApp`:
   - Swift host app and Xcode targets/schemes
+
+### Backend Decoupling (Important)
+
+This project is currently wired to WooCommerce endpoints, but WooCommerce is only one implementation of the data layer.
+
+What is already decoupled:
+
+- UI layer (`shared-ui`) depends on shared viewmodels and domain models, not Woo endpoints
+- Domain layer (`shared/domain`) depends on repository contracts/use cases, not concrete API SDKs
+- Data layer (`shared/data`) contains implementation details and adapters (network clients, DTOs, converters)
+- DI wiring (Koin) controls which implementation is injected
+
+How to integrate another e-commerce API:
+
+1. Create new remote sources/clients in `shared/data/api/<new-backend>` and `shared/data/network/...`
+2. Map new DTOs to existing domain/data models (or evolve models if needed)
+3. Implement existing repository interfaces with the new backend
+4. Switch DI module bindings from Woo implementations to new implementations
+5. Keep `shared-ui` and most viewmodels unchanged unless feature semantics differ
+
+This separation is the main reason the codebase can evolve backend providers without rewriting the app UI.
 
 ## Modules
 
@@ -150,4 +180,3 @@ Ensure both flavor `google-services.json` files are present in repo or generated
 
 - Some old Android-only modules still exist under `core/*` as legacy/transition modules.
 - Shared UI is the active direction for cross-platform feature work.
-

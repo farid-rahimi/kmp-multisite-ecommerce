@@ -11,10 +11,22 @@ Kotlin Multiplatform business logic module used by both Android and iOS.
 - Shared ViewModels
 - Dependency injection modules (Koin)
 
+## Why This Module Is Backend-Agnostic
+
+This module is designed so backend providers can change without rewriting the app UI:
+
+- `domain/*` defines use-case contracts and flow orchestration
+- repository interfaces abstract data sources
+- concrete backend behavior is isolated in data implementations
+- DI modules decide which backend implementation is active
+
+Current production adapter is WooCommerce, but the architecture supports additional adapters (custom REST, Shopify-like APIs, headless commerce gateways, etc.).
+
 ## Package Structure
 
 - `data/`
   - `api/woo` remote sources and converters
+  - (extensible) add `api/<provider>` for other commerce backends
   - `network` clients, request/response models
   - `database` entities/dao/module
   - repositories (`cart`, `products`, `orders`, `user`, `config`, ...)

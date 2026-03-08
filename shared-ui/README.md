@@ -9,6 +9,16 @@ Shared Compose UI module consumed by both Android and iOS.
 - Shared theme and typography
 - iOS bootstrap/bridge for initializing shared runtime
 
+## Design Goal
+
+`shared-ui` is intentionally backend-agnostic. Screens consume viewmodels/state/events, not WooCommerce-specific DTOs.
+
+This allows:
+
+- backend replacement with minimal UI change
+- consistent UX between Android and iOS
+- easier feature parity and QA across platforms
+
 ## Implemented Shared Screens
 
 - Home
