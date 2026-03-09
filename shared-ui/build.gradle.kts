@@ -36,6 +36,7 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.material3)
                 implementation(compose.ui)
+                implementation(libs.compose.ui.backhandler)
                 implementation(compose.components.resources)
                 implementation(compose.materialIconsExtended)
                 implementation(libs.paging.compose)

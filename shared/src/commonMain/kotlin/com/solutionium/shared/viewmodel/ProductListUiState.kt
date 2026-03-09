@@ -8,6 +8,7 @@ data class ProductListUiState(
     val cartItems: List<CartItem> = emptyList(),
     val favoriteIds: List<Int> = emptyList(),
     val paymentDiscount: Double? = null,
+    val installmentPriceEnabled: Boolean = false,
     val isSuperUser: Boolean = false
 ) {
     fun cartItemCount(productId: Int): Int =

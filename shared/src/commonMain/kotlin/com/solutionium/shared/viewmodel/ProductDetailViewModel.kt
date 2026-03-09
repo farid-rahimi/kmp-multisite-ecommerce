@@ -11,6 +11,7 @@ import com.solutionium.shared.data.model.toCartItem
 import com.solutionium.shared.domain.cart.AddToCartUseCase
 import com.solutionium.shared.domain.cart.GetCartItemByProductUseCase
 import com.solutionium.shared.domain.cart.UpdateCartItemUseCase
+import com.solutionium.shared.domain.config.InstallmentPriceEnabledUseCase
 import com.solutionium.shared.domain.config.PaymentMethodDiscountUseCase
 import com.solutionium.shared.domain.favorite.ObserveFavoritesUseCase
 import com.solutionium.shared.domain.favorite.ToggleFavoriteUseCase
@@ -41,6 +42,7 @@ class ProductDetailViewModel(
     private val observeFavoritesUseCase: ObserveFavoritesUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val paymentMethodDiscountUseCase: PaymentMethodDiscountUseCase,
+    private val installmentPriceEnabledUseCase: InstallmentPriceEnabledUseCase,
     private val getTopReviews: GetTopReviewsUseCase,
 
     ) {
@@ -102,6 +104,7 @@ class ProductDetailViewModel(
         observeCartQuantity()
         observeFavorites()
         loadPaymentMethodDiscounts()
+        loadInstallmentConfig()
         loadTopReviews()
     }
 
@@ -138,6 +141,12 @@ class ProductDetailViewModel(
         scope.launch {
             val discounts = paymentMethodDiscountUseCase()
             _state.update { it.copy(paymentDiscount = discounts.values.maxOrNull()) }
+        }
+    }
+
+    private fun loadInstallmentConfig() {
+        scope.launch {
+            _state.update { it.copy(installmentPriceEnabled = installmentPriceEnabledUseCase()) }
         }
     }
 

@@ -66,7 +66,8 @@ fun ProductListScreen(
             cartCounter = state::cartItemCount,
             onAddToCartClick = viewModel::addToCart,
             onRemoveFromCartClick = viewModel::removeFromCart,
-            showStock = state.isSuperUser
+            showStock = state.isSuperUser,
+            installmentPriceEnabled = state.installmentPriceEnabled
         )
     }
 }
@@ -91,7 +92,8 @@ private fun ProductListScreen(
     cartCounter: (Int) -> Int = { 0 },
     onAddToCartClick: (ProductThumbnail) -> Unit = {},
     onRemoveFromCartClick: (Int) -> Unit = {},
-    showStock: Boolean = false
+    showStock: Boolean = false,
+    installmentPriceEnabled: Boolean = false
 ) {
     Scaffold(
         topBar = {
@@ -118,7 +120,8 @@ private fun ProductListScreen(
                 cartCounter = cartCounter,
                 onAddToCartClick = onAddToCartClick,
                 onRemoveFromCartClick = onRemoveFromCartClick,
-                showStock = showStock
+                showStock = showStock,
+                installmentPriceEnabled = installmentPriceEnabled
             )
         },
     )
@@ -136,7 +139,8 @@ private fun ProductListContent(
     cartCounter: (Int) -> Int = { 0 },
     onAddToCartClick: (ProductThumbnail) -> Unit = {},
     onRemoveFromCartClick: (Int) -> Unit = {},
-    showStock: Boolean = false
+    showStock: Boolean = false,
+    installmentPriceEnabled: Boolean = false
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -173,7 +177,8 @@ private fun ProductListContent(
                     maxQuantity = if (item.manageStock) item.stock else 12,
                     onAddToCartClick = { onAddToCartClick(item) },
                     onRemoveFromCartClick = onRemoveFromCartClick,
-                    showStock = showStock
+                    showStock = showStock,
+                    showInstallmentPrice = installmentPriceEnabled
 
                 )
             }

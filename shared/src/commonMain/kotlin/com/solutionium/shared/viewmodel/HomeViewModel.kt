@@ -14,6 +14,7 @@ import com.solutionium.shared.domain.config.GetHeaderLogoUseCase
 import com.solutionium.shared.domain.config.GetStoriesUseCase
 import com.solutionium.shared.domain.config.GetVersionsUseCase
 import com.solutionium.shared.domain.config.HomeBannersUseCase
+import com.solutionium.shared.domain.config.InstallmentPriceEnabledUseCase
 import com.solutionium.shared.domain.config.PaymentMethodDiscountUseCase
 import com.solutionium.shared.domain.favorite.ObserveFavoritesUseCase
 import com.solutionium.shared.domain.favorite.ToggleFavoriteUseCase
@@ -61,6 +62,7 @@ class HomeViewModel(
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val homeBannerUseCase: HomeBannersUseCase,
     private val paymentMethodDiscountUseCase: PaymentMethodDiscountUseCase,
+    private val installmentPriceEnabledUseCase: InstallmentPriceEnabledUseCase,
     private val getStoriesUseCase: GetStoriesUseCase,
     private val addStoryViewUseCase: AddStoryViewUseCase,
     private val getAllViewedStories: GetAllStoryViewUseCase,
@@ -144,6 +146,7 @@ class HomeViewModel(
         loadBanners()
         observeFavorites()
         loadPaymentMethodDiscounts()
+        loadInstallmentConfig()
         observeSession()
         checkAppVersion()
         loadContactInfo()
@@ -269,6 +272,12 @@ class HomeViewModel(
         scope.launch {
             val discounts = paymentMethodDiscountUseCase()
             _state.update { it.copy(paymentDiscount = discounts.values.maxOrNull()) }
+        }
+    }
+
+    private fun loadInstallmentConfig() {
+        scope.launch {
+            _state.update { it.copy(installmentPriceEnabled = installmentPriceEnabledUseCase()) }
         }
     }
 

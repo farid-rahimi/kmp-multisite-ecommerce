@@ -36,6 +36,7 @@ fun AppConfigResponse.toModel(language: String?): AppConfig {
         paymentDiscount = paymentDiscount?.associate { it.methodID.orEmpty() to (it.amount ?: 0.0) }
             ?: emptyMap(),
         paymentForceEnabled = paymentForceEnabled ?: emptyList(),
+        installmentPrice = installmentPrice == true,
         bacsDetails = bacsDetailsResponse?.toModel(),
         images = images?.associate { it.termID to (it.src.orEmpty()) } ?: emptyMap(),
         freeShippingMethodID = freeShippingMethodID,

@@ -17,6 +17,8 @@ data class AppConfig (
 
     val paymentForceEnabled: List<String> = emptyList(),
 
+    val installmentPrice: Boolean = false,
+
     val bacsDetails: BACSDetails? = null,
 
     val images: Map<Int, String> = emptyMap(),

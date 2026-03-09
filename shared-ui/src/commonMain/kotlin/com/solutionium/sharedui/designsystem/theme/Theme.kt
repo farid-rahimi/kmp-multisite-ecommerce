@@ -15,6 +15,7 @@ enum class WooBrand {
 }
 
 val LocalWooBrand = staticCompositionLocalOf { WooBrand.SiteA }
+val LocalAppLanguage = staticCompositionLocalOf { "en" }
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -119,6 +120,7 @@ private val siteBDarkScheme = darkScheme.copy(
 fun WooTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     brand: WooBrand = WooBrand.SiteA,
+    languageCode: String = "en",
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
@@ -127,7 +129,10 @@ fun WooTheme(
         WooBrand.SiteB -> if (darkTheme) siteBDarkScheme else siteBLightScheme
     }
 
-    CompositionLocalProvider(LocalWooBrand provides brand) {
+    CompositionLocalProvider(
+        LocalWooBrand provides brand,
+        LocalAppLanguage provides languageCode.lowercase()
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = wooTypography(),

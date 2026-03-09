@@ -24,10 +24,12 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.backhandler.BackHandler
 import com.solutionium.shared.viewmodel.AccountViewModel
 import com.solutionium.shared.viewmodel.AddressViewModel
 import com.solutionium.shared.viewmodel.CartViewModel
@@ -87,6 +89,7 @@ private sealed interface TabRoute {
     ) : TabRoute
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SharedShopRoot() {
     var activeTab by remember { mutableStateOf(MainTab.Home) }
@@ -142,6 +145,25 @@ fun SharedShopRoot() {
         homeState.featuredLoading &&
         homeState.onSalesLoading
     val shouldShowBottomBar = !isFirstLoading
+    val activeStack = stackFor(activeTab)
+    val shouldHandleBack = showStoryViewer || activeStack.isNotEmpty() || activeTab != MainTab.Home
+
+    BackHandler(enabled = shouldHandleBack) {
+        when {
+            showStoryViewer -> {
+                showStoryViewer = false
+                homeViewModel.persistViewedStories()
+            }
+
+            activeStack.isNotEmpty() -> {
+                popFromTab(activeTab)
+            }
+
+            activeTab != MainTab.Home -> {
+                activeTab = MainTab.Home
+            }
+        }
+    }
 
     LaunchedEffect(homeViewModel, uriHandler) {
         homeViewModel.navigationEvent.collect { event ->

@@ -53,6 +53,8 @@ import com.solutionium.sharedui.resources.cart_validation_regular_price_changed
 import com.solutionium.sharedui.resources.cart_validation_stock_changed
 import com.solutionium.sharedui.resources.confirm_updates
 import com.solutionium.sharedui.resources.empty_cart
+import com.solutionium.sharedui.resources.full_pay
+import com.solutionium.sharedui.resources.installment_pay
 import com.solutionium.sharedui.resources.proceed_to_checkout
 import com.solutionium.sharedui.resources.review_the_changes_before_proceeding
 import com.solutionium.sharedui.resources.validating_cart_items
@@ -154,6 +156,7 @@ fun CartScreenContent(
                             validationMessage = infoMapper(item.validationInfo),
                             onProductClick = { onProductClick(item.productId) },
                             discountedPrice = state::discountedPrice,
+                            showInstallmentPrice = state.installmentPriceEnabled,
                             onRemove = { onRemove(item) },
                             onIncreaseQuantity = { onIncreaseQuantity(item) },
                             onDecreaseQuantity = { onDecreaseQuantity(item) },
@@ -168,6 +171,7 @@ fun CartScreenContent(
                 totalPrice = state.totalPrice,
                 hasAttentionItems = state.hasAttentionItems,
                 discountedPrice = state::discountedPrice,
+                showInstallmentPrice = state.installmentPriceEnabled,
                 onConfirmValidation = onConfirmValidation,
                 onCheckoutClick = onCheckoutClick,
             )
@@ -181,6 +185,7 @@ fun CartBottomBar(
     totalPrice: Double,
     hasAttentionItems: Boolean,
     discountedPrice: (Double?) -> Double? = { null },
+    showInstallmentPrice: Boolean = false,
     onConfirmValidation: () -> Unit,
     onCheckoutClick: () -> Unit,
 ) {
@@ -207,26 +212,30 @@ fun CartBottomBar(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "قسطی",
-                            fontSize = 11.sp,
-                            color = Color.Gray,
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(" x 4 ", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                        PriceView2(totalPrice / 4, false, null, magnifier = 1.5)
-                    }
-                    discountedPrice(totalPrice)?.let {
-                        Row {
+                    if (showInstallmentPrice) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "نقدی",
+                                text = stringResource(Res.string.installment_pay),
                                 fontSize = 11.sp,
                                 color = Color.Gray,
                             )
                             Spacer(modifier = Modifier.width(12.dp))
-                            PriceView2(it, false, null, magnifier = 1.0)
+                            Text(" x 4 ", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+                            PriceView2(totalPrice / 4, false, null, magnifier = 1.5)
                         }
+                        discountedPrice(totalPrice)?.let {
+                            Row {
+                                Text(
+                                    text = stringResource(Res.string.full_pay),
+                                    fontSize = 11.sp,
+                                    color = Color.Gray,
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                PriceView2(it, false, null, magnifier = 1.0)
+                            }
+                        }
+                    } else {
+                        PriceView2(totalPrice, false, null, magnifier = 1.2)
                     }
                 }
 

@@ -7,6 +7,7 @@ import com.solutionium.shared.domain.cart.ClearCartUseCase
 import com.solutionium.shared.domain.cart.ConfirmValidationUseCase
 import com.solutionium.shared.domain.cart.ObserveCartUseCase
 import com.solutionium.shared.domain.cart.UpdateCartItemUseCase
+import com.solutionium.shared.domain.config.InstallmentPriceEnabledUseCase
 import com.solutionium.shared.domain.cart.ValidateCartUseCase
 import com.solutionium.shared.domain.config.PaymentMethodDiscountUseCase
 import com.solutionium.shared.domain.user.CheckLoginUserUseCase
@@ -31,6 +32,7 @@ class CartViewModel(
     private val validateCartUseCase: ValidateCartUseCase,
     private val confirmValidation: ConfirmValidationUseCase,
     private val paymentMethodDiscountUseCase: PaymentMethodDiscountUseCase,
+    private val installmentPriceEnabledUseCase: InstallmentPriceEnabledUseCase,
     private val checkLoginUserUseCase: CheckLoginUserUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -45,6 +47,7 @@ class CartViewModel(
         observeCart()
         validateCart()
         loadPaymentMethodDiscounts()
+        loadInstallmentConfig()
     }
 
     fun refresh() {
@@ -84,6 +87,12 @@ class CartViewModel(
             } catch (e: Exception) {
                 _uiState.update { it.copy(paymentDiscount = 0.0) }
             }
+        }
+    }
+
+    private fun loadInstallmentConfig() {
+        scope.launch {
+            _uiState.update { it.copy(installmentPriceEnabled = installmentPriceEnabledUseCase()) }
         }
     }
 

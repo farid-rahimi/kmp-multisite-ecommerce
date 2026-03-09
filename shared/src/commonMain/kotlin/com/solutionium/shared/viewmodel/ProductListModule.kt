@@ -21,6 +21,7 @@ val productListModule = module {
             observeFavoritesUseCase = get(),
             toggleFavoriteUseCase = get(),
             paymentMethodDiscountUseCase = get(),
+            installmentPriceEnabledUseCase = get(),
             checkSuperUserUserCase = get()
         )
     }

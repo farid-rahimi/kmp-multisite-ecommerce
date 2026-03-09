@@ -29,6 +29,7 @@ val homeModule = module {
             toggleFavoriteUseCase = get(),
             homeBannerUseCase = get(),
             paymentMethodDiscountUseCase = get(),
+            installmentPriceEnabledUseCase = get(),
             getStoriesUseCase = get(),
             addStoryViewUseCase = get(),
             getAllViewedStories = get(),

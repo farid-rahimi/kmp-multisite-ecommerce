@@ -20,6 +20,7 @@ val cartModule = module {
             validateCartUseCase = get(),
             confirmValidation = get(),
             paymentMethodDiscountUseCase = get(),
+            installmentPriceEnabledUseCase = get(),
             checkLoginUserUseCase = get(),
         )
     }

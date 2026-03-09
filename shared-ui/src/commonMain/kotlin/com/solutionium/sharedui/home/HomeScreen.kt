@@ -126,6 +126,7 @@ fun HomeScreen(
                         ProductSectionRow(
                             title = title,
                             items = state.newArrivals,
+                            installmentPriceEnabled = state.installmentPriceEnabled,
                             toggleFavorite = viewModel::toggleFavorite,
                             isFavorite = state::isFavorite,
                             discountedPrice = state::discountedPrice,
@@ -149,6 +150,7 @@ fun HomeScreen(
                         ProductSectionRow(
                             title = title,
                             items = state.appOffers,
+                            installmentPriceEnabled = state.installmentPriceEnabled,
                             toggleFavorite = viewModel::toggleFavorite,
                             isFavorite = state::isFavorite,
                             discountedPrice = state::discountedPrice,
@@ -177,6 +179,7 @@ fun HomeScreen(
                         ProductSectionRow(
                             title = title,
                             items = state.onSales,
+                            installmentPriceEnabled = state.installmentPriceEnabled,
                             toggleFavorite = viewModel::toggleFavorite,
                             isFavorite = state::isFavorite,
                             discountedPrice = state::discountedPrice,
@@ -205,6 +208,7 @@ fun HomeScreen(
                         ProductSectionRow(
                             title = title,
                             items = state.featured,
+                            installmentPriceEnabled = state.installmentPriceEnabled,
                             toggleFavorite = viewModel::toggleFavorite,
                             isFavorite = state::isFavorite,
                             discountedPrice = state::discountedPrice,
@@ -260,6 +264,7 @@ fun HomeScreen(
 fun ProductSectionRow(
     title: String,
     items: List<ProductThumbnail>,
+    installmentPriceEnabled: Boolean = false,
     toggleFavorite: (Int, Boolean) -> Unit = { _, _ -> },
     discountedPrice: (Double?) -> Double? = { null },
     isFavorite: (Int) -> Boolean = { false },
@@ -316,8 +321,9 @@ fun ProductSectionRow(
                     maxQuantity = if (item.manageStock) item.stock else 12,
                     onAddToCartClick = { onAddToCartClick(item) },
                     onRemoveFromCartClick = onRemoveFromCartClick,
-                    priceMagnifier = 0.8,
+                    priceMagnifier = 1.0,
                     showStock = showStock,
+                    showInstallmentPrice = installmentPriceEnabled,
                 )
             }
         }

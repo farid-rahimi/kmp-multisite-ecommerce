@@ -28,6 +28,7 @@ val productDetailModule = module {
             observeFavoritesUseCase = get(),
             toggleFavoriteUseCase = get(),
             paymentMethodDiscountUseCase = get(),
+            installmentPriceEnabledUseCase = get(),
             getTopReviews = get(),
         )
     }

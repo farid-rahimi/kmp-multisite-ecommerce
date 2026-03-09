@@ -16,6 +16,7 @@ data class CartScreenUiState(
     val validationSummaryKey: String? = null,
     val validationSummaryCount: Int? = null,
     val paymentDiscount: Double = 0.0,
+    val installmentPriceEnabled: Boolean = false,
 
     val isUserLoggedIn: Boolean = true, // Assume true by default
     val showLoginPrompt: Boolean = false // Controls the dialog
@@ -27,4 +28,3 @@ data class CartScreenUiState(
         originalPrice?.let { paymentDiscount.let { (100 - it) / 100 } * originalPrice }
 
 }
-

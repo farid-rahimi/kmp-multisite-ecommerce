@@ -93,7 +93,8 @@ fun ProductThumbnailCard2(
     onAddToCartClick: (productId: Int) -> Unit,
     onRemoveFromCartClick: (productId: Int) -> Unit = {},
     priceMagnifier: Double = 1.0,
-    showStock: Boolean = false
+    showStock: Boolean = false,
+    showInstallmentPrice: Boolean = false,
 
 ) {
     Card(
@@ -252,18 +253,32 @@ fun ProductThumbnailCard2(
                     )
                 }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(stringResource(Res.string.installment_pay), fontSize = 9.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text("x 4 ", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                    PriceView2(
-                        price = product.price / 4,
-                        onSale = product.onSale,
-                        regularPrice = product.regularPrice?.let { it / 4 },
-                        magnifier = priceMagnifier
-                    )
+                if (showInstallmentPrice) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(Res.string.installment_pay), fontSize = 9.sp, color = Color.Gray)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text("x 4 ", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        PriceView2(
+                            price = product.price / 4,
+                            onSale = product.onSale,
+                            regularPrice = product.regularPrice?.let { it / 4 },
+                            magnifier = priceMagnifier
+                        )
+                    }
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        PriceView2(
+                            price = product.price,
+                            onSale = product.onSale,
+                            regularPrice = product.regularPrice,
+                            magnifier = priceMagnifier
+                        )
+                    }
                 }
                 discountedPrice(product.price)?.let {
                     Row(

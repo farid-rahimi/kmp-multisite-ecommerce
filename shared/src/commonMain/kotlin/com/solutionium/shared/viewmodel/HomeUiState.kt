@@ -29,6 +29,7 @@ data class HomeUiState(
     val cartItems: List<CartItem> = emptyList(),
     val favoriteIds: List<Int> = emptyList(),
     val paymentDiscount: Double? = null,
+    val installmentPriceEnabled: Boolean = false,
     val newArrivals: List<ProductThumbnail> = emptyList(),
     val newArrivalsLoading: Boolean = true,
     val appOffers: List<ProductThumbnail> = emptyList(),

@@ -90,6 +90,7 @@ fun CartItemCard(
     cartItem: CartItem,
     validationMessage: String?,
     discountedPrice: (Double?) -> Double? = { null },
+    showInstallmentPrice: Boolean = false,
     onProductClick: () -> Unit,
     onRemove: () -> Unit,
     onIncreaseQuantity: () -> Unit,
@@ -136,39 +137,50 @@ fun CartItemCard(
 
 
                     Column {
-                        Row {
-                            Text(
-                                text = stringResource(Res.string.installment_pay),
-                                fontSize = 10.sp,
-                                color = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                " x 4 ",
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                            )
-                            PriceView2(
-                                cartItem.currentPrice / 4,
-                                cartItem.isOnSale,
-                                cartItem.regularPrice?.let { it / 4 }
-                            )
-                        }
-                        discountedPrice(cartItem.currentPrice)?.let {
+                        if (showInstallmentPrice) {
                             Row {
                                 Text(
-                                    text = stringResource(Res.string.full_pay),
+                                    text = stringResource(Res.string.installment_pay),
                                     fontSize = 10.sp,
                                     color = Color.Gray
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    " x 4 ",
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                                )
                                 PriceView2(
-                                    it,
+                                    cartItem.currentPrice / 4,
                                     cartItem.isOnSale,
-                                    cartItem.regularPrice,
-                                    magnifier = 0.8
+                                    cartItem.regularPrice?.let { it / 4 },
+                                    magnifier = 1.2
+
                                 )
                             }
+                            discountedPrice(cartItem.currentPrice)?.let {
+                                Row {
+                                    Text(
+                                        text = stringResource(Res.string.full_pay),
+                                        fontSize = 10.sp,
+                                        color = Color.Gray
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    PriceView2(
+                                        it,
+                                        cartItem.isOnSale,
+                                        cartItem.regularPrice,
+                                        magnifier = 0.9
+                                    )
+                                }
+                            }
+                        } else {
+                            PriceView2(
+                                cartItem.currentPrice,
+                                cartItem.isOnSale,
+                                cartItem.regularPrice,
+                                magnifier = 1.1
+                            )
                         }
                     }
 //

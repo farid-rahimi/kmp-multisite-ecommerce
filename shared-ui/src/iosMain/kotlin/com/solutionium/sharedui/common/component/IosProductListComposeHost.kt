@@ -28,7 +28,7 @@ class IosProductListComposeHost {
         val layoutDirection = if (isRtlLanguage(currentLanguage)) LayoutDirection.Rtl else LayoutDirection.Ltr
 
         CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-            WooTheme(brand = IosRuntimeConfig.brand) {
+            WooTheme(brand = IosRuntimeConfig.brand, languageCode = currentLanguage) {
                 SharedShopRoot()
             }
         }

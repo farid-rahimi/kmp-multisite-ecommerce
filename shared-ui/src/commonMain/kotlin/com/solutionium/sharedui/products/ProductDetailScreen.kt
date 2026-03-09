@@ -353,6 +353,7 @@ fun ProductDetailScreen(
                                     (product.varType == ProductVarType.SIMPLE) ||
                                     (product.varType == ProductVarType.VARIABLE && selectedVariation != null) ||
                                     (selectedDecant != null),
+                        showInstallmentPrice = uiState.installmentPriceEnabled,
                         onAddToCartClick = viewModel::onAddToCartClick,
                         onIncreaseItem = viewModel::increaseQuantity,
                         onRemove = viewModel::removeItem
@@ -972,6 +973,7 @@ private fun ProductDetailBottomBar(
     isVariationSelected: Boolean = true,
     stockStatus: String,
     isLowStock: Boolean = false,
+    showInstallmentPrice: Boolean = false,
     onAddToCartClick: () -> Unit,
     onIncreaseItem: () -> Unit = {},
     onRemove: () -> Unit
@@ -996,43 +998,51 @@ private fun ProductDetailBottomBar(
 
             Column {
                 if (isAvailable) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.installment_pay),
-                            fontSize = 11.sp,
-                            color = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(" x 4 ", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                        PriceView2(
-                            price = price / 4,
-                            onSale = onSales,
-                            regularPrice = regularPrice?.let { it / 4 },
-                            magnifier = 1.3
-                        )
-                    }
-                    //PriceView2(price, onSales, regularPrice, magnifier = 1.3)
-
-                    discountedPrice(price)?.let {
+                    if (showInstallmentPrice) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = stringResource(Res.string.full_pay),
+                                text = stringResource(Res.string.installment_pay),
                                 fontSize = 11.sp,
                                 color = Color.Gray
                             )
                             Spacer(modifier = Modifier.width(8.dp))
+                            Text(" x 4 ", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                             PriceView2(
-                                price = discountedPrice(price) ?: price,
+                                price = price / 4,
                                 onSale = onSales,
-                                regularPrice = discountedPrice(regularPrice)
-                                    ?: regularPrice,
-                                magnifier = 1.0
+                                regularPrice = regularPrice?.let { it / 4 },
+                                magnifier = 1.3
                             )
                         }
+
+                        discountedPrice(price)?.let {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.full_pay),
+                                    fontSize = 11.sp,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                PriceView2(
+                                    price = discountedPrice(price) ?: price,
+                                    onSale = onSales,
+                                    regularPrice = discountedPrice(regularPrice)
+                                        ?: regularPrice,
+                                    magnifier = 1.0
+                                )
+                            }
+                        }
+                    } else {
+                        PriceView2(
+                            price = price,
+                            onSale = onSales,
+                            regularPrice = regularPrice,
+                            magnifier = 1.2
+                        )
                     }
 
                 }
@@ -1262,4 +1272,3 @@ private fun HtmlTextCompat(
 }
 
 private fun String.stripHtmlTags(): String = replace(Regex("<.*?>"), "")
-

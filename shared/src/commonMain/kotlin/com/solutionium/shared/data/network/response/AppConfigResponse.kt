@@ -23,6 +23,9 @@ data class AppConfigResponse (
     @SerialName("payment_force_enabled")
     val paymentForceEnabled: List<String>? = null,
 
+    @SerialName("installment_price")
+    val installmentPrice: Boolean? = null,
+
     @SerialName("bacs_details")
     val bacsDetailsResponse: BACSDetailsResponse? = null,
 

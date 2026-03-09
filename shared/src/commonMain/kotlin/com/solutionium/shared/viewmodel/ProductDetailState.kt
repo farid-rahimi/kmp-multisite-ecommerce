@@ -16,7 +16,8 @@ data class ProductDetailState(
     val message: String? = null,
     val error: GeneralError? = null,
     val favoriteIds: List<Int> = emptyList(),
-    val paymentDiscount: Double? = null
+    val paymentDiscount: Double? = null,
+    val installmentPriceEnabled: Boolean = false,
 ) {
     fun isFavorite(): Boolean =
          product?.id?.let { favoriteIds.contains(it) } ?: false
@@ -25,4 +26,3 @@ data class ProductDetailState(
         originalPrice?.let { paymentDiscount?.let { (100 - it) / 100 }?.let { it * originalPrice }}
 
 }
-

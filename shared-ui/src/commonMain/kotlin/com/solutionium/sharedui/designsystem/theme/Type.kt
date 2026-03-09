@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun wooTypography(): Typography {
-    val primaryFont = SharedUiFonts.primary()
+    val primaryFont = SharedUiFonts.primary(LocalAppLanguage.current)
     return Typography(
     displayLarge = TextStyle(
         fontFamily = primaryFont,

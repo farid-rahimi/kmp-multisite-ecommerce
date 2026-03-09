@@ -97,7 +97,7 @@ class MainActivity : ComponentActivity() {
             }
 
             CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-                WooTheme(brand = brand) {
+                WooTheme(brand = brand, languageCode = currentLanguage) {
                     if (uiState.showLanguageScreen) {
                         LanguageSelectionScreen(
                             onLanguageSelected = viewModel::onLanguageSelected,
