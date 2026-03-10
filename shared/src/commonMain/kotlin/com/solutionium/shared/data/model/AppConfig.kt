@@ -18,6 +18,7 @@ data class AppConfig (
     val paymentForceEnabled: List<String> = emptyList(),
 
     val installmentPrice: Boolean = false,
+    val walletEnabled: Boolean = false,
 
     val bacsDetails: BACSDetails? = null,
 

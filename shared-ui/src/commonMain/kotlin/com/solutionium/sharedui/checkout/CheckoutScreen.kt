@@ -382,12 +382,14 @@ fun CheckoutFormScreen(
 
             // --- Wallet Payment Section ---
             item {
-                WalletPaymentSection(
-                    walletBalance = state.userWallet?.balance ?: 0.0,
-                    useWallet = state.useWallet,
-                    onUseWalletChange = viewModel::onUseWalletChange,
-                    orderTotal = state.paidByWallet
-                )
+                if (state.walletEnabled) {
+                    WalletPaymentSection(
+                        walletBalance = state.userWallet?.balance ?: 0.0,
+                        useWallet = state.useWallet,
+                        onUseWalletChange = viewModel::onUseWalletChange,
+                        orderTotal = state.paidByWallet
+                    )
+                }
             }
 
             item {
@@ -415,7 +417,7 @@ fun CheckoutFormScreen(
                                 hasDiscount = { viewModel.paymentDiscountAmount(it) },
                                 isLoading = state.isLoadingPaymentGateways,
                                 // Let the section know if it's for a partial payment
-                                showAsRemainingPayment = state.useWallet
+                                showAsRemainingPayment = state.walletEnabled && state.useWallet
                             )
                         }
                     }

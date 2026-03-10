@@ -37,6 +37,7 @@ fun AppConfigResponse.toModel(language: String?): AppConfig {
             ?: emptyMap(),
         paymentForceEnabled = paymentForceEnabled ?: emptyList(),
         installmentPrice = installmentPrice == true,
+        walletEnabled = walletEnabled == true,
         bacsDetails = bacsDetailsResponse?.toModel(),
         images = images?.associate { it.termID to (it.src.orEmpty()) } ?: emptyMap(),
         freeShippingMethodID = freeShippingMethodID,

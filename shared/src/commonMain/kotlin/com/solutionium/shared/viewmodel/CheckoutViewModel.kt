@@ -21,6 +21,7 @@ import com.solutionium.shared.domain.checkout.GetShippingMethodsUseCase
 import com.solutionium.shared.domain.config.ForcedEnabledPaymentUseCase
 import com.solutionium.shared.domain.config.GetBACSDetailsUseCase
 import com.solutionium.shared.domain.config.PaymentMethodDiscountUseCase
+import com.solutionium.shared.domain.config.WalletEnabledUseCase
 import com.solutionium.shared.domain.user.GetUserWalletUseCase
 import com.solutionium.shared.domain.user.LoadAddressesUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -47,6 +48,7 @@ class CheckoutViewModel(
     private val paymentMethodDiscountUseCase: PaymentMethodDiscountUseCase,
     private val getBACSDetails: GetBACSDetailsUseCase,
     private val getUserWalletUseCase: GetUserWalletUseCase,
+    private val walletEnabledUseCase: WalletEnabledUseCase,
     private val paymentUnsuccessMessage: (String) -> String = { status ->
         "Payment was not successful. Status: $status"
     },
@@ -69,7 +71,27 @@ class CheckoutViewModel(
         loadShippingMethods()
         loadPaymentGateways()
         loadPaymentDiscount()
-        loadUserWallet()
+        loadWalletFeature()
+    }
+
+    private fun loadWalletFeature() {
+        scope.launch {
+            val enabled = walletEnabledUseCase()
+            _state.update { it.copy(walletEnabled = enabled) }
+            if (enabled) {
+                loadUserWallet()
+            } else {
+                _state.update {
+                    it.copy(
+                        userWallet = null,
+                        loadingWallet = false,
+                        useWallet = false,
+                        paidByWallet = 0.0,
+                    )
+                }
+                recalculateTotals()
+            }
+        }
     }
 
     private fun loadUserWallet() {
@@ -543,6 +565,7 @@ class CheckoutViewModel(
     }
 
     fun onUseWalletChange(useWallet: Boolean) {
+        if (!_state.value.walletEnabled) return
         _state.update { it.copy(useWallet = useWallet) }
         recalculateTotals()
     }

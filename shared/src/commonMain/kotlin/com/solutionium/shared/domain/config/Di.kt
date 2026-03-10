@@ -14,6 +14,7 @@ import com.solutionium.shared.domain.config.impl.HomeBannersUseCaseImpl
 import com.solutionium.shared.domain.config.impl.InstallmentPriceEnabledUseCaseImpl
 import com.solutionium.shared.domain.config.impl.PaymentMethodDiscountUseCaseImpl
 import com.solutionium.shared.domain.config.impl.ReviewCriteriaUseCaseImpl
+import com.solutionium.shared.domain.config.impl.WalletEnabledUseCaseImpl
 import org.koin.dsl.module
 
 fun getConfigDomainModules() = setOf(configDomainModule, appConfigDataModule)
@@ -33,4 +34,5 @@ val configDomainModule = module {
     factory<GetContactInfoUseCase> { GetContactInfoUseCaseImpl(get()) }
     factory<GetSearchTabsUseCase> { GetSearchTabsUseCaseImpl(get()) }
     factory<InstallmentPriceEnabledUseCase> { InstallmentPriceEnabledUseCaseImpl(get()) }
+    factory<WalletEnabledUseCase> { WalletEnabledUseCaseImpl(get()) }
 }

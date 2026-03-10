@@ -55,6 +55,7 @@ data class CheckoutUiState(
     val paymentMethodDiscounts: Map<String, Double> = emptyMap(),
     val availableAddresses: List<Address> = emptyList(),
     val isAddressListExpanded: Boolean = false,
+    val walletEnabled: Boolean = false,
     val userWallet: UserWallet? = null,
     val loadingWallet: Boolean = false,
     val useWallet: Boolean = false,

@@ -28,6 +28,7 @@ val checkoutModule = module {
             paymentMethodDiscountUseCase = get(),
             getBACSDetails = get(),
             getUserWalletUseCase = get(),
+            walletEnabledUseCase = get(),
         )
     }
 }

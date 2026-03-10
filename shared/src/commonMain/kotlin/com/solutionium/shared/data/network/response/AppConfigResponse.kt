@@ -26,6 +26,9 @@ data class AppConfigResponse (
     @SerialName("installment_price")
     val installmentPrice: Boolean? = null,
 
+    @SerialName("wallet_enabled")
+    val walletEnabled: Boolean? = null,
+
     @SerialName("bacs_details")
     val bacsDetailsResponse: BACSDetailsResponse? = null,
 
