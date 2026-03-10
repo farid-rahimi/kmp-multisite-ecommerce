@@ -218,7 +218,7 @@ fun ProductThumbnailCard2(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text( // Product Name
@@ -232,6 +232,8 @@ fun ProductThumbnailCard2(
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.heightIn(min = 30.dp) // Ensure space for 2 lines
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 if (showStock) {
                     val stockText = if (product.manageStock && product.stock > 0) {
@@ -300,16 +302,16 @@ fun ProductThumbnailCard2(
                 when (product.type) {
                     ProductCatType.PERFUME -> PerfumeAttributes2(product)
                     ProductCatType.SHOES -> ShoeAttributes2(product)
-                    else -> Spacer(modifier = Modifier.height(18.dp)) // Placeholder or empty space for other types
+                    else -> Spacer(modifier = Modifier.height(4.dp)) // Placeholder or empty space for other types
                 }
 
 
                 RotatingFeatureText2(features = product.features().map { it.toUiFeature2() })
 
 
-                // Rotating Features Text
+                 //Rotating Features Text
 //                if (product.rotatingFeatures.isNotEmpty()) {
-//                    RotatingFeatureText(features = product.rotatingFeatures)
+//                    RotatingFeatureText2(features = product.rotatingFeatures)
 //                } else {
 //                    Spacer(modifier = Modifier.height(18.dp)) // Ensure consistent height if no features
 //                }

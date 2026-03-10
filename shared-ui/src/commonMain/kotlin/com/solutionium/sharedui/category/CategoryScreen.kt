@@ -1,6 +1,5 @@
 package com.solutionium.sharedui.category
 
-import com.solutionium.sharedui.common.component.SearchAppBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,41 +50,32 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.solutionium.sharedui.common.component.CategoryScreenPlaceholder
-import com.solutionium.sharedui.common.component.PerfumeAttributes2
-import com.solutionium.sharedui.common.component.PriceView2
-import com.solutionium.sharedui.common.component.ShoeAttributes2
-import com.solutionium.sharedui.resources.Res
-import com.solutionium.sharedui.resources.all_perfumes_title
-import com.solutionium.sharedui.resources.all_shoes_title
-import com.solutionium.sharedui.resources.brands_title
-import com.solutionium.sharedui.resources.discover_perfume_collections
-import com.solutionium.sharedui.resources.in_stock
-import com.solutionium.sharedui.resources.in_stock_count
-import com.solutionium.sharedui.resources.no_results_found
-import com.solutionium.sharedui.resources.out_of_stock
-import com.solutionium.sharedui.resources.scents_title
-import com.solutionium.sharedui.resources.search
-import com.solutionium.sharedui.resources.seasons_title
-import com.solutionium.sharedui.resources.shoe_brands_title
-import com.solutionium.sharedui.resources.show_all_brands_text
-import com.solutionium.sharedui.resources.show_all_results
-import com.solutionium.sharedui.resources.show_all_scents_text
 import com.solutionium.shared.data.model.AttributeTerm
 import com.solutionium.shared.data.model.DisplayableTerm
-import com.solutionium.shared.data.model.PERFUME_CAT_ID
 import com.solutionium.shared.data.model.PRODUCT_ARG_ATTRIBUTE
 import com.solutionium.shared.data.model.PRODUCT_ARG_ATTRIBUTE_TERM
 import com.solutionium.shared.data.model.PRODUCT_ARG_BRAND_ID
-import com.solutionium.shared.data.model.PRODUCT_ARG_CATEGORY
 import com.solutionium.shared.data.model.PRODUCT_ARG_SEARCH
 import com.solutionium.shared.data.model.PRODUCT_ARG_TITLE
 import com.solutionium.shared.data.model.ProductCatType
 import com.solutionium.shared.data.model.ProductThumbnail
-import com.solutionium.shared.data.model.SHOES_CAT_ID
 import com.solutionium.shared.viewmodel.CategoryDisplayType
 import com.solutionium.shared.viewmodel.CategoryScreenState
 import com.solutionium.shared.viewmodel.CategoryViewModel
+import com.solutionium.sharedui.common.component.CategoryScreenPlaceholder
+import com.solutionium.sharedui.common.component.PerfumeAttributes2
+import com.solutionium.sharedui.common.component.PriceView2
+import com.solutionium.sharedui.common.component.SearchAppBar
+import com.solutionium.sharedui.common.component.ShoeAttributes2
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.all_perfumes_title
+import com.solutionium.sharedui.resources.in_stock
+import com.solutionium.sharedui.resources.in_stock_count
+import com.solutionium.sharedui.resources.no_results_found
+import com.solutionium.sharedui.resources.out_of_stock
+import com.solutionium.sharedui.resources.search
+import com.solutionium.sharedui.resources.show_all_results
+import com.solutionium.shared.data.model.SearchTabViewType
 import org.jetbrains.compose.resources.stringResource
 
 
@@ -369,7 +359,7 @@ fun CategoryContent(
                         }
 
                         when (section.viewType) {
-                            com.solutionium.shared.data.model.SearchTabViewType.SPOTLIGHT -> {
+                            SearchTabViewType.SPOTLIGHT -> {
                                 PerfumeSpotlightSection(
                                     spotlightTerms = section.items.filterIsInstance<AttributeTerm>(),
                                     title = section.title,
@@ -379,7 +369,7 @@ fun CategoryContent(
                                 )
                             }
 
-                            com.solutionium.shared.data.model.SearchTabViewType.CIRCLE_ROW -> {
+                            SearchTabViewType.CIRCLE_ROW -> {
                                 SmallItemsSection(
                                     title = section.title,
                                     items = section.items,
@@ -390,7 +380,7 @@ fun CategoryContent(
                                 )
                             }
 
-                            com.solutionium.shared.data.model.SearchTabViewType.GRID -> {
+                            SearchTabViewType.GRID -> {
                                 ItemGridSection(
                                     title = section.title,
                                     viewAllText = section.moreTitle ?: section.moreLink?.title ?: "All",
@@ -659,6 +649,7 @@ fun SmallItemCard(
     onClick: () -> Unit
 ) {
     Box(
+        contentAlignment = Alignment.TopCenter,
         // Using OutlinedCard for a slightly different feel for brands
         //onClick = onClick,
         modifier = modifier
@@ -668,7 +659,9 @@ fun SmallItemCard(
         //border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 8.dp),
             horizontalAlignment = CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -689,6 +682,7 @@ fun SmallItemCard(
                 text = item.name,
                 fontSize = MaterialTheme.typography.labelLarge.fontSize,
                 maxLines = 1,
+                modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
