@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
@@ -34,12 +35,15 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -80,6 +84,7 @@ import com.solutionium.sharedui.resources.back
 import com.solutionium.sharedui.resources.enter_otp
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhoneLoginScreen(
     modifier: Modifier = Modifier,
@@ -105,48 +110,60 @@ fun PhoneLoginScreen(
     messageType: AccountMessageType?,
     onDismissError: () -> Unit,
     privacyPolicyContent: String,
+    onBack: () -> Unit,
 ) {
     var loginWithPassword by remember { mutableStateOf(false) }
     var siteBAuthMode by remember { mutableStateOf(SiteBAuthMode.Login) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
+    val screenTitle = when {
+        brand == WooBrand.SiteB && passwordResetStage != PasswordResetStage.Idle -> stringResource(Res.string.forgot_password)
+        brand == WooBrand.SiteA && loginWithPassword -> stringResource(Res.string.login)
+        brand == WooBrand.SiteB && siteBAuthMode == SiteBAuthMode.Login -> stringResource(Res.string.login)
+        brand == WooBrand.SiteB && siteBAuthMode == SiteBAuthMode.Signup -> stringResource(Res.string.create_account)
+        else -> stringResource(Res.string.login_or_signup)
+    }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
-    ) {
-        if (showPrivacyDialog) {
-            PrivacyPolicyDialog(content = privacyPolicyContent, onDismiss = { showPrivacyDialog = false })
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(if (brand == WooBrand.SiteB) Alignment.TopCenter else Alignment.Center)
-                .padding(top = if (brand == WooBrand.SiteB) 24.dp else 0.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = if (brand == WooBrand.SiteB) Arrangement.Top else Arrangement.Center,
-        ) {
-            Text(
-                when {
-                    brand == WooBrand.SiteB && passwordResetStage != PasswordResetStage.Idle -> stringResource(Res.string.forgot_password)
-                    brand == WooBrand.SiteA && loginWithPassword -> stringResource(Res.string.login)
-                    brand == WooBrand.SiteB && siteBAuthMode == SiteBAuthMode.Login -> stringResource(Res.string.login)
-                    brand == WooBrand.SiteB && siteBAuthMode == SiteBAuthMode.Signup -> stringResource(Res.string.create_account)
-                    else -> stringResource(Res.string.login_or_signup)
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text(screenTitle) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
                 },
-                style = MaterialTheme.typography.headlineSmall,
             )
-            Spacer(modifier = Modifier.height(24.dp))
-
-            AnimatedVisibility(visible = !errorMessage.isNullOrBlank()) {
-                ErrorMessageCard(
-                    message = errorMessage.orEmpty(),
-                    messageType = messageType ?: AccountMessageType.Error,
-                    onDismiss = onDismissError,
-                )
+        },
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(32.dp),
+        ) {
+            if (showPrivacyDialog) {
+                PrivacyPolicyDialog(content = privacyPolicyContent, onDismiss = { showPrivacyDialog = false })
             }
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(if (brand == WooBrand.SiteB) Alignment.TopCenter else Alignment.Center)
+                    .padding(top = if (brand == WooBrand.SiteB) 24.dp else 0.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = if (brand == WooBrand.SiteB) Arrangement.Top else Arrangement.Center,
+            ) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                AnimatedVisibility(visible = !errorMessage.isNullOrBlank()) {
+                    ErrorMessageCard(
+                        message = errorMessage.orEmpty(),
+                        messageType = messageType ?: AccountMessageType.Error,
+                        onDismiss = onDismissError,
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
 
             if (brand == WooBrand.SiteA) {
                 AnimatedVisibility(
@@ -243,30 +260,31 @@ fun PhoneLoginScreen(
                 )
             }
 
-            TextButton(
-                onClick = { showPrivacyDialog = true },
-                modifier = Modifier.padding(16.dp),
-            ) {
-                Text(
-                    text = stringResource(Res.string.privacy_policy),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
-
-        if (brand == WooBrand.SiteA) {
-            TextButton(
-                onClick = { loginWithPassword = !loginWithPassword },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter),
-            ) {
-                val text = if (loginWithPassword) {
-                    stringResource(Res.string.login_with_otp_instead)
-                } else {
-                    stringResource(Res.string.login_with_password)
+                TextButton(
+                    onClick = { showPrivacyDialog = true },
+                    modifier = Modifier.padding(16.dp),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.privacy_policy),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
-                Text(text)
+            }
+
+            if (brand == WooBrand.SiteA) {
+                TextButton(
+                    onClick = { loginWithPassword = !loginWithPassword },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter),
+                ) {
+                    val text = if (loginWithPassword) {
+                        stringResource(Res.string.login_with_otp_instead)
+                    } else {
+                        stringResource(Res.string.login_with_password)
+                    }
+                    Text(text)
+                }
             }
         }
     }

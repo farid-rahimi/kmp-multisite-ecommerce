@@ -56,7 +56,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
@@ -97,7 +99,7 @@ import com.solutionium.shared.viewmodel.PasswordResetStage
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 fun AccountScreen(
     onAddressClick: () -> Unit,
     onFavoriteClick: (title: String, ids: String) -> Unit,
@@ -110,6 +112,22 @@ fun AccountScreen(
     val state by viewModel.state.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val brand = LocalWooBrand.current
+
+    val hasInnerAccountStage =
+        state.stage != AccountStage.LoggedIn && state.stage != AccountStage.LoggedOut
+    val hasPasswordResetFlow =
+        state.stage == AccountStage.LoggedOut && state.passwordResetStage != PasswordResetStage.Idle
+    val hideOuterTopBar = state.stage == AccountStage.LoggedOut ||
+        state.stage == AccountStage.OtpVerification ||
+        state.stage == AccountStage.EditProfile ||
+        state.stage == AccountStage.NewUserDetailsInput
+
+    BackHandler(enabled = hasInnerAccountStage || hasPasswordResetFlow) {
+        when {
+            hasPasswordResetFlow -> viewModel.cancelPasswordReset()
+            else -> viewModel.onNavigateBack(onBack)
+        }
+    }
 
     DisposableEffect(viewModel) {
         onDispose { viewModel.clear() }
@@ -153,52 +171,54 @@ fun AccountScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    if (state.stage != AccountStage.ChangeLanguage && state.stage != AccountStage.LoggedOut) {
-                        Text(stringResource(Res.string.feature_account_title))
-                    }
-                },
-                actions = {
-                    if (state.stage != AccountStage.ChangeLanguage) {
-                        var menuExpanded by remember { mutableStateOf(false) }
+            if (!hideOuterTopBar) {
+                TopAppBar(
+                    title = {
+                        if (state.stage != AccountStage.ChangeLanguage && state.stage != AccountStage.LoggedOut) {
+                            Text(stringResource(Res.string.feature_account_title))
+                        }
+                    },
+                    actions = {
+                        if (state.stage != AccountStage.ChangeLanguage) {
+                            var menuExpanded by remember { mutableStateOf(false) }
 
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                        }
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                            }
 
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false },
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(Res.string.language_menu)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    viewModel.onNavigateToLanguage()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(Res.string.contact_support)) },
-                                onClick = {
-                                    viewModel.showContactSupport()
-                                    menuExpanded = false
-                                },
-                            )
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(Res.string.language_menu)) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        viewModel.onNavigateToLanguage()
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(Res.string.contact_support)) },
+                                    onClick = {
+                                        viewModel.showContactSupport()
+                                        menuExpanded = false
+                                    },
+                                )
+                            }
                         }
-                    }
-                },
-                navigationIcon = {
-                    if (state.stage == AccountStage.ChangeLanguage) {
-                        IconButton(onClick = { viewModel.onNavigateBack(onBack) }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                            )
+                    },
+                    navigationIcon = {
+                        if (state.stage == AccountStage.ChangeLanguage) {
+                            IconButton(onClick = { viewModel.onNavigateBack(onBack) }) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                )
+                            }
                         }
-                    }
-                },
-            )
+                    },
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
@@ -210,7 +230,7 @@ fun AccountScreen(
             Box(
                 modifier = modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(if (hideOuterTopBar) PaddingValues(0.dp) else paddingValues),
                 contentAlignment = Alignment.Center,
             ) {
                 when (state.stage) {
@@ -240,6 +260,13 @@ fun AccountScreen(
                         messageType = state.messageType,
                         onDismissError = viewModel::clearMessage,
                         privacyPolicyContent = state.privacyPolicy,
+                        onBack = {
+                            if (state.passwordResetStage != PasswordResetStage.Idle) {
+                                viewModel.cancelPasswordReset()
+                            } else {
+                                viewModel.onNavigateBack(onBack)
+                            }
+                        },
                     )
 
                     AccountStage.OtpVerification -> OtpVerificationScreen(
@@ -250,6 +277,7 @@ fun AccountScreen(
                         onOtpChange = viewModel::onOtpChange,
                         onVerifyOtp = viewModel::verifyOtp,
                         onRequestNewOtp = { viewModel.requestOtp() },
+                        onNavigateBack = { viewModel.onNavigateBack(onBack) },
                     )
 
                     AccountStage.NewUserDetailsInput -> EditProfileSubScreen(
@@ -257,7 +285,7 @@ fun AccountScreen(
                         isLoading = state.isLoading,
                         isNewUser = true,
                         userDetails = state.userDetails ?: UserDetails(),
-                        onNavigateBack = null,
+                        onNavigateBack = { viewModel.onNavigateBack(onBack) },
                         onSaveChanges = viewModel::submitNewUserDetails,
                         validationErrors = state.validationErrors,
                     )

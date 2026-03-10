@@ -90,7 +90,7 @@ fun EditProfileSubScreen(
                     )
                 },
                 navigationIcon = {
-                    if (!isNewUser) {
+                    if (onNavigateBack != null) {
                         IconButton(onClick = { onNavigateBack?.invoke() }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
