@@ -33,6 +33,10 @@ val appModule = module {
                     "SITE_B" -> "wp-json/woo-mobile-auth/v1/login_user"
                     else -> "wp-json/digits/v1/login_user"
                 },
+                passwordRegisterPath = when (BuildConfig.SITE_BRAND) {
+                    "SITE_B" -> "wp-json/woo-mobile-auth/v1/register_user"
+                    else -> "wp-json/digits/v1/register_user"
+                },
                 enableNetworkLogs = true,
             )
         }

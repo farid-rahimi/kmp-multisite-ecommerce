@@ -18,6 +18,9 @@ data class EditUserRequest(
     @SerialName("email")
     val email: String? = null,
 
+    @SerialName("phone_number")
+    val phoneNumber: String? = null,
+
     @SerialName("meta")
     val meta: EditUserFCMTokenMeta? = null
 )

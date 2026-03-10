@@ -13,6 +13,19 @@ interface WooUserRemoteSource {
     suspend fun sendOtp(phoneNumber: String): Result<Unit, GeneralError>
 
     suspend fun loginOrRegister(phoneNumber: String, otp: String): Result<UserAccess, GeneralError>
+    suspend fun signupUserPass(
+        name: String,
+        email: String,
+        phone: String,
+        pass: String,
+    ): Result<UserAccess, GeneralError>
+    suspend fun requestPasswordResetOtp(email: String): Result<Unit, GeneralError>
+    suspend fun verifyPasswordResetOtp(email: String, otp: String): Result<Unit, GeneralError>
+    suspend fun resetPasswordByOtp(
+        email: String,
+        otp: String,
+        newPassword: String,
+    ): Result<Unit, GeneralError>
 
     suspend fun logout(token: String?): Result<Boolean, GeneralError>
     suspend fun getMe(token: String?): Result<UserDetails, GeneralError>

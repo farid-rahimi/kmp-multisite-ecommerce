@@ -123,6 +123,102 @@ internal class WooUserRemoteSourceImpl(
             is NetworkResponse.UnknownError -> Result.Failure(GeneralError.UnknownError(result.error))
         }
 
+    override suspend fun signupUserPass(
+        name: String,
+        email: String,
+        phone: String,
+        pass: String,
+    ): Result<UserAccess, GeneralError> =
+        when (
+            val result = authService.registerUser(
+                name = name,
+                email = email,
+                phone = phone,
+                password = pass,
+            )
+        ) {
+            is NetworkResponse.Success -> {
+                val response = result.body
+                if (response?.success == true) {
+                    Result.Success(response.data.toUserAccess())
+                } else {
+                    Result.Failure(GeneralError.UnknownError(Throwable(response?.data.toString())))
+                }
+            }
+
+            is NetworkResponse.ApiError -> {
+                val errorResponse = result.body
+                Result.Failure(
+                    GeneralError.ApiError(
+                        errorResponse.data?.msg,
+                        errorResponse.data?.code,
+                        result.code,
+                    ),
+                )
+            }
+
+            is NetworkResponse.NetworkError -> Result.Failure(GeneralError.NetworkError)
+            is NetworkResponse.UnknownError -> Result.Failure(GeneralError.UnknownError(result.error))
+        }
+
+    override suspend fun requestPasswordResetOtp(email: String): Result<Unit, GeneralError> =
+        when (val result = authService.requestPasswordResetOtp(email)) {
+            is NetworkResponse.Success -> Result.Success(Unit)
+            is NetworkResponse.ApiError -> {
+                val errorResponse = result.body
+                Result.Failure(
+                    GeneralError.ApiError(
+                        errorResponse.data?.msg,
+                        errorResponse.data?.code,
+                        result.code,
+                    ),
+                )
+            }
+
+            is NetworkResponse.NetworkError -> Result.Failure(GeneralError.NetworkError)
+            is NetworkResponse.UnknownError -> Result.Failure(GeneralError.UnknownError(result.error))
+        }
+
+    override suspend fun verifyPasswordResetOtp(email: String, otp: String): Result<Unit, GeneralError> =
+        when (val result = authService.verifyPasswordResetOtp(email, otp)) {
+            is NetworkResponse.Success -> Result.Success(Unit)
+            is NetworkResponse.ApiError -> {
+                val errorResponse = result.body
+                Result.Failure(
+                    GeneralError.ApiError(
+                        errorResponse.data?.msg,
+                        errorResponse.data?.code,
+                        result.code,
+                    ),
+                )
+            }
+
+            is NetworkResponse.NetworkError -> Result.Failure(GeneralError.NetworkError)
+            is NetworkResponse.UnknownError -> Result.Failure(GeneralError.UnknownError(result.error))
+        }
+
+    override suspend fun resetPasswordByOtp(
+        email: String,
+        otp: String,
+        newPassword: String,
+    ): Result<Unit, GeneralError> =
+        when (val result = authService.resetPasswordByOtp(email, otp, newPassword)) {
+            is NetworkResponse.Success -> Result.Success(Unit)
+            is NetworkResponse.ApiError -> {
+                val errorResponse = result.body
+                Result.Failure(
+                    GeneralError.ApiError(
+                        errorResponse.data?.msg,
+                        errorResponse.data?.code,
+                        result.code,
+                    ),
+                )
+            }
+
+            is NetworkResponse.NetworkError -> Result.Failure(GeneralError.NetworkError)
+            is NetworkResponse.UnknownError -> Result.Failure(GeneralError.UnknownError(result.error))
+        }
+
     override suspend fun logout(token: String?): Result<Boolean, GeneralError> =
         when (val result = authService.logout("Bearer $token")) {
             is NetworkResponse.Success -> {

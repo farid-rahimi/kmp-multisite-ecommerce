@@ -15,6 +15,19 @@ interface WooUserRepository {
 
     suspend fun loginOrRegister(phoneNumber: String, otp: String): Result<ActionType, GeneralError>
     suspend fun loginUserPass(user: String, pass: String): Result<ActionType, GeneralError>
+    suspend fun signupUserPass(
+        name: String,
+        email: String,
+        phone: String,
+        pass: String,
+    ): Result<ActionType, GeneralError>
+    suspend fun requestPasswordResetOtp(email: String): Result<Unit, GeneralError>
+    suspend fun verifyPasswordResetOtp(email: String, otp: String): Result<Unit, GeneralError>
+    suspend fun resetPasswordByOtp(
+        email: String,
+        otp: String,
+        newPassword: String,
+    ): Result<Unit, GeneralError>
 
 
     suspend fun getMe(): Result<UserDetails, GeneralError>
@@ -40,4 +53,3 @@ interface WooUserRepository {
     suspend fun setLanguage(languageCode: String)
 
 }
-

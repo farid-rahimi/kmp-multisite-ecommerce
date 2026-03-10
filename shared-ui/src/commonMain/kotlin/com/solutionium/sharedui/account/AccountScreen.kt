@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.solutionium.sharedui.common.component.LanguageSelectionScreen
+import com.solutionium.sharedui.designsystem.theme.LocalWooBrand
 import com.solutionium.sharedui.home.PlatformContactSupportDialog
 import com.solutionium.sharedui.resources.Res
 import com.solutionium.sharedui.resources.cancel
@@ -92,6 +93,7 @@ import com.solutionium.shared.data.model.UserDetails
 import com.solutionium.shared.data.model.UserWallet
 import com.solutionium.shared.viewmodel.AccountStage
 import com.solutionium.shared.viewmodel.AccountViewModel
+import com.solutionium.shared.viewmodel.PasswordResetStage
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -107,6 +109,7 @@ fun AccountScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val brand = LocalWooBrand.current
 
     DisposableEffect(viewModel) {
         onDispose { viewModel.clear() }
@@ -140,7 +143,7 @@ fun AccountScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state.message) {
-        if (state.message != null) {
+        if (state.message != null && state.stage != AccountStage.LoggedOut) {
             snackbarHostState.showSnackbar(
                 message = state.message ?: "",
                 duration = SnackbarDuration.Short,
@@ -152,7 +155,7 @@ fun AccountScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    if (state.stage != AccountStage.ChangeLanguage) {
+                    if (state.stage != AccountStage.ChangeLanguage && state.stage != AccountStage.LoggedOut) {
                         Text(stringResource(Res.string.feature_account_title))
                     }
                 },
@@ -213,6 +216,7 @@ fun AccountScreen(
                 when (state.stage) {
                     AccountStage.LoggedOut -> PhoneLoginScreen(
                         modifier = Modifier.fillMaxSize(),
+                        brand = brand,
                         phoneNumber = state.phoneNumber ?: "",
                         username = state.username,
                         isLoading = state.isLoading,
@@ -221,6 +225,20 @@ fun AccountScreen(
                         onPasswordChange = viewModel::onPasswordChange,
                         onRequestOtp = viewModel::requestOtp,
                         onPasswordLogin = viewModel::loginWithPassword,
+                        onPasswordSignup = { name, email, phone, password ->
+                            viewModel.signupWithPassword(name, email, phone, password)
+                        },
+                        passwordResetStage = state.passwordResetStage,
+                        passwordResetEmail = state.passwordResetEmail,
+                        passwordResetOtp = state.passwordResetOtp,
+                        onRequestPasswordResetOtp = viewModel::requestPasswordResetOtp,
+                        onVerifyPasswordResetOtp = viewModel::verifyPasswordResetOtp,
+                        onResetPasswordByOtp = viewModel::resetPasswordByOtp,
+                        onCancelPasswordReset = viewModel::cancelPasswordReset,
+                        onStartPasswordReset = viewModel::startPasswordReset,
+                        errorMessage = state.message,
+                        messageType = state.messageType,
+                        onDismissError = viewModel::clearMessage,
                         privacyPolicyContent = state.privacyPolicy,
                     )
 
@@ -248,6 +266,7 @@ fun AccountScreen(
                         modifier = Modifier.fillMaxSize(),
                         isLoading = state.isLoading,
                         user = state.userDetails,
+                        showWallet = state.walletEnabled,
                         walletBalance = state.userWallet?.balance ?: 0.0,
                         isLoadingWalletBalance = state.isLoadingWallet,
                         onWalletClick = viewModel::onNavigateToWalletHistory,
@@ -299,6 +318,7 @@ fun UserAccountScreen(
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     user: UserDetails?,
+    showWallet: Boolean = false,
     walletBalance: Double,
     isLoadingWalletBalance: Boolean = false,
     onWalletClick: () -> Unit,
@@ -331,13 +351,15 @@ fun UserAccountScreen(
             HorizontalDivider()
         }
 
-        item {
-            WalletBalanceCard(
-                balance = walletBalance,
-                isLoading = isLoadingWalletBalance,
-                onWalletClick = onWalletClick,
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+        if (showWallet) {
+            item {
+                WalletBalanceCard(
+                    balance = walletBalance,
+                    isLoading = isLoadingWalletBalance,
+                    onWalletClick = onWalletClick,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
 
         item {

@@ -40,13 +40,16 @@ import com.solutionium.sharedui.resources.edit_profile
 import com.solutionium.sharedui.resources.email_address
 import com.solutionium.sharedui.resources.error_field_required
 import com.solutionium.sharedui.resources.error_invalid_email
+import com.solutionium.sharedui.resources.error_invalid_phone
 import com.solutionium.sharedui.resources.first_name
 import com.solutionium.sharedui.resources.last_name
-import com.solutionium.sharedui.resources.phone
+import com.solutionium.sharedui.resources.phone_number
 import com.solutionium.sharedui.resources.save_changes
 import com.solutionium.shared.data.model.UserDetails
 import com.solutionium.shared.viewmodel.AccountValidationErrorKeys
 import com.solutionium.shared.viewmodel.FieldErrors
+import com.solutionium.shared.util.PhoneNumberFormatter
+import com.solutionium.sharedui.resources.country_code
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -61,10 +64,17 @@ fun EditProfileSubScreen(
     onSaveChanges: (UserDetails) -> Unit,
     validationErrors: FieldErrors,
 ) {
+    val phoneParts = remember(userDetails.phoneNumber) { PhoneNumberFormatter.splitForUi(userDetails.phoneNumber) }
     var displayName by remember(userDetails.displayName) { mutableStateOf(userDetails.displayName) }
     var firstName by remember(userDetails.firstName) { mutableStateOf(userDetails.firstName) }
     var lastName by remember(userDetails.lastName) { mutableStateOf(userDetails.lastName) }
-    var email by remember(userDetails.email) { mutableStateOf(userDetails.email) }
+    var countryCode by remember(userDetails.phoneNumber) { mutableStateOf(phoneParts.countryCode) }
+    var phoneDigits by remember(userDetails.phoneNumber) { mutableStateOf(phoneParts.localNumber) }
+    var phoneEdited by remember(userDetails.phoneNumber) { mutableStateOf(false) }
+    val normalizedPhone = PhoneNumberFormatter.normalize(countryCode, phoneDigits)
+    val hasPhoneInput = countryCode.filter(Char::isDigit).isNotBlank() || phoneDigits.isNotBlank()
+    val isRealtimePhoneInvalid = phoneEdited && hasPhoneInput && !PhoneNumberFormatter.isCanonical(normalizedPhone)
+    val showPhoneError = validationErrors.phoneErrorKey != null || isRealtimePhoneInvalid
 
     Scaffold(
         modifier = modifier,
@@ -97,6 +107,24 @@ fun EditProfileSubScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            OutlinedTextField(
+                value = userDetails.email,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(stringResource(Res.string.email_address)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth(),
+                isError = validationErrors.emailErrorKey != null,
+                supportingText = {
+                    if (validationErrors.emailErrorKey != null) {
+                        Text(
+                            text = stringResource(mapValidationErrorToRes(validationErrors.emailErrorKey)),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                },
+            )
+
             Row(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = firstName,
@@ -139,27 +167,40 @@ fun EditProfileSubScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text(stringResource(Res.string.email_address)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth(),
-                isError = validationErrors.emailErrorKey != null,
-                supportingText = {
-                    if (validationErrors.emailErrorKey != null) {
-                        Text(
-                            text = stringResource(mapValidationErrorToRes(validationErrors.emailErrorKey)),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                },
-            )
-
-            Text(
-                stringResource(Res.string.phone, userDetails.phoneNumber),
-                style = MaterialTheme.typography.bodyLarge,
-            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = countryCode,
+                    onValueChange = {
+                        phoneEdited = true
+                        countryCode = PhoneNumberFormatter.sanitizeCountryCode(it)
+                        phoneDigits = phoneDigits.take(PhoneNumberFormatter.maxLocalInputDigits(countryCode))
+                    },
+                    label = { Text(stringResource(Res.string.country_code)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    modifier = Modifier.weight(0.35f),
+                    isError = showPhoneError,
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                OutlinedTextField(
+                    value = phoneDigits,
+                    onValueChange = {
+                        phoneEdited = true
+                        phoneDigits = it.filter(Char::isDigit).take(PhoneNumberFormatter.maxLocalInputDigits(countryCode))
+                    },
+                    label = { Text(stringResource(Res.string.phone_number)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    modifier = Modifier.weight(0.65f),
+                    isError = showPhoneError,
+                    supportingText = {
+                        if (showPhoneError) {
+                            Text(
+                                text = countryCodePhoneHint(countryCode),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    },
+                )
+            }
 
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(8.dp))
@@ -168,10 +209,11 @@ fun EditProfileSubScreen(
                 onClick = {
                     onSaveChanges(
                         userDetails.copy(
-                            displayName = displayName,
-                            firstName = firstName,
-                            lastName = lastName,
-                            email = email,
+                            displayName = displayName.trim(),
+                            firstName = firstName.trim(),
+                            lastName = lastName.trim(),
+                            email = userDetails.email.trim(),
+                            phoneNumber = normalizedPhone,
                         ),
                     )
                 },
@@ -192,6 +234,16 @@ private fun mapValidationErrorToRes(errorKey: String?): StringResource {
     return when (errorKey) {
         AccountValidationErrorKeys.FIELD_REQUIRED -> Res.string.error_field_required
         AccountValidationErrorKeys.INVALID_EMAIL -> Res.string.error_invalid_email
+        AccountValidationErrorKeys.INVALID_PHONE -> Res.string.error_invalid_phone
         else -> Res.string.error_field_required
+    }
+}
+
+private fun countryCodePhoneHint(countryCode: String): String {
+    val codeDigits = countryCode.filter(Char::isDigit)
+    return when (codeDigits) {
+        "971" -> "+971 XX XXX XXXX"
+        "98" -> "+98 XXX XXX XXXX"
+        else -> "$countryCode XXXXXXXXXX"
     }
 }

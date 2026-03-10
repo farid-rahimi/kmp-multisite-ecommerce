@@ -14,6 +14,10 @@ val userDomainModule = module {
     factory<CheckSuperUserUseCase> { CheckSuperUserUseCaseImpl(get()) }
     factory<LoginOrRegisterUseCase> { LoginOrRegisterUseCaseImpl(get()) }
     factory<LoginByUserPassUseCase> { LoginByUserPassUseCaseImpl(get()) }
+    factory<SignupByUserPassUseCase> { SignupByUserPassUseCaseImpl(get()) }
+    factory<RequestPasswordResetOtpUseCase> { RequestPasswordResetOtpUseCaseImpl(get()) }
+    factory<VerifyPasswordResetOtpUseCase> { VerifyPasswordResetOtpUseCaseImpl(get()) }
+    factory<ResetPasswordByOtpUseCase> { ResetPasswordByOtpUseCaseImpl(get()) }
     factory<LogoutUseCase> { LogoutUseCaseImpl(get()) }
     factory<GetCurrentUserUseCase> { GetCurrentUserUseCaseImpl(get()) }
     factory<LoadAddressesUseCase> { LoadAddressesUseCaseImpl(get()) }
@@ -28,4 +32,3 @@ val userDomainModule = module {
     factory<SetLanguageUseCase> { SetLanguageUseCaseImpl(get()) }
     factory<ObserveLanguageUseCase> { ObserveLanguageUseCaseImpl(get()) }
 }
-

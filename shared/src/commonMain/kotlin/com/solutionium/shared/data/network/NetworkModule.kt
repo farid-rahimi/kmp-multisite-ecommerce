@@ -31,6 +31,7 @@ data class NetworkConfig(
     val consumerKey: String,
     val consumerSecret: String,
     val passwordLoginPath: String = "wp-json/digits/v1/login_user",
+    val passwordRegisterPath: String = "wp-json/digits/v1/register_user",
     val enableNetworkLogs: Boolean = true,
 )
 
@@ -138,6 +139,7 @@ val networkModule = module {
         DigitsClient(
             client = get(named("NoAuthKtorClient")),
             passwordLoginPath = networkConfig.passwordLoginPath,
+            passwordRegisterPath = networkConfig.passwordRegisterPath,
         )
     }
     single { UserClient(get(named("NoAuthKtorClient"))) }

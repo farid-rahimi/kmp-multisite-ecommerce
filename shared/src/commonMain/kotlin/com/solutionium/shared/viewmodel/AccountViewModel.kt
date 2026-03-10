@@ -6,6 +6,7 @@ import com.solutionium.shared.data.model.Result
 import com.solutionium.shared.data.model.UserDetails
 import com.solutionium.shared.domain.config.GetContactInfoUseCase
 import com.solutionium.shared.domain.config.GetPrivacyPolicyUseCase
+import com.solutionium.shared.domain.config.WalletEnabledUseCase
 import com.solutionium.shared.domain.favorite.ObserveFavoritesUseCase
 import com.solutionium.shared.domain.order.GetLatestOrderUseCase
 import com.solutionium.shared.domain.user.CheckLoginUserUseCase
@@ -16,8 +17,13 @@ import com.solutionium.shared.domain.user.LoginByUserPassUseCase
 import com.solutionium.shared.domain.user.LoginOrRegisterUseCase
 import com.solutionium.shared.domain.user.LogoutUseCase
 import com.solutionium.shared.domain.user.ObserveLanguageUseCase
+import com.solutionium.shared.domain.user.RequestPasswordResetOtpUseCase
+import com.solutionium.shared.domain.user.ResetPasswordByOtpUseCase
 import com.solutionium.shared.domain.user.SendOtpUseCase
 import com.solutionium.shared.domain.user.SetLanguageUseCase
+import com.solutionium.shared.domain.user.SignupByUserPassUseCase
+import com.solutionium.shared.domain.user.VerifyPasswordResetOtpUseCase
+import com.solutionium.shared.util.PhoneNumberFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -36,10 +42,15 @@ class AccountViewModel(
     private val sendOtpUseCase: SendOtpUseCase,
     private val loginOrRegisterUseCase: LoginOrRegisterUseCase,
     private val loginByUserPassUseCase: LoginByUserPassUseCase,
+    private val signupByUserPassUseCase: SignupByUserPassUseCase,
+    private val requestPasswordResetOtpUseCase: RequestPasswordResetOtpUseCase,
+    private val verifyPasswordResetOtpUseCase: VerifyPasswordResetOtpUseCase,
+    private val resetPasswordByOtpUseCase: ResetPasswordByOtpUseCase,
     private val logoutUseCase: LogoutUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val editUserDetailsUseCase: EditUserDetailsUseCase,
     private val getUserWalletUseCase: GetUserWalletUseCase,
+    private val walletEnabledUseCase: WalletEnabledUseCase,
     private val observeFavoritesUseCase: ObserveFavoritesUseCase,
     private val latestOrderUseCase: GetLatestOrderUseCase,
     private val seLanguageUseCase: SetLanguageUseCase,
@@ -147,7 +158,9 @@ class AccountViewModel(
     }
 
     fun onNavigateToWalletHistory() {
-        _state.update { it.copy(stage = AccountStage.ViewWalletTransactions) }
+        if (_state.value.walletEnabled) {
+            _state.update { it.copy(stage = AccountStage.ViewWalletTransactions) }
+        }
 
     }
 
@@ -160,13 +173,21 @@ class AccountViewModel(
                 _state.update { it.copy(stage = AccountStage.LoggedIn, isLoading = false) }
                 fetchUserDetailsAndOrders()
             } else {
-                _state.update { it.copy(stage = AccountStage.LoggedOut, isLoading = false) }
+                _state.update {
+                    it.copy(
+                        stage = AccountStage.LoggedOut,
+                        isLoading = false,
+                        passwordResetStage = PasswordResetStage.Idle,
+                        passwordResetEmail = "",
+                        passwordResetOtp = "",
+                    )
+                }
             }
         }
     }
 
     fun onPhoneNumberChange(newNumber: String) {
-        _state.update { it.copy(phoneNumber = newNumber) }
+            _state.update { it.copy(phoneNumber = newNumber) }
         //_phoneNumber.value = newNumber.filter { it.isDigit() }.take(11) // Basic validation
     }
 
@@ -186,14 +207,14 @@ class AccountViewModel(
     fun requestOtp() {
         val phoneNumber = _state.value.phoneNumber ?: "0"
         if (phoneNumber.length < 11) {
-            _state.update { it.copy(message = "Please enter a valid 11-digit phone number.") }
+            setErrorMessage("Please enter a valid 11-digit phone number.")
 
             return
         }
 
         scope.launch {
             //_screenState.value = AccountUiState.Loading
-            _state.update { it.copy(otp = "", isLoading = true) }
+            _state.update { it.copy(otp = "", isLoading = true, message = null, messageType = null) }
 
             sendOtpUseCase(phoneNumber).collect { result ->
 
@@ -203,19 +224,16 @@ class AccountViewModel(
                             it.copy(
                                 stage = AccountStage.OtpVerification,
                                 isLoading = false,
-                                message = null
+                                message = null,
+                                messageType = null,
                             )
                         }
                         //_screenState.value = AccountUiState.OtpVerification(_phoneNumber.value)
                     }
 
                     is Result.Failure -> {
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                message = "Failed to send OTP. Please try again."
-                            )
-                        }
+                        _state.update { it.copy(isLoading = false) }
+                        setErrorMessage("Failed to send OTP. Please try again.")
 
                     }
                 }
@@ -228,13 +246,13 @@ class AccountViewModel(
         val otp = _state.value.otp ?: ""
         if (otp.length < 4) {
             //val currentState = _screenState.value
-            _state.update { it.copy(message = "Please enter a valid 4-digit OTP.") }
+            setErrorMessage("Please enter a valid 4-digit OTP.")
 
             return
         }
         scope.launch {
             val phoneNumber = _state.value.phoneNumber ?: "0"
-            _state.update { it.copy(isLoading = true) }
+            _state.update { it.copy(isLoading = true, message = null, messageType = null) }
             //_screenState.value = AccountUiState.Loading
             //delay(500) // Simulate API call to verify OTP
 
@@ -266,12 +284,8 @@ class AccountViewModel(
                     }
 
                     is Result.Failure -> {
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                message = "Otp Verification Failed"
-                            )
-                        }
+                        _state.update { it.copy(isLoading = false) }
+                        setErrorMessage("Otp Verification Failed")
 
                     }
                 }
@@ -289,12 +303,12 @@ class AccountViewModel(
 
         // --- Basic Validation ---
         if (username.isBlank() || password.isBlank()) {
-            _state.update { it.copy(message = "Username and password cannot be empty.") }
+            setErrorMessage("Username and password cannot be empty.")
             return
         }
 
         scope.launch {
-            _state.update { it.copy(isLoading = true, message = null) }
+            _state.update { it.copy(isLoading = true, message = null, messageType = null) }
 
             // --- Call the Use Case ---
             loginByUserPassUseCase(username, password).collect { result ->
@@ -317,15 +331,194 @@ class AccountViewModel(
 
                     is Result.Failure -> {
                         // Login failed, show an error
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                message = result.error.toString() // Or a more user-friendly message
-                            )
-                        }
+                        _state.update { it.copy(isLoading = false) }
+                        setErrorMessage(toUserFriendlyMessage(result.error, "We could not sign you in. Please try again."))
                     }
                 }
             }
+        }
+    }
+
+    fun signupWithPassword(
+        name: String,
+        email: String,
+        phone: String,
+        password: String,
+    ) {
+        val trimmedName = name.trim()
+        val trimmedEmail = email.trim()
+        val trimmedPhone = phone.trim()
+        val normalizedPhone = PhoneNumberFormatter.normalizeFromRaw(trimmedPhone)
+
+        if (
+            trimmedName.isBlank() ||
+            trimmedEmail.isBlank() ||
+            trimmedPhone.isBlank() ||
+            password.isBlank()
+        ) {
+            setErrorMessage("Please fill all signup fields.")
+            return
+        }
+
+        if (!isValidEmail(trimmedEmail)) {
+            setErrorMessage("Please enter a valid email address.")
+            return
+        }
+        if (!PhoneNumberFormatter.isCanonical(normalizedPhone)) {
+            setErrorMessage("Please enter phone in valid format like +971551112222.")
+            return
+        }
+
+        scope.launch {
+            _state.update { it.copy(isLoading = true, message = null, messageType = null) }
+
+            signupByUserPassUseCase(
+                name = trimmedName,
+                email = trimmedEmail,
+                phone = normalizedPhone,
+                password = password,
+            ).collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        _state.update {
+                            it.copy(
+                                stage = AccountStage.LoggedIn,
+                                isLoading = false,
+                            )
+                        }
+                        fetchUserDetailsAndOrders()
+                        updateFTMToken()
+                    }
+
+                    is Result.Failure -> {
+                        _state.update { it.copy(isLoading = false) }
+                        setErrorMessage(toUserFriendlyMessage(result.error, "We could not create your account. Please try again."))
+                    }
+                }
+            }
+        }
+    }
+
+    fun requestPasswordResetOtp(email: String) {
+        val trimmedEmail = email.trim()
+        if (!isValidEmail(trimmedEmail)) {
+            setErrorMessage("Please enter a valid email address.")
+            return
+        }
+
+        scope.launch {
+            _state.update { it.copy(isLoading = true, message = null, messageType = null) }
+            requestPasswordResetOtpUseCase(trimmedEmail).collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                passwordResetEmail = trimmedEmail,
+                                passwordResetStage = PasswordResetStage.OtpSent,
+                            )
+                        }
+                        setSuccessMessage("Verification code sent to your email.")
+                    }
+
+                    is Result.Failure -> {
+                        _state.update { it.copy(isLoading = false) }
+                        setErrorMessage(toUserFriendlyMessage(result.error, "Unable to send verification code."))
+                    }
+                }
+            }
+        }
+    }
+
+    fun verifyPasswordResetOtp(email: String, otp: String) {
+        val trimmedEmail = email.trim()
+        val trimmedOtp = otp.trim()
+        if (trimmedEmail.isBlank() || trimmedOtp.isBlank()) {
+            setErrorMessage("Please enter email and verification code.")
+            return
+        }
+        scope.launch {
+            _state.update { it.copy(isLoading = true, message = null, messageType = null) }
+            verifyPasswordResetOtpUseCase(trimmedEmail, trimmedOtp).collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                passwordResetEmail = trimmedEmail,
+                                passwordResetOtp = trimmedOtp,
+                                passwordResetStage = PasswordResetStage.OtpVerified,
+                            )
+                        }
+                        setSuccessMessage("Code verified. Set a new password.")
+                    }
+
+                    is Result.Failure -> {
+                        _state.update { it.copy(isLoading = false) }
+                        setErrorMessage(toUserFriendlyMessage(result.error, "Invalid verification code."))
+                    }
+                }
+            }
+        }
+    }
+
+    fun resetPasswordByOtp(email: String, otp: String, newPassword: String) {
+        val trimmedEmail = email.trim()
+        val trimmedOtp = otp.trim()
+        if (trimmedEmail.isBlank() || trimmedOtp.isBlank() || newPassword.isBlank()) {
+            setErrorMessage("Please complete all password reset fields.")
+            return
+        }
+        if (newPassword.length < 6) {
+            setErrorMessage("Password must be at least 6 characters.")
+            return
+        }
+        scope.launch {
+            _state.update { it.copy(isLoading = true, message = null, messageType = null) }
+            resetPasswordByOtpUseCase(trimmedEmail, trimmedOtp, newPassword).collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                passwordResetStage = PasswordResetStage.Idle,
+                                passwordResetEmail = "",
+                                passwordResetOtp = "",
+                            )
+                        }
+                        setSuccessMessage("Password updated successfully. Please sign in.")
+                    }
+
+                    is Result.Failure -> {
+                        _state.update { it.copy(isLoading = false) }
+                        setErrorMessage(toUserFriendlyMessage(result.error, "Unable to reset password."))
+                    }
+                }
+            }
+        }
+    }
+
+    fun cancelPasswordReset() {
+        _state.update {
+            it.copy(
+                passwordResetStage = PasswordResetStage.Idle,
+                passwordResetEmail = "",
+                passwordResetOtp = "",
+                message = null,
+                messageType = null,
+            )
+        }
+    }
+
+    fun startPasswordReset() {
+        _state.update {
+            it.copy(
+                passwordResetStage = PasswordResetStage.EmailInput,
+                passwordResetEmail = "",
+                passwordResetOtp = "",
+                message = null,
+                messageType = null,
+            )
         }
     }
 
@@ -343,16 +536,22 @@ class AccountViewModel(
         // --- VALIDATION LOGIC START ---
         _state.update { it.copy(validationErrors = FieldErrors()) }
         val firstNameBlank = userDetails.firstName.isBlank()
-        val lastNameBlank = userDetails.lastName.isBlank()
+        val emailBlank = userDetails.email.isBlank()
         val emailInvalid = userDetails.email.isNotBlank() && !isValidEmail(userDetails.email)
+        val phoneInvalid = !PhoneNumberFormatter.isCanonical(userDetails.phoneNumber)
 
-        if (firstNameBlank || lastNameBlank || emailInvalid) {
+        if (firstNameBlank || emailBlank || emailInvalid || phoneInvalid) {
             _state.update {
                 it.copy(
                     validationErrors = FieldErrors(
                         firstNameErrorKey = if (firstNameBlank) AccountValidationErrorKeys.FIELD_REQUIRED else null,
-                        lastNameErrorKey = if (lastNameBlank) AccountValidationErrorKeys.FIELD_REQUIRED else null,
-                        emailErrorKey = if (emailInvalid) AccountValidationErrorKeys.INVALID_EMAIL else null,
+                        lastNameErrorKey = null,
+                        emailErrorKey = when {
+                            emailBlank -> AccountValidationErrorKeys.FIELD_REQUIRED
+                            emailInvalid -> AccountValidationErrorKeys.INVALID_EMAIL
+                            else -> null
+                        },
+                        phoneErrorKey = if (phoneInvalid) AccountValidationErrorKeys.INVALID_PHONE else null,
                     )
                 )
             }
@@ -366,7 +565,7 @@ class AccountViewModel(
         }
 
         // Clear any previous error messages if validation passes
-        _state.update { it.copy(message = null) }
+        _state.update { it.copy(message = null, messageType = null) }
 
         // --- VALIDATION LOGIC END ---
 
@@ -386,7 +585,12 @@ class AccountViewModel(
                 }
 
                 is Result.Failure -> {
-                    _state.update { it.copy(isLoading = false, message = result.error.toString()) }
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            message = toUserFriendlyMessage(result.error, "We could not save your profile changes."),
+                        )
+                    }
                 }
             }
 
@@ -396,7 +600,15 @@ class AccountViewModel(
 
     private fun fetchUserDetailsAndOrders() {
         scope.launch {
-            _state.update { it.copy(isLoading = true, isLoadingWallet = true, isLoadingLatestOrder = true) }
+            val isWalletEnabled = walletEnabledUseCase()
+            _state.update {
+                it.copy(
+                    isLoading = true,
+                    isLoadingWallet = isWalletEnabled,
+                    walletEnabled = isWalletEnabled,
+                    isLoadingLatestOrder = true,
+                )
+            }
             getCurrentUserUseCase().collect { result ->
                 when (result) {
                     is Result.Success -> {
@@ -416,32 +628,31 @@ class AccountViewModel(
             }
 
 
-
-            getUserWalletUseCase().collect { walletResult ->// This should be a suspending function call
-
-
-                when (walletResult) {
-                    is Result.Success -> {
-                        _state.update {
-                            it.copy(
-                                isLoadingWallet = false,
-                                userWallet = walletResult.data
-                            )
+            if (isWalletEnabled) {
+                getUserWalletUseCase().collect { walletResult ->
+                    when (walletResult) {
+                        is Result.Success -> {
+                            _state.update {
+                                it.copy(
+                                    isLoadingWallet = false,
+                                    userWallet = walletResult.data
+                                )
+                            }
                         }
 
-                        // Both user details and wallet loaded successfully
-                    }
-
-                    is Result.Failure -> {
-                        _state.update {
-                            it.copy(
-                                userWallet = null,
-                                isLoadingWallet = false,
-                                message = walletResult.error.toString()
+                        is Result.Failure -> {
+                            _state.update { it.copy(userWallet = null, isLoadingWallet = false) }
+                            setErrorMessage(
+                                toUserFriendlyMessage(
+                                    walletResult.error,
+                                    "We could not load wallet information.",
+                                ),
                             )
                         }
                     }
                 }
+            } else {
+                _state.update { it.copy(userWallet = null, isLoadingWallet = false, stage = AccountStage.LoggedIn) }
             }
 
 
@@ -503,8 +714,9 @@ class AccountViewModel(
             // This suspends until the IDs are fetched from the database
             val result = observeFavoritesUseCase.getSnapshot()
             if (result.isEmpty()) {
-                // Optional: Show a toast "You have no favorites"
-                navigateToProductList("")
+                // Send non-existent ID to force empty result instead of loading full catalog.
+                navigateToProductList("0")
+                return@launch
             }
             val idsString = result.joinToString(separator = ",")
             navigateToProductList(idsString)
@@ -536,6 +748,18 @@ class AccountViewModel(
         scope.cancel()
     }
 
+    fun clearMessage() {
+        _state.update { it.copy(message = null, messageType = null) }
+    }
+
+    private fun setErrorMessage(text: String) {
+        _state.update { it.copy(message = text, messageType = AccountMessageType.Error) }
+    }
+
+    private fun setSuccessMessage(text: String) {
+        _state.update { it.copy(message = text, messageType = AccountMessageType.Success) }
+    }
+
     private fun isValidEmail(email: String): Boolean {
         if (email.isBlank()) return false
         val atIndex = email.indexOf('@')
@@ -543,4 +767,27 @@ class AccountViewModel(
         val domain = email.substring(atIndex + 1)
         return domain.contains('.') && !domain.startsWith('.') && !domain.endsWith('.')
     }
+
+    private fun toUserFriendlyMessage(error: GeneralError, fallback: String): String =
+        when (error) {
+            is GeneralError.ApiError -> {
+                val apiMessage = error.message?.trim().orEmpty()
+                if (apiMessage.isNotEmpty()) {
+                    apiMessage
+                } else {
+                    when (error.status) {
+                        400 -> "The request is invalid. Please review your input and try again."
+                        401 -> "Your credentials are incorrect. Please try again."
+                        403 -> "Access was denied. Please check your permissions and try again."
+                        404 -> "The service is currently unavailable. Please try again later."
+                        409 -> "An account with this information already exists."
+                        in 500..599 -> "The server is currently unavailable. Please try again in a moment."
+                        else -> fallback
+                    }
+                }
+            }
+
+            is GeneralError.NetworkError -> "No internet connection. Please check your network and try again."
+            is GeneralError.UnknownError -> error.error.message?.takeIf { it.isNotBlank() } ?: fallback
+        }
 }

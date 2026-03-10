@@ -19,14 +19,19 @@ data class AccountUIState(
     val email: String? = null,
     val name: String? = null,
     val otp: String? = null,
+    val passwordResetStage: PasswordResetStage = PasswordResetStage.Idle,
+    val passwordResetEmail: String = "",
+    val passwordResetOtp: String = "",
     val username: String = "",
     val password: String = "",
     val userDetails: UserDetails? = null,
+    val walletEnabled: Boolean = false,
     val userWallet: UserWallet? = null,
     val isLoadingWallet: Boolean = false,
     val latestOrder: Order? = null,
     val isLoadingLatestOrder: Boolean = false,
     val message: String? = null,
+    val messageType: AccountMessageType? = null,
     val validationErrors: FieldErrors = FieldErrors(),
     val showLogoutConfirmDialog: Boolean = false, // Add this new state
     val currentLanguage: String = "none",
@@ -50,10 +55,24 @@ enum class AccountStage{
 data class FieldErrors(
     val firstNameErrorKey: String? = null,
     val lastNameErrorKey: String? = null,
-    val emailErrorKey: String? = null
+    val emailErrorKey: String? = null,
+    val phoneErrorKey: String? = null,
 )
 
 object AccountValidationErrorKeys {
     const val FIELD_REQUIRED = "error_field_required"
     const val INVALID_EMAIL = "error_invalid_email"
+    const val INVALID_PHONE = "error_invalid_phone"
+}
+
+enum class PasswordResetStage {
+    Idle,
+    EmailInput,
+    OtpSent,
+    OtpVerified,
+}
+
+enum class AccountMessageType {
+    Error,
+    Success,
 }

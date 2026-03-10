@@ -55,6 +55,37 @@ internal class WooUserRepositoryImpl(
         }
     }
 
+    override suspend fun signupUserPass(
+        name: String,
+        email: String,
+        phone: String,
+        pass: String,
+    ): Result<ActionType, GeneralError> {
+        return when (val result = wooUserRemoteSource.signupUserPass(name, email, phone, pass)) {
+            is Result.Success -> {
+                tokenStore.saveToken(result.data.token)
+                tokenStore.saveUserId(result.data.userId)
+                Result.Success(result.data.action)
+            }
+
+            is Result.Failure -> {
+                Result.Failure(result.error)
+            }
+        }
+    }
+
+    override suspend fun requestPasswordResetOtp(email: String): Result<Unit, GeneralError> =
+        wooUserRemoteSource.requestPasswordResetOtp(email)
+
+    override suspend fun verifyPasswordResetOtp(email: String, otp: String): Result<Unit, GeneralError> =
+        wooUserRemoteSource.verifyPasswordResetOtp(email, otp)
+
+    override suspend fun resetPasswordByOtp(
+        email: String,
+        otp: String,
+        newPassword: String,
+    ): Result<Unit, GeneralError> = wooUserRemoteSource.resetPasswordByOtp(email, otp, newPassword)
+
     override suspend fun getMe(): Result<UserDetails, GeneralError> {
 
         if (tokenStore.getToken() == null) {
