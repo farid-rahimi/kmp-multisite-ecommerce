@@ -280,7 +280,7 @@ class ProductDetailViewModel(
                     _state.update {
                         it.copy(
                             error = result.error,
-                            message = (result.error as GeneralError.ApiError).message,
+                            message = result.error.toString(),
                             isLoadingVariations = false,
                         )
                     }

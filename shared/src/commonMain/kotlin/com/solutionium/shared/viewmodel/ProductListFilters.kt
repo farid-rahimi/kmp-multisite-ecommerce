@@ -30,6 +30,10 @@ internal class ProductListFilters(
         args[PRODUCT_ARG_IDS]?.takeIf { it.isNotEmpty() }?.let {
             filters.add(FilterCriterion(ProductFilterKey.INCLUDE_IDS.apiKey, it))
         }
+        // Backward compatibility for older navigation callers that used "ids".
+        args["ids"]?.takeIf { it.isNotEmpty() }?.let {
+            filters.add(FilterCriterion(ProductFilterKey.INCLUDE_IDS.apiKey, it))
+        }
 
         args[PRODUCT_ARG_CATEGORY]?.let {
             filters.add(FilterCriterion(ProductFilterKey.CATEGORY_ID.apiKey, it))

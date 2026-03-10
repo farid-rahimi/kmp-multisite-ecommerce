@@ -57,6 +57,8 @@ import com.solutionium.sharedui.resources.tab_cart
 import com.solutionium.sharedui.resources.tab_category
 import com.solutionium.sharedui.resources.tab_home
 import com.solutionium.sharedui.review.ReviewListScreen
+import com.solutionium.shared.data.model.PRODUCT_ARG_IDS
+import com.solutionium.shared.data.model.PRODUCT_ARG_TITLE
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -299,7 +301,14 @@ fun SharedShopRoot() {
                                         AccountScreen(
                                             onAddressClick = { push(TabRoute.AddressList) },
                                             onFavoriteClick = { title, ids ->
-                                                push(TabRoute.ProductList(mapOf("title" to title, "ids" to ids)))
+                                                push(
+                                                    TabRoute.ProductList(
+                                                        mapOf(
+                                                            PRODUCT_ARG_TITLE to title,
+                                                            PRODUCT_ARG_IDS to ids,
+                                                        ),
+                                                    ),
+                                                )
                                             },
                                             onOrdersClick = { push(TabRoute.OrderList) },
                                             onOrderClick = { push(TabRoute.OrderList) },

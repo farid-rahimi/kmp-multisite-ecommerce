@@ -13,7 +13,6 @@ import io.ktor.client.request.header
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
-import io.ktor.http.appendPathSegments
 import io.ktor.http.path
 
 class UserClient(
@@ -29,11 +28,10 @@ class UserClient(
 
     suspend fun updateUser(userId: String, userData: EditUserRequest, token: String) =
         client.safeRequest<WpUserResponse, WooErrorResponse> {
-            method = HttpMethod.Patch
-            url {
-                path("wp-json/wp/v2/users/")
-                appendPathSegments(userId)
-            }
+            // Profile update is handled by custom mobile-auth plugin endpoint.
+            // userId is intentionally ignored because endpoint uses authenticated user.
+            method = HttpMethod.Post
+            url { path("wp-json/woo-mobile-auth/v1/update_profile") }
             setBody(userData)
             header(HttpHeaders.Authorization, token)
         }

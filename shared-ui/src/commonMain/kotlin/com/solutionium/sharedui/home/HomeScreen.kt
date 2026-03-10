@@ -145,7 +145,7 @@ fun HomeScreen(
                 item {
                     if (state.appOffersLoading) {
                         ProductCarouselPlaceholder()
-                    } else {
+                    } else if (state.appOffers.isNotEmpty()) {
                         val title = stringResource(Res.string.app_offers)
                         ProductSectionRow(
                             title = title,
@@ -203,7 +203,7 @@ fun HomeScreen(
                 item {
                     if (state.featuredLoading) {
                         ProductCarouselPlaceholder()
-                    } else {
+                    } else if (state.featured.isNotEmpty()) {
                         val title = stringResource(Res.string.featured)
                         ProductSectionRow(
                             title = title,
@@ -299,7 +299,7 @@ fun ProductSectionRow(
 
         LazyRow(
             modifier = Modifier
-                .height(390.dp)
+                .height(320.dp)
                 .fillMaxWidth(),
             contentPadding = PaddingValues(16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -315,8 +315,8 @@ fun ProductSectionRow(
                     discountedPrice = discountedPrice,
                     modifier = Modifier
                         .animateItem()
-                        .fillParentMaxHeight()
-                        .aspectRatio(0.49f),
+                        //.fillParentMaxHeight()
+                        .aspectRatio(0.6f),
                     inCartQuantity = cartCounter(item.id),
                     maxQuantity = if (item.manageStock) item.stock else 12,
                     onAddToCartClick = { onAddToCartClick(item) },

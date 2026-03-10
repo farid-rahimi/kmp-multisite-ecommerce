@@ -3,6 +3,16 @@ package com.solutionium.shared.data.network.response
 
 import com.solutionium.shared.data.network.common.MetaDatum
 import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 typealias WooProductVariationListResponse = List<WooProductVariationResponse>
 
@@ -65,6 +75,7 @@ data class WooProductVariationResponse(
     val taxClass: String,
 
     @SerialName("manage_stock")
+    @Serializable(with = FlexibleManageStockSerializer::class)
     val manageStock: Boolean,
 
     @SerialName("stock_quantity")
@@ -108,6 +119,34 @@ data class WooProductVariationResponse(
     val parentID: Long,
 )
 
+/**
+ * Woo variations may return `manage_stock` as boolean or string ("parent").
+ * Treat "parent" as true so stock-aware UI remains enabled for inherited behavior.
+ */
+object FlexibleManageStockSerializer : KSerializer<Boolean> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("FlexibleManageStock", PrimitiveKind.BOOLEAN)
+
+    override fun deserialize(decoder: Decoder): Boolean {
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: return decoder.decodeBoolean()
+
+        val primitive: JsonPrimitive = jsonDecoder.decodeJsonElement().jsonPrimitive
+        primitive.booleanOrNull?.let { return it }
+        primitive.intOrNull?.let { return it != 0 }
+
+        return when (primitive.content.trim().lowercase()) {
+            "true", "1", "yes" -> true
+            "parent" -> false
+            else -> false
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: Boolean) {
+        encoder.encodeBoolean(value)
+    }
+}
+
 @Serializable
 data class WooVariationAttribute(
     val id: Int = 0,
@@ -115,5 +154,4 @@ data class WooVariationAttribute(
     val slug: String? = null, // "pa_color"
     val option: String // "Red"
 )
-
 

@@ -33,5 +33,6 @@ fun UserDetails.toEditUserRequest(): EditUserRequest = EditUserRequest(
     nickname = nickName.ifBlank { null },
     name = displayName.ifBlank { null },
     email = email.ifBlank { null },
+    phoneNumber = phoneNumber.ifBlank { null },
     meta = if (fcmToken.isNotBlank()) EditUserFCMTokenMeta(fcmToken) else null
 )
