@@ -17,7 +17,7 @@ fun getApiModule() = setOf(apiModule) + getNetworkDataModules()
 val apiModule = module {
     single<WooProductsRemoteSource> { WooProductsRemoteSourceImpl(get()) }
     single<WooCategoryRemoteSource> { WooCategoryRemoteSourceImpl(get()) }
-    single<WooCheckoutRemoteSource> { WooCheckoutRemoteSourceImpl(get()) }
+    single<WooCheckoutRemoteSource> { WooCheckoutRemoteSourceImpl(get(), get(), get()) }
     single<WooUserRemoteSource> { WooUserRemoteSourceImpl(get(), get()) }
     single<WooOrderRemoteSource> { WooOrderRemoteSourceImpl(get()) }
     single<WooCouponRemoteSource> { WooCouponRemoteSourceImpl(get()) }

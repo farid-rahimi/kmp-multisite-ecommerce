@@ -4,6 +4,14 @@ import androidx.compose.runtime.Composable
 import com.solutionium.sharedui.navigation.SharedShopRoot
 
 @Composable
-fun WooApp() {
-    SharedShopRoot()
+fun WooApp(
+    paymentReturnStatus: String? = null,
+    paymentReturnOrderId: Int? = null,
+    onPaymentReturnConsumed: () -> Unit = {},
+) {
+    SharedShopRoot(
+        paymentReturnStatus = paymentReturnStatus,
+        paymentReturnOrderId = paymentReturnOrderId,
+        onPaymentReturnConsumed = onPaymentReturnConsumed,
+    )
 }

@@ -29,6 +29,7 @@ val checkoutModule = module {
             getBACSDetails = get(),
             getUserWalletUseCase = get(),
             walletEnabledUseCase = get(),
+            networkConfigProvider = get(),
         )
     }
 }

@@ -19,8 +19,46 @@ class CheckoutRepositoryImpl(
     override suspend fun getShippingMethods(): Result<List<ShippingMethod>, GeneralError> =
         checkoutRemoteSource.getShippingMethods()
 
-    override suspend fun createOrder(orderData: NewOrderData): Result<Order, GeneralError> =
-        checkoutRemoteSource.createOrder(orderData.copy(customerID = tokenStore.getUserId()?.toLong() ?: 0L))
+    override suspend fun createOrder(orderData: NewOrderData): Result<Order, GeneralError> {
+        val createOrderResult =
+            checkoutRemoteSource.createOrder(orderData.copy(customerID = tokenStore.getUserId()?.toLong() ?: 0L))
+
+        if (createOrderResult !is Result.Success) {
+            return createOrderResult
+        }
+
+        val createdOrder = createOrderResult.data
+        val token = tokenStore.getToken()?.trim().orEmpty()
+        val orderKey = createdOrder.orderKey?.trim().orEmpty()
+
+        if (orderKey.isBlank()) {
+            return createOrderResult
+        }
+
+        val paymentSessionResult = checkoutRemoteSource.createPaymentSessionUrl(
+            orderId = createdOrder.id,
+            orderKey = orderKey,
+            bearerToken = token.takeIf { it.isNotBlank() }?.let { "Bearer $it" },
+        )
+
+        return when (paymentSessionResult) {
+            is Result.Success -> {
+                val sessionUrl = paymentSessionResult.data.trim()
+                if (sessionUrl.isNotBlank()) {
+                    println("CheckoutRepository: payment_session_url success for order=${createdOrder.id}")
+                    Result.Success(createdOrder.copy(paymentUrl = sessionUrl))
+                } else {
+                    println("CheckoutRepository: payment_session_url returned blank for order=${createdOrder.id}, using fallback paymentUrl")
+                    createOrderResult
+                }
+            }
+
+            is Result.Failure -> {
+                println("CheckoutRepository: payment_session_url failed for order=${createdOrder.id}, using fallback paymentUrl, error=${paymentSessionResult.error}")
+                createOrderResult
+            }
+        }
+    }
 
 
 

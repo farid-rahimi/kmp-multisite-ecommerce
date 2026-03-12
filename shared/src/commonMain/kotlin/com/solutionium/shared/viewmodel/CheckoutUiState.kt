@@ -14,6 +14,8 @@ sealed class PlaceOrderStatus {
     data object InProgress : PlaceOrderStatus()
     data class AwaitingPayment(val paymentUrl: String, val orderId: Int) : PlaceOrderStatus()
     data class Success(val orderId: Int, val orderTotal: String) : PlaceOrderStatus()
+    //data class CODSuccess(val orderId: Int, val orderTotal: String) : PlaceOrderStatus()
+
     data class BACSSuccess(
         val orderId: Int,
         val orderTotal: String,

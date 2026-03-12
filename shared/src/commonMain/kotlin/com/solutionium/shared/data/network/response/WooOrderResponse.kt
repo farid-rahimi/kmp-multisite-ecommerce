@@ -84,6 +84,9 @@ data class WooOrderResponse (
     @SerialName("payment_method_title")
     val paymentMethodTitle: String,
 
+    @SerialName("payment_url")
+    val paymentUrl: String? = null,
+
     @SerialName("transaction_id")
     val transactionID: String,
 
@@ -162,7 +165,7 @@ data class WooLineItem (
 
 @Serializable
 data class ImageItem (
-    val id: String?,
+    val id: JsonElement? = null,
     val src: String?
 )
 
@@ -234,6 +237,4 @@ data class Refund (
     val reason: String,
     val total: String
 )
-
-
 

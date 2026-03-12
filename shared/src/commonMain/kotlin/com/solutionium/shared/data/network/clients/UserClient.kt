@@ -1,7 +1,9 @@
 package com.solutionium.shared.data.network.clients
 
 import com.solutionium.shared.data.network.request.EditUserRequest
+import com.solutionium.shared.data.network.request.PaymentSessionUrlRequest
 import com.solutionium.shared.data.network.response.AppConfigResponse
+import com.solutionium.shared.data.network.response.PaymentSessionUrlResponse
 import com.solutionium.shared.data.network.response.PrivacyPolicyResponse
 import com.solutionium.shared.data.network.response.WooErrorResponse
 import com.solutionium.shared.data.network.response.WooUserWalletResponse
@@ -54,6 +56,27 @@ class UserClient(
             method = HttpMethod.Get
             url { path("app/config.php") }
             header(HttpHeaders.CacheControl, "no-cache")
+        }
+
+    suspend fun createPaymentSessionUrl(
+        orderId: Int,
+        orderKey: String,
+        appScheme: String,
+        token: String?,
+    ) =
+        client.safeRequest<PaymentSessionUrlResponse, WooErrorResponse> {
+            method = HttpMethod.Post
+            url { path("wp-json/woo-mobile-auth/v1/payment_session_url") }
+            setBody(
+                PaymentSessionUrlRequest(
+                    orderId = orderId,
+                    orderKey = orderKey,
+                    appScheme = appScheme,
+                ),
+            )
+            if (!token.isNullOrBlank()) {
+                header(HttpHeaders.Authorization, token)
+            }
         }
 
     suspend fun getPrivacyPolicy() =

@@ -1,6 +1,7 @@
 package com.solutionium.shared.data.network.response
 
 import kotlinx.serialization.*
+import kotlinx.serialization.json.JsonElement
 
 typealias PaymentGatewayListResponse = List<PaymentGatewayResponse>
 
@@ -23,22 +24,7 @@ data class PaymentGatewayResponse (
     @SerialName("method_supports")
     val methodSupports: List<String>? = null,
 
-    val settings: Map<String, PaymentGatewaySetting>? = null,
+    val settings: JsonElement? = null,
 
     )
-
-
-
-
-@Serializable
-data class PaymentGatewaySetting (
-    val id: String? = null,
-    val label: String? = null,
-    val description: String? = null,
-    val type: String? = null,
-    val value: String? = null,
-    val default: String? = null,
-    val tip: String? = null,
-    val placeholder: String? = null,
-)
 

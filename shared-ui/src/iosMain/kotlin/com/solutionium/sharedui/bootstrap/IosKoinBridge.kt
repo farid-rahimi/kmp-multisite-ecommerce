@@ -9,6 +9,7 @@ import com.solutionium.shared.viewmodel.getAccountModules
 import com.solutionium.shared.viewmodel.getAddressModules
 import com.solutionium.shared.viewmodel.getCartModules
 import com.solutionium.shared.viewmodel.getCategoryModules
+import com.solutionium.shared.viewmodel.getCheckoutModules
 import com.solutionium.shared.viewmodel.getHomeModules
 import com.solutionium.shared.viewmodel.getOrderListModules
 import com.solutionium.shared.viewmodel.getProductDetailModules
@@ -30,9 +31,10 @@ class IosKoinBridge {
         baseUrl: String,
         consumerKey: String,
         consumerSecret: String,
+        paymentReturnScheme: String,
     ) {
         IosRuntimeConfig.brand = if (siteBrand.uppercase() == "SITE_B") WooBrand.SiteB else WooBrand.SiteA
-        val defaultLanguage = if (siteBrand.uppercase() == "SITE_B") "ar" else "fa"
+        val defaultLanguage = "en"
         val savedLanguage = NSUserDefaults.standardUserDefaults.stringForKey("app_language")
         applyPlatformLanguage(savedLanguage ?: defaultLanguage)
 
@@ -43,6 +45,7 @@ class IosKoinBridge {
                         baseUrl = baseUrl,
                         consumerKey = consumerKey,
                         consumerSecret = consumerSecret,
+                        paymentReturnScheme = paymentReturnScheme,
                         passwordLoginPath = if (siteBrand.uppercase() == "SITE_B") {
                             "wp-json/woo-mobile-auth/v1/login_user"
                         } else {
@@ -66,6 +69,7 @@ class IosKoinBridge {
                         getAccountModules() +
                             getAddressModules() +
                             getCartModules() +
+                            getCheckoutModules() +
                             getHomeModules() +
                             getCategoryModules() +
                             getOrderListModules() +
@@ -77,6 +81,9 @@ class IosKoinBridge {
                         ).toList(),
                 )
             }
+        }.onFailure { throwable ->
+            println("IosKoinBridge initKoin failed: ${throwable.message}")
+            throwable.printStackTrace()
         }
     }
 
@@ -86,6 +93,7 @@ class IosKoinBridge {
             baseUrl = "https://qeshminora.com/",
             consumerKey = "fallback_key",
             consumerSecret = "fallback_secret",
+            paymentReturnScheme = "solutioniuma",
         )
     }
 }

@@ -29,6 +29,7 @@ val appModule = module {
                 baseUrl = BuildConfig.API_BASE_URL,
                 consumerKey = BuildConfig.API_CONSUMER_KEY,
                 consumerSecret = BuildConfig.API_CONSUMER_SECRET,
+                paymentReturnScheme = BuildConfig.PAYMENT_RETURN_SCHEME,
                 passwordLoginPath = when (BuildConfig.SITE_BRAND) {
                     "SITE_B" -> "wp-json/woo-mobile-auth/v1/login_user"
                     else -> "wp-json/digits/v1/login_user"

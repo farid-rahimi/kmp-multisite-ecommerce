@@ -93,7 +93,11 @@ private sealed interface TabRoute {
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun SharedShopRoot() {
+fun SharedShopRoot(
+    paymentReturnStatus: String? = null,
+    paymentReturnOrderId: Int? = null,
+    onPaymentReturnConsumed: () -> Unit = {},
+) {
     var activeTab by remember { mutableStateOf(MainTab.Home) }
     val homeStack = remember { mutableStateListOf<TabRoute>() }
     val categoryStack = remember { mutableStateListOf<TabRoute>() }
@@ -149,6 +153,22 @@ fun SharedShopRoot() {
     val shouldShowBottomBar = !isFirstLoading
     val activeStack = stackFor(activeTab)
     val shouldHandleBack = showStoryViewer || activeStack.isNotEmpty() || activeTab != MainTab.Home
+
+    LaunchedEffect(paymentReturnStatus, paymentReturnOrderId) {
+        if (paymentReturnStatus.isNullOrBlank()) return@LaunchedEffect
+
+        activeTab = MainTab.Cart
+        val route = TabRoute.Checkout(
+            paymentReturnStatus = paymentReturnStatus,
+            paymentReturnOrderId = paymentReturnOrderId,
+        )
+        if (cartStack.lastOrNull() is TabRoute.Checkout) {
+            cartStack[cartStack.lastIndex] = route
+        } else {
+            cartStack.add(route)
+        }
+        onPaymentReturnConsumed()
+    }
 
     BackHandler(enabled = shouldHandleBack) {
         when {

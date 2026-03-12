@@ -8,9 +8,13 @@ import com.solutionium.shared.data.model.NewOrderData
 import com.solutionium.shared.data.model.PaymentGateway
 import com.solutionium.shared.data.model.Result
 import com.solutionium.shared.data.model.ShippingMethod
+import com.solutionium.shared.data.model.getMobileReturnEnabledMeta
+import com.solutionium.shared.data.model.getMobileReturnExpiresMeta
+import com.solutionium.shared.data.model.getMobileReturnSchemeMeta
 import com.solutionium.shared.data.model.getPartialPaymentAmount
 import com.solutionium.shared.data.model.getPaymentRedirectUrl
 import com.solutionium.shared.data.model.getWalletPartialPaymentMeta
+import com.solutionium.shared.data.network.NetworkConfigProvider
 import com.solutionium.shared.domain.cart.ClearCartUseCase
 import com.solutionium.shared.domain.cart.ObserveCartUseCase
 import com.solutionium.shared.domain.checkout.ApplyCouponUseCase
@@ -49,6 +53,7 @@ class CheckoutViewModel(
     private val getBACSDetails: GetBACSDetailsUseCase,
     private val getUserWalletUseCase: GetUserWalletUseCase,
     private val walletEnabledUseCase: WalletEnabledUseCase,
+    private val networkConfigProvider: NetworkConfigProvider,
     private val paymentUnsuccessMessage: (String) -> String = { status ->
         "Payment was not successful. Status: $status"
     },
@@ -410,7 +415,11 @@ class CheckoutViewModel(
                 metadata.add(getPartialPaymentAmount(currentState.paidByWallet.toString()))
             }
 
-            metadata.add(getPaymentRedirectUrl())
+            val paymentReturnScheme = networkConfigProvider.get().paymentReturnScheme
+            metadata.add(getPaymentRedirectUrl(paymentReturnScheme))
+            metadata.add(getMobileReturnEnabledMeta())
+            metadata.add(getMobileReturnSchemeMeta(paymentReturnScheme))
+            metadata.add(getMobileReturnExpiresMeta())
 
             if (cartItems.isEmpty()) {
                 _state.update { it.copy(error = CheckoutError.EmptyCart()) }
@@ -430,7 +439,7 @@ class CheckoutViewModel(
             }
 
             var status = if (paymentGateway.id == "bacs" && !totalWalletPayment) "on-hold" else null
-            if (totalWalletPayment) {
+            if (totalWalletPayment || paymentGateway.id == "cod") {
                 status = "processing"
             }
 
@@ -473,6 +482,16 @@ class CheckoutViewModel(
                                         orderId = orderResponse.id,
                                         orderTotal = orderResponse.total,
                                         bacsDetails = bacsDetails,
+                                    ),
+                                )
+                            }
+                        } else if (paymentGateway.id == "cod") {
+                            clearCartUseCase()
+                            _state.update {
+                                it.copy(
+                                    placeOrderStatus = PlaceOrderStatus.Success(
+                                        orderId = orderResponse.id,
+                                        orderTotal = orderResponse.total,
                                     ),
                                 )
                             }

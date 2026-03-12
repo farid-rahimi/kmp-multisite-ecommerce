@@ -19,10 +19,12 @@ android {
         create("siteA") {
             dimension = "site"
             applicationId = "com.solutionium.woo"
+            manifestPlaceholders["paymentReturnScheme"] = "solutioniuma"
             androidResources {
                 localeFilters += listOf("en", "fa")
             }
             buildConfigField("String", "SITE_BRAND", "\"SITE_A\"")
+            buildConfigField("String", "PAYMENT_RETURN_SCHEME", "\"solutioniuma\"")
             buildConfigField("String", "API_BASE_URL", "\"https://qeshminora.com/\"")
             buildConfigField("String", "API_SITE_HOST", "\"qeshminora.com\"")
             buildConfigField("String", "API_CONSUMER_KEY", "\"${System.getenv("WOO_SITE_A_CONSUMER_KEY") ?: System.getenv("WOO_CONSUMER_KEY") ?: "fallback_key"}\"")
@@ -31,10 +33,12 @@ android {
         create("siteB") {
             dimension = "site"
             applicationId = "ae.leparfum.shop"
+            manifestPlaceholders["paymentReturnScheme"] = "solutioniumb"
             androidResources {
                 localeFilters += listOf("en", "ar")
             }
             buildConfigField("String", "SITE_BRAND", "\"SITE_B\"")
+            buildConfigField("String", "PAYMENT_RETURN_SCHEME", "\"solutioniumb\"")
 
             buildConfigField("String", "API_BASE_URL", "\"https://leparfum.ae/\"")
             buildConfigField("String", "API_SITE_HOST", "\"leparfum.ae\"")

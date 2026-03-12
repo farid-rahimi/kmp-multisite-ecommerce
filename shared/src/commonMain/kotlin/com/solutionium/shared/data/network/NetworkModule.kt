@@ -30,6 +30,7 @@ data class NetworkConfig(
     val baseUrl: String,
     val consumerKey: String,
     val consumerSecret: String,
+    val paymentReturnScheme: String = "solutionium",
     val passwordLoginPath: String = "wp-json/digits/v1/login_user",
     val passwordRegisterPath: String = "wp-json/digits/v1/register_user",
     val enableNetworkLogs: Boolean = true,
