@@ -1,14 +1,28 @@
 package com.solutionium.shared.data.model
 
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+
 data class Order(
     val id: Int,
+    val orderNumber: String,
     val total: String,
     val status: String,
     val dateCreated: String,
+    val currency: String = "",
+    val subtotal: String = "0",
+    val shippingTotal: String = "0",
+    val totalTax: String = "0",
+    val discountTotal: String = "0",
+    val feeTotal: String = "0",
     val datePaid: String? = null,
     val dateCompleted: String? = null,
     val paymentMethod: String,
     val paymentMethodTitle: String,
+    val shippingMethodTitle: String? = null,
+    val customerNote: String? = null,
+    val billingAddress: Address? = null,
+    val shippingAddress: Address? = null,
     val orderKey: String? = null,
     val paymentUrl: String? = null,
     val lineItems: List<LineItem>
@@ -88,10 +102,43 @@ data class NewOrderData(
 
 }
 
-fun getPaymentRedirectUrl() = Metadata(
-    key = "app_payment_redirect_url",
-    value = "solutionium://payment-return"
+fun getPaymentRedirectUrl(scheme: String = "solutionium"): Metadata {
+    val sanitizedScheme = scheme
+        .trim()
+        .lowercase()
+        .removeSuffix("://")
+        .ifBlank { "solutionium" }
+    return Metadata(
+        key = "app_payment_redirect_url",
+        value = "$sanitizedScheme://payment-return",
+    )
+}
+
+fun getMobileReturnEnabledMeta() = Metadata(
+    key = "_woo_mobile_return_to_app",
+    value = "1",
 )
+
+fun getMobileReturnSchemeMeta(scheme: String = "solutionium"): Metadata {
+    val sanitizedScheme = scheme
+        .trim()
+        .lowercase()
+        .removeSuffix("://")
+        .ifBlank { "solutionium" }
+    return Metadata(
+        key = "_woo_mobile_return_scheme",
+        value = sanitizedScheme,
+    )
+}
+
+@OptIn(ExperimentalTime::class)
+fun getMobileReturnExpiresMeta(ttlSeconds: Long = 2 * 60 * 60): Metadata {
+    val expiresAt = Clock.System.now().epochSeconds + ttlSeconds
+    return Metadata(
+        key = "_woo_mobile_return_expires",
+        value = expiresAt.toString(),
+    )
+}
 
 fun getPartialPaymentAmount(value: String) = Metadata(
     key = "_partial_pay_through_wallet_amount",
@@ -121,4 +168,3 @@ data class LineItem(
     val subTotal: String?,
     val imageUrl: String?
 )
-

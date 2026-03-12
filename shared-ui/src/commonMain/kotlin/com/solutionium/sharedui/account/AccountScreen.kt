@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.sp
 import com.solutionium.sharedui.common.component.LanguageSelectionScreen
 import com.solutionium.sharedui.designsystem.theme.LocalWooBrand
 import com.solutionium.sharedui.home.PlatformContactSupportDialog
+import com.solutionium.sharedui.orders.OrderSummaryCard
 import com.solutionium.sharedui.resources.Res
 import com.solutionium.sharedui.resources.cancel
 import com.solutionium.sharedui.resources.contact_support
@@ -267,6 +268,8 @@ fun AccountScreen(
                                 viewModel.onNavigateBack(onBack)
                             }
                         },
+                        onLanguageClick = viewModel::onNavigateToLanguage,
+                        onSupportClick = viewModel::showContactSupport,
                     )
 
                     AccountStage.OtpVerification -> OtpVerificationScreen(
@@ -408,7 +411,10 @@ fun UserAccountScreen(
                     modifier = Modifier.padding(vertical = 16.dp),
                 )
             } else {
-                SimpleOrderSummaryCard(latestOrder, onClick = { onOrderClick(latestOrder.id) })
+                OrderSummaryCard(
+                    order = latestOrder,
+                    onClick = { onOrderClick(latestOrder.id) },
+                )
             }
         }
 
@@ -656,31 +662,5 @@ fun WalletTransactionItem(transaction: Transaction) {
                 color = amountColor,
             ),
         )
-    }
-}
-
-@Composable
-private fun SimpleOrderSummaryCard(
-    order: Order,
-    onClick: () -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        onClick = onClick,
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Order #${order.id}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = order.status,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }

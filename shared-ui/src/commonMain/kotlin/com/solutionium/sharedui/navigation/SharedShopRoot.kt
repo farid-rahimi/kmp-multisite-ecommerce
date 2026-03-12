@@ -38,6 +38,7 @@ import com.solutionium.shared.viewmodel.CheckoutViewModel
 import com.solutionium.shared.viewmodel.HomeNavigationEvent
 import com.solutionium.shared.viewmodel.HomeViewModel
 import com.solutionium.shared.viewmodel.OrderListViewModel
+import com.solutionium.shared.viewmodel.OrderDetailsViewModel
 import com.solutionium.shared.viewmodel.ProductDetailViewModel
 import com.solutionium.shared.viewmodel.ReviewViewModel
 import com.solutionium.sharedui.account.AccountScreen
@@ -48,6 +49,7 @@ import com.solutionium.sharedui.category.CategoryScreen
 import com.solutionium.sharedui.checkout.CheckoutScreen
 import com.solutionium.sharedui.home.HomeScreen
 import com.solutionium.sharedui.home.PlatformStoryViewer
+import com.solutionium.sharedui.orders.OrderDetailsScreen
 import com.solutionium.sharedui.orders.OrderListScreen
 import com.solutionium.sharedui.products.ProductDetailScreen
 import com.solutionium.sharedui.products.ProductListScreen
@@ -83,6 +85,7 @@ private sealed interface TabRoute {
     ) : TabRoute
 
     data object OrderList : TabRoute
+    data class OrderDetails(val orderId: Int) : TabRoute
     data object AddressList : TabRoute
     data class AddressEdit(val addressIdOrNew: Int) : TabRoute
     data class Checkout(
@@ -331,7 +334,7 @@ fun SharedShopRoot(
                                                 )
                                             },
                                             onOrdersClick = { push(TabRoute.OrderList) },
-                                            onOrderClick = { push(TabRoute.OrderList) },
+                                            onOrderClick = { orderId -> push(TabRoute.OrderDetails(orderId)) },
                                             viewModel = accountViewModel,
                                             onBack = {},
                                         )
@@ -403,7 +406,24 @@ fun SharedShopRoot(
                                     onDispose { viewModel.clear() }
                                 }
                                 OrderListScreen(
-                                    onOrderClick = {},
+                                    onOrderClick = { orderId -> push(TabRoute.OrderDetails(orderId)) },
+                                    onBack = { pop() },
+                                    viewModel = viewModel,
+                                )
+                            }
+
+                            is TabRoute.OrderDetails -> {
+                                val viewModel = koinInject<OrderDetailsViewModel>(
+                                    parameters = {
+                                        parametersOf(
+                                            mapOf("order_id" to route.orderId.toString()),
+                                        )
+                                    },
+                                )
+                                DisposableEffect(viewModel) {
+                                    onDispose { viewModel.clear() }
+                                }
+                                OrderDetailsScreen(
                                     onBack = { pop() },
                                     viewModel = viewModel,
                                 )

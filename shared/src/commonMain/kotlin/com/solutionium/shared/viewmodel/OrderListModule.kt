@@ -7,5 +7,5 @@ fun getOrderListModules() = setOf(orderListModule) + getOrderDomainModules()
 
 val orderListModule = module {
     factory { OrderListViewModel(get()) }
+    factory { (args: Map<String, String>) -> OrderDetailsViewModel(get(), args) }
 }
-

@@ -21,7 +21,7 @@ class WooOrderClient(
         client.safeRequest {
             method = HttpMethod.Get
             url {
-                path("wp-json/wc/v3/orders/")
+                path("wp-json/wc/v3/orders")
                 appendPathSegments(orderId.toString())
             }
             header(HttpHeaders.CacheControl, "no-cache")

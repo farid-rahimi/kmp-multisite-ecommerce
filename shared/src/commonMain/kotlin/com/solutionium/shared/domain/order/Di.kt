@@ -10,4 +10,5 @@ fun getOrderDomainModules() = setOf(orderDomainModule, orderDataModule)
 val orderDomainModule = module {
     factory<GetOrderListPagingUseCase> { GetOrderListPagingUseCaseImpl(get()) }
     factory<GetLatestOrderUseCase> { GetLatestOrderUseCaseImpl(get()) }
+    factory<GetOrderByIdUseCase> { GetOrderByIdUseCaseImpl(get()) }
 }

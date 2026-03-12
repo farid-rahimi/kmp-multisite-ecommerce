@@ -21,11 +21,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -35,6 +35,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,11 +60,13 @@ import androidx.compose.ui.unit.dp
 import com.solutionium.sharedui.designsystem.theme.WooBrand
 import com.solutionium.sharedui.resources.Res
 import com.solutionium.sharedui.resources.close
+import com.solutionium.sharedui.resources.contact_support
 import com.solutionium.sharedui.resources.create_account
 import com.solutionium.sharedui.resources.country_code
 import com.solutionium.sharedui.resources.email
 import com.solutionium.sharedui.resources.forgot_password
 import com.solutionium.sharedui.resources.full_name
+import com.solutionium.sharedui.resources.language_menu
 import com.solutionium.sharedui.resources.login
 import com.solutionium.sharedui.resources.login_or_signup
 import com.solutionium.sharedui.resources.login_with_otp_instead
@@ -111,10 +115,13 @@ fun PhoneLoginScreen(
     onDismissError: () -> Unit,
     privacyPolicyContent: String,
     onBack: () -> Unit,
+    onLanguageClick: () -> Unit,
+    onSupportClick: () -> Unit,
 ) {
     var loginWithPassword by remember { mutableStateOf(false) }
     var siteBAuthMode by remember { mutableStateOf(SiteBAuthMode.Login) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
+    var menuExpanded by remember { mutableStateOf(false) }
     val screenTitle = when {
         brand == WooBrand.SiteB && passwordResetStage != PasswordResetStage.Idle -> stringResource(Res.string.forgot_password)
         brand == WooBrand.SiteA && loginWithPassword -> stringResource(Res.string.login)
@@ -128,9 +135,28 @@ fun PhoneLoginScreen(
         topBar = {
             TopAppBar(
                 title = { Text(screenTitle) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                actions = {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.language_menu)) },
+                            onClick = {
+                                menuExpanded = false
+                                onLanguageClick()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.contact_support)) },
+                            onClick = {
+                                menuExpanded = false
+                                onSupportClick()
+                            },
+                        )
                     }
                 },
             )

@@ -90,17 +90,30 @@ fun Metadata.toRequestBody(): OrderMetadata =
         value = value
     )
 
-fun WooOrderResponse.toModel(): Order = Order(
+fun WooOrderResponse.toModel(baseUrl: String): Order = Order(
     id = id,
+    orderNumber = number,
     total = total,
     status = status,
     dateCreated = dateCreated,
+    currency = currency,
+    subtotal = lineItems.sumOf { it.subtotal.toDoubleOrNull() ?: 0.0 }.toStableMoneyString(),
+    shippingTotal = shippingTotal,
+    totalTax = totalTax,
+    discountTotal = discountTotal,
+    feeTotal = feeLines.orEmpty().sumOf { it.total.toDoubleOrNull() ?: 0.0 }.toStableMoneyString(),
     datePaid = datePaid,
     dateCompleted = dateCompleted,
     paymentMethod = paymentMethod,
     paymentMethodTitle = paymentMethodTitle,
+    shippingMethodTitle = shippingLines.firstOrNull()?.methodTitle,
+    customerNote = customerNote.takeIf { it.isNotBlank() },
+    billingAddress = billing.toModel(),
+    shippingAddress = shipping.toModel(),
     orderKey = orderKey, //orderKey
-    paymentUrl = "${"BASE_URL"}checkout/order-pay/${id}/?key=${orderKey}", //paymentUrl // TODO()
+    paymentUrl = paymentUrl
+        ?.takeIf { it.isNotBlank() }
+        ?: "${baseUrl.ensureTrailingSlash()}checkout/order-pay/${id}/?pay_for_order=true&key=${orderKey}",
     lineItems = lineItems.map { it.toModel() }
 )
 
@@ -120,3 +133,24 @@ fun FeeLine.toWooFeeLine() = WooFeeLine(
     total = total.toString(),
     metaData = metadata.map { it.toRequestBody() }
 )
+
+private fun WooAddress.toModel() = Address(
+    id = null,
+    title = null,
+    firstName = firstName,
+    lastName = lastName,
+    company = company,
+    address1 = address1,
+    address2 = address2,
+    city = city,
+    state = state,
+    postcode = postcode,
+    country = country,
+    email = email,
+    phone = phone,
+    isDefault = false,
+)
+
+private fun Double.toStableMoneyString(): String = toString()
+
+private fun String.ensureTrailingSlash(): String = if (endsWith("/")) this else "$this/"
