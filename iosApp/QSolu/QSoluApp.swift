@@ -15,12 +15,14 @@ struct QSoluApp: App {
         let baseUrl = (Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String) ?? "https://qeshminora.com/"
         let consumerKey = (Bundle.main.object(forInfoDictionaryKey: "API_CONSUMER_KEY") as? String) ?? ""
         let consumerSecret = (Bundle.main.object(forInfoDictionaryKey: "API_CONSUMER_SECRET") as? String) ?? ""
+        let paymentReturnScheme = (Bundle.main.object(forInfoDictionaryKey: "PAYMENT_RETURN_SCHEME") as? String) ?? "solutioniuma"
 
         IosKoinBridge().doInitKoin(
             siteBrand: siteBrand,
             baseUrl: baseUrl,
             consumerKey: consumerKey,
-            consumerSecret: consumerSecret
+            consumerSecret: consumerSecret,
+            paymentReturnScheme: paymentReturnScheme
         )
     }
 

@@ -47,11 +47,11 @@
                 <!-- Define the URL structure your app will handle -->
                 <data
                     android:host="payment-return"
-                    android:scheme="solutionium" />
+                    android:scheme="${paymentReturnScheme}" />
                 <!--
                     This will handle URLs like:
-                    solutionium://payment-return/order-received?order_id=123&status=success
-                    solutionium://payment-return/order-failed?order_id=123&status=failed
+                    solutioniuma://payment-return/order-received?order_id=123&status=success
+                    solutioniumb://payment-return/order-failed?order_id=123&status=failed
                 -->
             </intent-filter>
 

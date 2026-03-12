@@ -21,3 +21,8 @@ local.properties
 # iOS local plist
 iosApp/QSolu/Info.plist
 iosApp/Info-SiteB.plist
+/docs/wp-plugin/ziina.zip
+/docs/wp-plugin/tabby-checkout.zip
+/docs/wp-plugin/ziina/
+/docs/wp-plugin/tabby-checkout/
+/iosApp/QSolu.xcodeproj
