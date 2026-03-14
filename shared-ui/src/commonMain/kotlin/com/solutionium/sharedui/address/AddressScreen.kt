@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
@@ -41,7 +40,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -51,6 +49,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.solutionium.sharedui.common.component.PlatformTopBar
+import com.solutionium.sharedui.common.component.platformPrimaryButtonShape
 import com.solutionium.sharedui.resources.Res
 import com.solutionium.sharedui.resources.an_unexpected_error_occurred
 import com.solutionium.sharedui.resources.add_new_address
@@ -100,13 +100,9 @@ fun AddressListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            PlatformTopBar(
                 title = { Text(stringResource(Res.string.my_addresses)) },
-                navigationIcon = {
-                    IconButton(onClick = onBackNavigation) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                onBack = onBackNavigation,
                 actions = {
                     IconButton(onClick = { onNavigateToEditAddress(null) }) {
                         Icon(
@@ -346,7 +342,7 @@ fun AddEditAddressScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            PlatformTopBar(
                 title = {
                     Text(
                         if (uiState.addressId == null) {
@@ -356,11 +352,7 @@ fun AddEditAddressScreen(
                         },
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                onBack = onBack,
             )
         },
         bottomBar = {
@@ -372,7 +364,7 @@ fun AddEditAddressScreen(
                         .padding(16.dp)
                         .height(52.dp),
                     enabled = !uiState.isSaving && !uiState.isLoading,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = platformPrimaryButtonShape(),
                 ) {
                     if (uiState.isSaving) {
                         CircularProgressIndicator(

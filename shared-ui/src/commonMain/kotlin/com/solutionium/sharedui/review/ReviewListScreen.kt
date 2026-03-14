@@ -1,33 +1,62 @@
 package com.solutionium.sharedui.review
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.solutionium.shared.data.model.Review
+import com.solutionium.shared.viewmodel.ReviewFormState
+import com.solutionium.shared.viewmodel.ReviewViewModel
 import com.solutionium.sharedui.common.component.CriteriaRatingBar
 import com.solutionium.sharedui.common.component.OrderSummaryCardPlaceholder
+import com.solutionium.sharedui.common.component.PlatformTopBar
 import com.solutionium.sharedui.common.component.ReviewItem
 import com.solutionium.sharedui.resources.Res
 import com.solutionium.sharedui.resources.criteria_ratings_title
@@ -35,27 +64,42 @@ import com.solutionium.sharedui.resources.login_to_review
 import com.solutionium.sharedui.resources.no_reviews_yet
 import com.solutionium.sharedui.resources.review_field_label
 import com.solutionium.sharedui.resources.review_form_title
+import com.solutionium.sharedui.resources.review_publish_as
+import com.solutionium.sharedui.resources.review_submit_success_message
+import com.solutionium.sharedui.resources.review_submit_success_title
 import com.solutionium.sharedui.resources.reviews_title
+import com.solutionium.sharedui.resources.shared_ok
 import com.solutionium.sharedui.resources.submit_review
 import com.solutionium.sharedui.resources.write_a_review
-import com.solutionium.shared.data.model.Review
-import com.solutionium.shared.viewmodel.ReviewFormState
-import com.solutionium.shared.viewmodel.ReviewViewModel
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewListScreen(
     viewModel: ReviewViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onLoginToReviewClick: () -> Unit = {},
+    authSheetVisible: Boolean = false,
 ) {
     val reviews: LazyPagingItems<Review> = viewModel.reviews.collectAsLazyPagingItems()
     val state by viewModel.state.collectAsState()
     val showReviewDialog by viewModel.showReviewDialog.collectAsState()
     val productReviewCriteria by viewModel.productReviewCriteria.collectAsState()
-
+    val showSubmitSuccessDialog by viewModel.showSubmitSuccessDialog.collectAsState()
+    val refreshReviewsTick by viewModel.refreshReviewsTick.collectAsState()
     val isRefreshing = reviews.loadState.refresh is LoadState.Loading
 
+    LaunchedEffect(authSheetVisible) {
+        if (!authSheetVisible) {
+            viewModel.refreshLoginStatus()
+        }
+    }
+
+    LaunchedEffect(refreshReviewsTick) {
+        if (refreshReviewsTick > 0) {
+            reviews.refresh()
+        }
+    }
 
     if (showReviewDialog) {
         ReviewFormDialog(
@@ -74,11 +118,24 @@ fun ReviewListScreen(
         )
     }
 
+    if (showSubmitSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissSubmitSuccessDialog() },
+            title = { Text(stringResource(Res.string.review_submit_success_title)) },
+            text = { Text(stringResource(Res.string.review_submit_success_message)) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.dismissSubmitSuccessDialog() }) {
+                    Text(stringResource(Res.string.shared_ok))
+                }
+            },
+        )
+    }
+
     val productName = if (reviews.itemCount > 0) reviews.peek(0)?.productName else null
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            PlatformTopBar(
                 title = {
                     Column {
                         Text(stringResource(Res.string.reviews_title))
@@ -96,30 +153,35 @@ fun ReviewListScreen(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 ),
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
+                onBack = onBackClick,
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { if (state.isLoggedIn) viewModel.onOpenReviewDialog() },
+                onClick = {
+                    if (state.isLoggedIn) {
+                        viewModel.onOpenReviewDialog()
+                    } else {
+                        onLoginToReviewClick()
+                    }
+                },
                 icon = { Icon(Icons.Filled.Edit, contentDescription = "Write a review") },
-                text = { if (state.isLoggedIn) Text(stringResource(Res.string.write_a_review)) else Text(
-                    stringResource(Res.string.login_to_review)
-                ) }
+                text = {
+                    if (state.isLoggedIn) Text(stringResource(Res.string.write_a_review))
+                    else Text(stringResource(Res.string.login_to_review))
+                },
+                modifier = Modifier.height(40.dp).padding(end = 4.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+
             )
         },
+        //contentWindowInsets = WindowInsets(0, 0, 0, 100),
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
     ) { paddingValues ->
 
         PullToRefreshBox(
+            modifier = Modifier
+                .fillMaxSize(),
             isRefreshing = isRefreshing,
             onRefresh = { reviews.refresh() } // <-- Call refresh on the Paging items
         ) {
@@ -172,6 +234,11 @@ fun ReviewListScreen(
                     }
                 }
 
+                item {
+                    Spacer(
+                        modifier = Modifier.height(50.dp)
+                    )
+                }
 
             }
         }
@@ -197,11 +264,37 @@ fun ReviewFormDialog(
                 modifier = Modifier.padding(20.dp)
             ) {
                 item {
+                    val publishName = remember(formState.userDetails) {
+                        resolveReviewPublishName(formState)
+                    }
                     Text(
                         stringResource(Res.string.review_form_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
+                    if (publishName.isNotBlank()) {
+                        val publishAsText = stringResource(Res.string.review_publish_as, publishName)
+                        val styledPublishAsText = remember(publishAsText, publishName) {
+                            val start = publishAsText.indexOf(publishName)
+                            if (start >= 0) {
+                                buildAnnotatedString {
+                                    append(publishAsText.substring(0, start))
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append(publishName)
+                                    }
+                                    append(publishAsText.substring(start + publishName.length))
+                                }
+                            } else {
+                                buildAnnotatedString { append(publishAsText) }
+                            }
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = styledPublishAsText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Spacer(Modifier.height(8.dp))
 
                     // Overall Star Rating
@@ -284,4 +377,18 @@ fun ReviewFormDialog(
             }
         }
     }
+}
+
+private fun resolveReviewPublishName(formState: ReviewFormState): String {
+    val details = formState.userDetails ?: return ""
+    val display = details.displayName.trim()
+    if (display.isNotBlank()) return display
+
+    val fullName = listOf(details.firstName, details.lastName)
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .joinToString(" ")
+    if (fullName.isNotBlank()) return fullName
+
+    return details.email.trim()
 }

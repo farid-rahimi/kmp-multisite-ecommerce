@@ -28,7 +28,7 @@ class UserClient(
             header(HttpHeaders.Authorization, token)
         }
 
-    suspend fun updateUser(userId: String, userData: EditUserRequest, token: String) =
+    suspend fun updateUser(userData: EditUserRequest, token: String) =
         client.safeRequest<WpUserResponse, WooErrorResponse> {
             // Profile update is handled by custom mobile-auth plugin endpoint.
             // userId is intentionally ignored because endpoint uses authenticated user.
@@ -54,7 +54,7 @@ class UserClient(
     suspend fun getAppConfig() =
         client.safeRequest<AppConfigResponse, WooErrorResponse> {
             method = HttpMethod.Get
-            url { path("app/config.php") }
+            url { path("app/config-test.php") }
             header(HttpHeaders.CacheControl, "no-cache")
         }
 

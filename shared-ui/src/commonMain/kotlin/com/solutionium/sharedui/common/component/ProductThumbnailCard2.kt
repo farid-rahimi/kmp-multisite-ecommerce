@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.outlined.BrightnessAuto
 import androidx.compose.material.icons.outlined.LocalShipping
@@ -78,6 +79,7 @@ import com.solutionium.sharedui.resources.installment_pay
 import com.solutionium.sharedui.resources.out_of_stock
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.round
 
 
 @Composable
@@ -232,6 +234,33 @@ fun ProductThumbnailCard2(
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.heightIn(min = 30.dp) // Ensure space for 2 lines
                 )
+
+                if (product.rating > 0.0 && product.ratingCount > 0) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFC107),
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = formatRatingValue(product.rating),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
+                        Text(
+                            text = "(${product.ratingCount})",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -583,6 +612,11 @@ fun FeatureType.toUiFeature2(): UiFeature2 =
                 icon = Icons.Outlined.Loyalty
             )
     }
+
+private fun formatRatingValue(value: Double): String {
+    val rounded = round(value * 10.0) / 10.0
+    return if (rounded % 1.0 == 0.0) rounded.toInt().toString() else rounded.toString()
+}
 
 fun hexToColor2(hex: String): Color {
     val cleanHex = hex.removePrefix("#")

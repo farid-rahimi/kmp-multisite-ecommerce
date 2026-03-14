@@ -43,6 +43,7 @@ kotlin {
                 implementation(libs.koin.compose)
                 implementation(libs.coil.compose)
                 implementation(libs.coil.network.ktor3)
+                implementation(libs.kotlinx.datetime)
                 implementation(project(":shared"))
             }
         }

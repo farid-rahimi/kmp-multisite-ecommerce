@@ -8,20 +8,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -35,6 +30,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.solutionium.sharedui.common.component.PlatformTopBar
+import com.solutionium.sharedui.common.component.platformPrimaryButtonShape
 import com.solutionium.sharedui.resources.Res
 import com.solutionium.sharedui.resources.enter_otp
 import com.solutionium.sharedui.resources.otp_sent_to
@@ -76,13 +73,9 @@ fun OtpVerificationScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
+            PlatformTopBar(
                 title = { Text(stringResource(Res.string.verify_otp)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                onBack = onNavigateBack,
             )
         },
     ) { paddingValues ->
@@ -116,6 +109,7 @@ fun OtpVerificationScreen(
                 onClick = onVerifyOtp,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = otp.length == 4 && !isLoading,
+                shape = platformPrimaryButtonShape(),
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))

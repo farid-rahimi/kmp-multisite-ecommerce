@@ -5,37 +5,43 @@ typealias WooReviewListResponse = List<WooReviewResponse>
 
 @Serializable
 data class WooReviewResponse (
-    val id: Int,
+    val id: Int = 0,
 
     @SerialName("date_created")
-    val dateCreated: String,
+    val dateCreated: String = "",
 
     @SerialName("date_created_gmt")
-    val dateCreatedGmt: String,
+    val dateCreatedGmt: String = "",
 
     @SerialName("product_id")
-    val productID: Int,
+    val productID: Int = 0,
 
     @SerialName("product_name")
-    val productName: String,
+    val productName: String = "",
 
     @SerialName("product_permalink")
-    val productPermalink: String,
+    val productPermalink: String = "",
 
-    val status: String,
-    val reviewer: String,
+    val status: String = "hold",
+    val reviewer: String = "",
 
     @SerialName("reviewer_email")
-    val reviewerEmail: String,
+    val reviewerEmail: String = "",
 
-    val review: String,
-    val rating: Int,
-    val verified: Boolean,
+    val review: String = "",
+    val rating: Int = 0,
+    val verified: Boolean = false,
+    @SerialName("verified_buyer")
+    val verifiedBuyer: Boolean = false,
+    val featured: Boolean = false,
+    val helpful: Boolean = false,
+    @SerialName("helpful_votes")
+    val helpfulVotes: Int = 0,
 
     @SerialName("criteria_ratings")
-    val criteriaRatings: List<CriteriaRatingResponse>,
+    val criteriaRatings: List<CriteriaRatingResponse> = emptyList(),
 
-    val children: List<ReviewChildResponse>
+    val children: List<ReviewChildResponse> = emptyList()
 
 )
 

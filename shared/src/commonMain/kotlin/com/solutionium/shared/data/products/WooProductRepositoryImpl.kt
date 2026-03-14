@@ -91,6 +91,19 @@ internal class WooProductRepositoryImpl(
     ): Result<List<Review>, GeneralError> =
         wooProductsRemoteSource.getProductReviews(1, queries)
 
+    override suspend fun getReviewCriteria(
+        productId: Int,
+        categoryIds: List<Int>,
+        criteriaPathOverride: String?,
+        languageCode: String?,
+    ): Result<List<String>, GeneralError> =
+        wooProductsRemoteSource.getReviewCriteria(
+            productId = productId,
+            categoryIds = categoryIds,
+            criteriaPathOverride = criteriaPathOverride,
+            languageCode = languageCode,
+        )
+
     override fun getReviewListStream(
         queries: Map<String, String>,
     ): Flow<PagingData<Review>> =

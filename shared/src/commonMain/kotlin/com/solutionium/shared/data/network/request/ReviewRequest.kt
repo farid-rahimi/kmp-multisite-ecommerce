@@ -20,6 +20,6 @@ data class ReviewRequest(
     val rating: Int,
 
     @SerialName("criteria_ratings")
-    val criteriaRatings: List<CriteriaRatingResponse>,
+    val criteriaRatings: List<CriteriaRatingResponse> = emptyList(),
 
 )

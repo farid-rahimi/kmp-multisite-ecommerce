@@ -20,7 +20,10 @@ fun WooReviewResponse.toModel() = Review(
     reviewerEmail = reviewerEmail,
     review = review,
     rating = rating,
-    verified = verified,
+    verified = verified || verifiedBuyer,
+    featured = featured,
+    helpful = helpful || helpfulVotes > 0,
+    helpfulVotes = helpfulVotes,
     criteriaRatings = criteriaRatings.map { it.toModel() },
     children = children.map { it.toModel() }
 )

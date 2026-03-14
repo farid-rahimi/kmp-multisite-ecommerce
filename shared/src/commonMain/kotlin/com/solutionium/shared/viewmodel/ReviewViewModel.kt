@@ -11,6 +11,7 @@ import com.solutionium.shared.domain.review.GetReviewListPagingUseCase
 import com.solutionium.shared.domain.review.SubmitReviewUseCase
 import com.solutionium.shared.domain.user.CheckLoginUserUseCase
 import com.solutionium.shared.domain.user.GetCurrentUserUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -18,6 +19,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -43,6 +45,8 @@ class ReviewViewModel(
     private val reviewCriteriaUseCase: ReviewCriteriaUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var observeLoginJob: Job? = null
+    private var fetchUserJob: Job? = null
 
     private val productId: Int =
         initialArgs["productId"]?.toIntOrNull()
@@ -69,25 +73,57 @@ class ReviewViewModel(
     private val _productReviewCriteria = MutableStateFlow<List<String>>(emptyList())
     val productReviewCriteria: StateFlow<List<String>> = _productReviewCriteria.asStateFlow()
 
+    private val _showSubmitSuccessDialog = MutableStateFlow(false)
+    val showSubmitSuccessDialog: StateFlow<Boolean> = _showSubmitSuccessDialog.asStateFlow()
+
+    private val _refreshReviewsTick = MutableStateFlow(0)
+    val refreshReviewsTick: StateFlow<Int> = _refreshReviewsTick.asStateFlow()
+
     init {
-        checkLoginStatus()
+        observeLoginStatus()
     }
 
-    private fun checkLoginStatus() {
+    fun refreshLoginStatus() {
         scope.launch {
+            handleLoginState(checkLoginUserUseCase().first())
+        }
+    }
+
+    private fun observeLoginStatus() {
+        observeLoginJob?.cancel()
+        observeLoginJob = scope.launch {
             _state.update { it.copy(checkingLogin = true) }
-            val isLoggedIn = checkLoginUserUseCase().first()
-            if (isLoggedIn) {
-                _state.update { it.copy(isLoggedIn = true, checkingLogin = false) }
+            checkLoginUserUseCase()
+                .distinctUntilChanged()
+                .collect { isLoggedIn ->
+                    handleLoginState(isLoggedIn)
+                }
+        }
+    }
+
+    private fun handleLoginState(isLoggedIn: Boolean) {
+        if (isLoggedIn) {
+            _state.update { it.copy(isLoggedIn = true, checkingLogin = false) }
+            if (_state.value.userDetails == null) {
                 fetchUserDetails()
-            } else {
-                _state.update { it.copy(isLoggedIn = false, checkingLogin = false) }
+            }
+        } else {
+            fetchUserJob?.cancel()
+            _showReviewDialog.value = false
+            _state.update {
+                it.copy(
+                    isLoggedIn = false,
+                    checkingLogin = false,
+                    loadingUser = false,
+                    userDetails = null,
+                )
             }
         }
     }
 
     private fun fetchUserDetails() {
-        scope.launch {
+        fetchUserJob?.cancel()
+        fetchUserJob = scope.launch {
             _state.update { it.copy(loadingUser = true) }
             getCurrentUserUseCase().collect { result ->
                 when (result) {
@@ -119,6 +155,10 @@ class ReviewViewModel(
         _showReviewDialog.value = false
     }
 
+    fun dismissSubmitSuccessDialog() {
+        _showSubmitSuccessDialog.value = false
+    }
+
     fun onRatingChange(newRating: Int) {
         _state.update { it.copy(rating = newRating) }
     }
@@ -136,7 +176,7 @@ class ReviewViewModel(
     private fun loadReviewCriteria() {
         scope.launch {
             _productReviewCriteria.value =
-                if (categoryIds.isNotEmpty()) reviewCriteriaUseCase(categoryIds) else emptyList()
+                reviewCriteriaUseCase(productId = productId, catIds = categoryIds)
         }
     }
 
@@ -157,8 +197,17 @@ class ReviewViewModel(
 
             when (submitReviewUseCase(newReview)) {
                 is Result.Success -> {
-                    _state.update { it.copy(isSubmitting = false) }
+                    _state.update {
+                        it.copy(
+                            rating = 0,
+                            reviewText = "",
+                            criteriaRatings = emptyMap(),
+                            isSubmitting = false,
+                        )
+                    }
                     onCloseReviewDialog()
+                    _showSubmitSuccessDialog.value = true
+                    _refreshReviewsTick.update { it + 1 }
                 }
 
                 is Result.Failure -> {

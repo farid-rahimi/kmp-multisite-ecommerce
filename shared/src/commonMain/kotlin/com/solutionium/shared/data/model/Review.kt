@@ -19,6 +19,9 @@ data class Review(
     val review: String,
     val rating: Int,
     val verified: Boolean,
+    val featured: Boolean,
+    val helpful: Boolean,
+    val helpfulVotes: Int,
 
     val criteriaRatings: List<CriteriaRating>,
 

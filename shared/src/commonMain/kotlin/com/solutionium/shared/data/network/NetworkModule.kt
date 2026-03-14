@@ -33,6 +33,9 @@ data class NetworkConfig(
     val paymentReturnScheme: String = "solutionium",
     val passwordLoginPath: String = "wp-json/digits/v1/login_user",
     val passwordRegisterPath: String = "wp-json/digits/v1/register_user",
+    val reviewListPath: String = "wp-json/wc/v3/products/reviews/",
+    val reviewSubmitPath: String = "wp-json/wc/v3/products/reviews/",
+    val reviewCriteriaPath: String? = null,
     val enableNetworkLogs: Boolean = true,
 )
 
@@ -130,7 +133,24 @@ val networkModule = module {
 
     // --- API CLIENTS (Mapping them to the correct HttpClient) ---
 
-    single { WooProductClient(get(named("BasicAuthKtorClient"))) }
+    single(named("WooAuthProductClient")) {
+        val networkConfig = getOrNull<NetworkConfigProvider>()?.get() ?: defaultNetworkConfig()
+        WooProductClient(
+            client = get(named("BasicAuthKtorClient")),
+            reviewListPath = networkConfig.reviewListPath,
+            reviewSubmitPath = networkConfig.reviewSubmitPath,
+            reviewCriteriaPath = networkConfig.reviewCriteriaPath,
+        )
+    }
+    single(named("WooPublicProductClient")) {
+        val networkConfig = getOrNull<NetworkConfigProvider>()?.get() ?: defaultNetworkConfig()
+        WooProductClient(
+            client = get(named("NoAuthKtorClient")),
+            reviewListPath = networkConfig.reviewListPath,
+            reviewSubmitPath = networkConfig.reviewSubmitPath,
+            reviewCriteriaPath = networkConfig.reviewCriteriaPath,
+        )
+    }
     single { WooCategoryClient(get(named("BasicAuthKtorClient"))) }
     single { WooCheckoutOrderClient(get(named("BasicAuthKtorClient"))) }
     single { WooOrderClient(get(named("BasicAuthKtorClient"))) }

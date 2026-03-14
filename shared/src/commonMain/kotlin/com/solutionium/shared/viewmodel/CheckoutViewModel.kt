@@ -138,11 +138,7 @@ class CheckoutViewModel(
         }
     }
 
-    fun loadDefaultAddress() {
-        scope.launch {
-            _state.update { it.copy(isLoadingAddress = true) }
-        }
-    }
+
 
     private fun loadPaymentGateways() =
         scope.launch {
@@ -499,7 +495,7 @@ class CheckoutViewModel(
                             _state.update {
                                 it.copy(
                                     placeOrderStatus = PlaceOrderStatus.AwaitingPayment(
-                                        paymentUrl = orderResponse.paymentUrl ?: "",
+                                        paymentUrl = orderResponse.paymentUrl,
                                         orderId = orderResponse.id,
                                     ),
                                 )

@@ -34,9 +34,13 @@
     <!-- ... other strings ... -->
 
     <!-- Relative Time Strings -->
+    <string name="relative_time_just_now">Just now</string>
     <string name="relative_time_today">Today</string>
     <string name="relative_time_yesterday">Yesterday</string>
     <string name="verified_purchase">Verified Purchase</string>
+    <string name="verified_buyer">Verified Buyer</string>
+    <string name="helpful">Helpful</string>
+    <string name="helpful_votes">%1$d Helpful</string>
     <string name="shop_manager">%1$s (Shop Manager)</string>
     <string name="contact_support">Contact Support</string>
     <string name="call_us">Call Us</string>
@@ -45,21 +49,29 @@
     <string name="instagram">Instagram</string>
     <string name="email">Email</string>
     <string name="back">Back</string>
+    <plurals name="relative_time_minutes_ago">
+        <item quantity="one">%1$d minute ago</item>
+        <item quantity="other">%1$d minutes ago</item>
+    </plurals>
+    <plurals name="relative_time_hours_ago">
+        <item quantity="one">%1$d hour ago</item>
+        <item quantity="other">%1$d hours ago</item>
+    </plurals>
     <plurals name="relative_time_days_ago">
-        <item quantity="one">%d day ago</item>
-        <item quantity="other">%d days ago</item>
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
     </plurals>
     <plurals name="relative_time_weeks_ago">
-        <item quantity="one">%d week ago</item>
-        <item quantity="other">%d weeks ago</item>
+        <item quantity="one">%1$d week ago</item>
+        <item quantity="other">%1$d weeks ago</item>
     </plurals>
     <plurals name="relative_time_months_ago">
-        <item quantity="one">%d month ago</item>
-        <item quantity="other">%d months ago</item>
+        <item quantity="one">%1$d month ago</item>
+        <item quantity="other">%1$d months ago</item>
     </plurals>
     <plurals name="relative_time_years_ago">
-        <item quantity="one">%d year ago</item>
-        <item quantity="other">%d years ago</item>
+        <item quantity="one">%1$d year ago</item>
+        <item quantity="other">%1$d years ago</item>
     </plurals>
 
 
@@ -78,10 +90,14 @@
     <string name="write_a_review">Write a Review</string>
     <string name="login_to_review">Login to Review</string>
     <string name="review_form_title">What's your rating?</string>
+    <string name="review_publish_as">Your review will be published as %1$s</string>
     <string name="review_field_label">Share your experience</string>
     <string name="criteria_ratings_title">Detailed Ratings</string>
     <string name="submit_review">Submit Review</string>
     <string name="no_reviews_yet">No Review Yet!</string>
+    <string name="review_submit_success_title">Thank you for your review</string>
+    <string name="review_submit_success_message">Your review was submitted successfully and will be visible soon.</string>
+    <string name="shared_ok">OK</string>
 
     <string name="an_unexpected_error_occurred">An unexpected error occurred.</string>
     <string name="product_data_is_unavailable">Product data is unavailable.</string>
@@ -95,6 +111,7 @@
     <string name="write_review_button">Write a Review</string>
     <string name="see_all_reviews">See All</string>
     <string name="reviews_count">Reviews %1$s</string>
+    <string name="reviews_count_label">%1$d reviews</string>
     <string name="decant_selection_title">Available Sizes</string>
     <string name="full_bottle">Full Bottle</string>
     <string name="add_to_cart_low">ADD TO CART (Low)</string>

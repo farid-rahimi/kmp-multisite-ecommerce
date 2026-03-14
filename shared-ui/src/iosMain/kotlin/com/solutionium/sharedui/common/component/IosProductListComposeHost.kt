@@ -16,7 +16,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import platform.UIKit.UIViewController
 
-class IosProductListComposeHost {
+class IosProductListComposeHost(
+    private val initialTabIndex: Int = 0,
+    private val showBottomBar: Boolean = true,
+    private val lockTabToInitial: Boolean = false,
+) {
     private val paymentReturnEvent = MutableStateFlow(PaymentReturnEvent())
 
     private val controller = ComposeUIViewController(
@@ -45,6 +49,9 @@ class IosProductListComposeHost {
                             }
                         }
                     },
+                    initialTabIndex = initialTabIndex,
+                    showBottomBar = showBottomBar,
+                    lockTabToInitial = lockTabToInitial,
                 )
             }
         }

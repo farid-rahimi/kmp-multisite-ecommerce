@@ -32,6 +32,12 @@ interface WooProductRepository {
     suspend fun getReviewList(
         queries: Map<String, String>
     ): Result<List<Review>, GeneralError>
+    suspend fun getReviewCriteria(
+        productId: Int,
+        categoryIds: List<Int>,
+        criteriaPathOverride: String? = null,
+        languageCode: String? = null,
+    ): Result<List<String>, GeneralError>
 
     fun getReviewListStream(
         queries: Map<String, String>

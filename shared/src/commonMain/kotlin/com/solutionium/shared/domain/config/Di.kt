@@ -27,7 +27,7 @@ val configDomainModule = module {
     factory<GetStoriesUseCase> { GetStoriesUseCaseImpl(get()) }
     factory<GetHeaderLogoUseCase> { GetHeaderLogoUseCaseImpl(get()) }
     factory<GetBACSDetailsUseCase> { GetBACSDetailsUseCaseImpl(get()) }
-    factory<ReviewCriteriaUseCase> { ReviewCriteriaUseCaseImpl(get()) }
+    factory<ReviewCriteriaUseCase> { ReviewCriteriaUseCaseImpl(get(), get(), get()) }
     factory<GetPrivacyPolicyUseCase> { GetPrivacyPolicyUseCaseImpl(get()) }
     factory<ForcedEnabledPaymentUseCase> { ForcedEnabledPaymentUseCaseImpl(get()) }
     factory<GetVersionsUseCase> { GetVersionsUseCaseImpl(get()) }

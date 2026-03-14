@@ -33,6 +33,8 @@ data class AppConfig (
     val contact: ContactInfo? = null,
 
     val searchTabs: List<SearchTabConfig> = emptyList(),
+    val reviewProvider: String? = null,
+    val reviewCriteriaEndpoint: String? = null,
 
 )
 

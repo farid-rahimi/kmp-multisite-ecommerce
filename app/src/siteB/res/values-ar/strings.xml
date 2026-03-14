@@ -1,7 +1,4 @@
 <resources>
-    <string name="app_name">متجر الموقع ب</string>
-    <string name="home">اكتشف</string>
-    <string name="category">المجموعات</string>
-    <string name="cart">الحقيبة</string>
-    <string name="account">الملف الشخصي</string>
+    <string name="app_name">Le Parfum</string>
+
 </resources>

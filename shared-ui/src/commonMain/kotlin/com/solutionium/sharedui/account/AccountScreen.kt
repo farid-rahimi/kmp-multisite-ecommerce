@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -45,7 +44,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -67,6 +65,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.solutionium.sharedui.common.component.LanguageSelectionScreen
+import com.solutionium.sharedui.common.component.PlatformTopBar
+import com.solutionium.sharedui.common.component.platformPrimaryButtonShape
 import com.solutionium.sharedui.designsystem.theme.LocalWooBrand
 import com.solutionium.sharedui.home.PlatformContactSupportDialog
 import com.solutionium.sharedui.orders.OrderSummaryCard
@@ -109,6 +109,7 @@ fun AccountScreen(
     modifier: Modifier = Modifier,
     viewModel: AccountViewModel,
     onBack: () -> Unit,
+    clearOnDispose: Boolean = true,
 ) {
     val state by viewModel.state.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -130,8 +131,10 @@ fun AccountScreen(
         }
     }
 
-    DisposableEffect(viewModel) {
-        onDispose { viewModel.clear() }
+    DisposableEffect(viewModel, clearOnDispose) {
+        onDispose {
+            if (clearOnDispose) viewModel.clear()
+        }
     }
 
     if (state.showLogoutConfirmDialog) {
@@ -170,10 +173,12 @@ fun AccountScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
+    Box(
+        modifier = modifier.fillMaxSize(),
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             if (!hideOuterTopBar) {
-                TopAppBar(
+                PlatformTopBar(
                     title = {
                         if (state.stage != AccountStage.ChangeLanguage && state.stage != AccountStage.LoggedOut) {
                             Text(stringResource(Res.string.feature_account_title))
@@ -208,30 +213,23 @@ fun AccountScreen(
                             }
                         }
                     },
-                    navigationIcon = {
-                        if (state.stage == AccountStage.ChangeLanguage) {
-                            IconButton(onClick = { viewModel.onNavigateBack(onBack) }) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back",
-                                )
-                            }
-                        }
+                    onBack = if (state.stage == AccountStage.ChangeLanguage) {
+                        { viewModel.onNavigateBack(onBack) }
+                    } else {
+                        null
                     },
                 )
             }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { paddingValues ->
+
         PullToRefreshBox(
             modifier = Modifier.fillMaxSize(),
             isRefreshing = isRefreshing,
             onRefresh = { viewModel.refresh() },
         ) {
             Box(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxSize()
-                    .padding(if (hideOuterTopBar) PaddingValues(0.dp) else paddingValues),
+                    .padding(PaddingValues(0.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 when (state.stage) {
@@ -261,13 +259,6 @@ fun AccountScreen(
                         messageType = state.messageType,
                         onDismissError = viewModel::clearMessage,
                         privacyPolicyContent = state.privacyPolicy,
-                        onBack = {
-                            if (state.passwordResetStage != PasswordResetStage.Idle) {
-                                viewModel.cancelPasswordReset()
-                            } else {
-                                viewModel.onNavigateBack(onBack)
-                            }
-                        },
                         onLanguageClick = viewModel::onNavigateToLanguage,
                         onSupportClick = viewModel::showContactSupport,
                     )
@@ -341,6 +332,13 @@ fun AccountScreen(
                 }
             }
         }
+        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp),
+        )
     }
 }
 
@@ -465,6 +463,7 @@ fun UserAccountScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
+                shape = platformPrimaryButtonShape(),
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
@@ -560,13 +559,9 @@ fun ViewWalletTransactionsSubScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
+            PlatformTopBar(
                 title = { Text(stringResource(Res.string.wallet_history)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                onBack = onNavigateBack,
             )
         },
     ) { paddingValues ->

@@ -31,9 +31,13 @@
     <string name="installment_pay">تقسيط</string>
     <string name="full_pay">دفع كامل</string>
 
+    <string name="relative_time_just_now">الآن</string>
     <string name="relative_time_today">اليوم</string>
     <string name="relative_time_yesterday">أمس</string>
     <string name="verified_purchase">شراء موثّق</string>
+    <string name="verified_buyer">مشتري موثوق</string>
+    <string name="helpful">مفيد</string>
+    <string name="helpful_votes">%1$d مفيد</string>
     <string name="shop_manager">%1$s (مدير المتجر)</string>
     <string name="contact_support">تواصل مع خدمة العملاء</string>
     <string name="call_us">اتصل علينا</string>
@@ -42,21 +46,29 @@
     <string name="instagram">إنستغرام</string>
     <string name="email">البريد الإلكتروني</string>
     <string name="back">رجوع</string>
+    <plurals name="relative_time_minutes_ago">
+        <item quantity="one">قبل دقيقة</item>
+        <item quantity="other">قبل %1$d دقائق</item>
+    </plurals>
+    <plurals name="relative_time_hours_ago">
+        <item quantity="one">قبل ساعة</item>
+        <item quantity="other">قبل %1$d ساعات</item>
+    </plurals>
     <plurals name="relative_time_days_ago">
         <item quantity="one">قبل يوم</item>
-        <item quantity="other">قبل %d أيام</item>
+        <item quantity="other">قبل %1$d أيام</item>
     </plurals>
     <plurals name="relative_time_weeks_ago">
         <item quantity="one">قبل أسبوع</item>
-        <item quantity="other">قبل %d أسابيع</item>
+        <item quantity="other">قبل %1$d أسابيع</item>
     </plurals>
     <plurals name="relative_time_months_ago">
         <item quantity="one">قبل شهر</item>
-        <item quantity="other">قبل %d أشهر</item>
+        <item quantity="other">قبل %1$d أشهر</item>
     </plurals>
     <plurals name="relative_time_years_ago">
         <item quantity="one">قبل سنة</item>
-        <item quantity="other">قبل %d سنوات</item>
+        <item quantity="other">قبل %1$d سنوات</item>
     </plurals>
 
     <string name="all">الكل</string>
@@ -74,10 +86,14 @@
     <string name="write_a_review">اكتب تقييمك</string>
     <string name="login_to_review">سجّل دخول عشان تكتب تقييم</string>
     <string name="review_form_title">شلون تقييمك للمنتج؟</string>
+    <string name="review_publish_as">تقييمك بيننشر باسم %1$s</string>
     <string name="review_field_label">شاركنا تجربتك</string>
     <string name="criteria_ratings_title">تقييمات تفصيلية</string>
     <string name="submit_review">إرسال التقييم</string>
     <string name="no_reviews_yet">ما في تقييمات للحين!</string>
+    <string name="review_submit_success_title">شكراً على تقييمك</string>
+    <string name="review_submit_success_message">تم إرسال تقييمك بنجاح، وبيظهر قريب.</string>
+    <string name="shared_ok">تمام</string>
 
     <string name="an_unexpected_error_occurred">صار خطأ غير متوقع.</string>
     <string name="product_data_is_unavailable">بيانات المنتج غير متاحة حالياً.</string>
@@ -91,6 +107,7 @@
     <string name="write_review_button">اكتب تقييم</string>
     <string name="see_all_reviews">شوف الكل</string>
     <string name="reviews_count">التقييمات %1$s</string>
+    <string name="reviews_count_label">%1$d تقييم</string>
     <string name="decant_selection_title">الأحجام المتوفرة</string>
     <string name="full_bottle">عبوة كاملة</string>
     <string name="add_to_cart_low">أضف للسلة (المخزون قليل)</string>

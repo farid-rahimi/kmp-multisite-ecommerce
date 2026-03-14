@@ -56,6 +56,9 @@ class IosKoinBridge {
                         } else {
                             "wp-json/digits/v1/register_user"
                         },
+                        reviewListPath = "wp-json/woo-app-config/v1/product_reviews",
+                        reviewSubmitPath = "wp-json/woo-app-config/v1/submit_review",
+                        reviewCriteriaPath = "wp-json/woo-app-config/v1/review_criteria",
                         enableNetworkLogs = true,
                     )
                 }

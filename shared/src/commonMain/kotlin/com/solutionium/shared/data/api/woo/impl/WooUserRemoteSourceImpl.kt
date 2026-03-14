@@ -251,7 +251,6 @@ internal class WooUserRemoteSourceImpl(
         handleNetworkResponse(
             networkCall = {
                 userService.updateUser(
-                    userId = userId,
                     userData = userDetails.toEditUserRequest(),
                     token = "Bearer $token"
                 )

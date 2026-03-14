@@ -40,10 +40,9 @@ class MainActivity : ComponentActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
+    ) { _ : Boolean ->
             // Permission granted. FCM can post notifications.
-        }
+
     }
 
     private fun askNotificationPermission() {
@@ -165,6 +164,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun defaultLanguageForBrand(): String {
-        return if (BuildConfig.SITE_BRAND == "SITE_B") "ar" else "fa"
+        return if (BuildConfig.SITE_BRAND == "SITE_B") "ar" else "en"
     }
 }

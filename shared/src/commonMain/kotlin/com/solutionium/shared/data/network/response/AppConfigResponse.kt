@@ -48,6 +48,12 @@ data class AppConfigResponse (
 
     @SerialName("search_tab")
     val searchTabs: List<SearchTabResponse>? = null,
+
+    @SerialName("review_provider")
+    val reviewProvider: String? = null,
+
+    @SerialName("review_criteria_endpoint")
+    val reviewCriteriaEndpoint: String? = null,
 )
 
 @Serializable

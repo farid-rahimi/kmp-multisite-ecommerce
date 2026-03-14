@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
-import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -45,8 +44,11 @@ import androidx.compose.ui.unit.sp
 import com.solutionium.shared.data.model.Review
 import com.solutionium.shared.data.model.ReviewChild
 import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.featured
+import com.solutionium.sharedui.resources.helpful
+import com.solutionium.sharedui.resources.helpful_votes
 import com.solutionium.sharedui.resources.shop_manager
-import com.solutionium.sharedui.resources.verified_purchase
+import com.solutionium.sharedui.resources.verified_buyer
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -64,24 +66,12 @@ fun ReviewItem(review: Review, modifier: Modifier = Modifier) {
                 )
 
                 Text(
-                    text = review.dateCreated,
+                    text = relativeTimeFromIso(review.dateCreated),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 RatingBar(rating = review.rating, modifier = Modifier.padding(top = 2.dp))
-            }
-            if (review.verified) {
-                Text(
-                    style = MaterialTheme.typography.bodySmall,
-                    text = stringResource(Res.string.verified_purchase)
-                )
-                Spacer(Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.Filled.VerifiedUser,
-                    contentDescription = "Verified Purchase",
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                    modifier = Modifier.size(20.dp)
-                )
+                ReviewBadges(review = review)
             }
         }
 
@@ -122,6 +112,50 @@ fun ReviewItem(review: Review, modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun ReviewBadges(review: Review, modifier: Modifier = Modifier) {
+    val chips = mutableListOf<String>()
+    if (review.featured) {
+        chips += stringResource(Res.string.featured)
+    }
+    if (review.verified) {
+        chips += stringResource(Res.string.verified_buyer)
+    }
+    if (review.helpful || review.helpfulVotes > 0) {
+        chips += if (review.helpfulVotes > 0) {
+            stringResource(Res.string.helpful_votes, review.helpfulVotes)
+        } else {
+            stringResource(Res.string.helpful)
+        }
+    }
+
+    if (chips.isEmpty()) {
+        return
+    }
+
+    Row(
+        modifier = modifier.padding(top = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        chips.forEach { label ->
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f))
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun AdminResponseItem(response: ReviewChild, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
@@ -152,7 +186,7 @@ fun AdminResponseItem(response: ReviewChild, modifier: Modifier = Modifier) {
                     )
                     Spacer(Modifier.weight(1f))
                     Text(
-                        text = response.date,
+                        text = relativeTimeFromIso(response.date),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -297,6 +331,11 @@ fun ReviewSummaryItemCard(review: Review, modifier: Modifier = Modifier) {
                     )
                 }
             }
+
+            ReviewBadges(
+                review = review,
+                modifier = Modifier.padding(top = 8.dp)
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 

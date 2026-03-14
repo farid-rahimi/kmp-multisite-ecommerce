@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,12 +37,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Favorite
@@ -66,12 +66,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -79,6 +79,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -86,24 +87,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChanged
 import coil3.compose.AsyncImage
-import com.solutionium.sharedui.common.component.PriceView2
-import com.solutionium.sharedui.common.component.ReviewSummaryItemCard
-import com.solutionium.sharedui.resources.Res
-import com.solutionium.sharedui.resources.*
 import com.solutionium.shared.data.model.PRODUCT_ARG_BRAND_ID
 import com.solutionium.shared.data.model.PRODUCT_ARG_TITLE
 import com.solutionium.shared.data.model.ProductAttribute
@@ -113,9 +108,36 @@ import com.solutionium.shared.data.model.Review
 import com.solutionium.shared.data.model.SimpleTerm
 import com.solutionium.shared.viewmodel.ProductDetailState
 import com.solutionium.shared.viewmodel.ProductDetailViewModel
+import com.solutionium.sharedui.common.component.PlatformTopBar
+import com.solutionium.sharedui.common.component.PriceView2
+import com.solutionium.sharedui.common.component.ReviewSummaryItemCard
+import com.solutionium.sharedui.common.component.platformUsesCupertinoChrome
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.add_to_cart
+import com.solutionium.sharedui.resources.add_to_cart_low
+import com.solutionium.sharedui.resources.an_unexpected_error_occurred
+import com.solutionium.sharedui.resources.customer_reviews_title
+import com.solutionium.sharedui.resources.description
+import com.solutionium.sharedui.resources.full_pay
+import com.solutionium.sharedui.resources.installment_pay
+import com.solutionium.sharedui.resources.low_in_stock_msg
+import com.solutionium.sharedui.resources.no_review_content
+import com.solutionium.sharedui.resources.no_review_title
+import com.solutionium.sharedui.resources.out_of_stock
+import com.solutionium.sharedui.resources.out_of_stock_msg
+import com.solutionium.sharedui.resources.product_attributes_title
+import com.solutionium.sharedui.resources.product_data_is_unavailable
+import com.solutionium.sharedui.resources.product_detail_title
+import com.solutionium.sharedui.resources.retry
+import com.solutionium.sharedui.resources.reviews_count
+import com.solutionium.sharedui.resources.reviews_count_label
+import com.solutionium.sharedui.resources.see_all_reviews
+import com.solutionium.sharedui.resources.show_less
+import com.solutionium.sharedui.resources.show_more
+import com.solutionium.sharedui.resources.variation_not_selected_msg
+import com.solutionium.sharedui.resources.write_review_button
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
-import kotlin.ranges.coerceIn
 
 
 @Composable
@@ -207,7 +229,7 @@ fun ProductDetailScreen(
         //if (selectedVariation != null || selectedDecant != null) {
         manualBottomBarVisible = true
         // Hide the bar automatically after 5 seconds if the user doesn't interact
-        delay(6000L)
+        delay(4000L)
         manualBottomBarVisible = false
         //}
     }
@@ -379,7 +401,7 @@ private fun ProductDetailTopAppBar(
     onShareClick: () -> Unit,
     onFavoriteClick: () -> Unit
 ) {
-    TopAppBar(
+    PlatformTopBar(
         title = {
             Text(
                 productName ?: stringResource(Res.string.product_detail_title),
@@ -391,14 +413,7 @@ private fun ProductDetailTopAppBar(
                 //color = LocalContentColor.current.copy(alpha = scrollAlpha) // Fade the text in/out
             )
         },
-        navigationIcon = {
-            IconButton(
-                onClick = onBackClick,
-                modifier = Modifier
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
-        },
+        onBack = onBackClick,
         actions = {
             IconButton(
                 onClick = onShareClick,
@@ -423,7 +438,8 @@ private fun ProductDetailTopAppBar(
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = scrollAlpha)
-        )
+        ),
+        addBottomDivider = scrollAlpha > 0.02f,
     )
 }
 
@@ -444,6 +460,7 @@ private fun ProductContent(
     var expanded by remember { mutableStateOf(true) }
 
     Column(modifier = modifier) {
+        Spacer(Modifier.height(if (platformUsesCupertinoChrome()) 0.dp else 40.dp))
         ProductImageHeader(
             imageUrls = product.imageUrls,
             currentVarImage = currentVarImage,
@@ -465,6 +482,7 @@ private fun ProductContent(
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp)) {
             ProductBasicInfo(product, onBrandClick)
             //Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         decants()
@@ -472,14 +490,7 @@ private fun ProductContent(
         variations()
 
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ProductRatingSummary(
-                averageRating = uiState.averageRating ?: 0f,
-                reviewCount = uiState.comments.size,
-                onClick = {  }
-            )
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             ProductAttributesInfo(
                 attributes = product.attributes.filter { it.visible },
@@ -555,7 +566,7 @@ private fun ProductContent(
                         product.categories.map { it.id })
                 })
         }
-        Spacer(modifier = Modifier.height(80.dp)) // Space for bottom bar
+        Spacer(modifier = Modifier.height(100.dp)) // Space for bottom bar
     }
 }
 
@@ -731,19 +742,41 @@ private fun ProductImageHeader(
 @Composable
 private fun ProductBasicInfo(
     product: ProductDetail,
-    onClickBrand: (SimpleTerm) -> Unit = {}
+    onClickBrand: (SimpleTerm) -> Unit = {},
+    onClickRating: () -> Unit = {}
 ) {
+    val brand = product.brands.firstOrNull()
+    val hasRating = product.rating > 0.0 && product.ratingCount > 0
 
-    product.brands.firstOrNull()?.let {
-        Text(
-            text = it.name,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            letterSpacing = 0.8.sp,
-            modifier = Modifier.clickable(onClick = { onClickBrand(it) })
-        )
+    if (brand != null || hasRating) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            if (brand != null) {
+                Text(
+                    text = brand.name,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    letterSpacing = 0.8.sp,
+                    modifier = Modifier.clickable(onClick = { onClickBrand(brand) })
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+
+            if (hasRating) {
+                ProductRatingSummary(
+                    averageRating = product.rating.toFloat(),
+                    reviewCount = product.ratingCount,
+                    onClick = onClickRating
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(4.dp))
     }
+
     Text(
         text = product.name,
         fontSize = 16.sp,
@@ -765,26 +798,36 @@ private fun ProductBasicInfo(
 
 @Composable
 private fun ProductRatingSummary(averageRating: Float, reviewCount: Int, onClick: () -> Unit) {
-    if (averageRating > 0 && reviewCount > 0) {
+    if (averageRating > 0f && reviewCount > 0) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.clickable(onClick = onClick)
         ) {
-            Icon(Icons.Filled.Star, contentDescription = "Rating", tint = Color(0xFFFFC107))
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = "Rating",
+                tint = Color(0xFFFFC107),
+                modifier = Modifier.size(16.dp)
+            )
             Text(
-                text = " ",
-                style = MaterialTheme.typography.titleSmall,
+                text = formatRatingSummaryValue(averageRating),
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 4.dp)
             )
             Text(
-                text = " ($reviewCount reviews)",
-                style = MaterialTheme.typography.bodyMedium,
+                text = stringResource(Res.string.reviews_count_label, reviewCount),
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 4.dp)
             )
         }
     }
+}
+
+private fun formatRatingSummaryValue(value: Float): String {
+    val rounded = kotlin.math.round(value * 10f) / 10f
+    return if (rounded % 1f == 0f) rounded.toInt().toString() else rounded.toString()
 }
 
 @Composable
@@ -826,7 +869,7 @@ private fun CollapsibleSection(
                 onClick = onToggle,
                 modifier = Modifier
                     .align(Alignment.Start)
-                    .padding(top = 0.dp)
+                    .padding(top = 0.dp, start = 0.dp)
             ) {
                 Text(if (isExpanded) stringResource(Res.string.show_less) else stringResource(Res.string.show_more))
             }
@@ -903,7 +946,6 @@ private fun ExpandableInfoCard(
 ) {
     Surface(
         shape = RoundedCornerShape(12.dp),
-        tonalElevation = 1.dp,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -986,15 +1028,23 @@ private fun ProductDetailBottomBar(
         "lowstock" -> stringResource(Res.string.add_to_cart_low)
         else -> stringResource(Res.string.add_to_cart)
     }
+    val platformBottomPadding = if (platformUsesCupertinoChrome()) 80.dp else 0.dp
 
-    Surface(modifier = Modifier.fillMaxWidth(), shadowElevation = 8.dp, tonalElevation = 3.dp) {
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 8.dp,
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 18.dp)
+                    //.navigationBarsPadding()
+                ,
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
 
             Column {
                 if (isAvailable) {
@@ -1083,7 +1133,7 @@ private fun ProductDetailBottomBar(
                 Button(
                     onClick = onAddToCartClick,
                     enabled = isAvailable,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(20.dp),
                     modifier = Modifier
                         .height(40.dp)
                         .defaultMinSize(minWidth = 140.dp),
@@ -1103,6 +1153,8 @@ private fun ProductDetailBottomBar(
                 }
             }
 
+            }
+            Spacer(modifier = Modifier.height(platformBottomPadding))
         }
     }
 }
@@ -1125,10 +1177,10 @@ fun QuantitySelector(
         OutlinedIconButton(
             onClick = onRemove,
             modifier = Modifier.size(40.dp), // Consistent size
-            shape = MaterialTheme.shapes.medium,
+            shape = MaterialTheme.shapes.extraLarge,
             border = BorderStroke(
                 1.dp,
-                if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
+                if (enabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface.copy(
                     alpha = 0.12f
                 )
             ),
@@ -1163,10 +1215,10 @@ fun QuantitySelector(
                 }
             },
             modifier = Modifier.size(40.dp),
-            shape = MaterialTheme.shapes.medium,
+            shape = MaterialTheme.shapes.extraLarge,
             border = BorderStroke(
                 1.dp,
-                if (enabled && quantity < maxQuantity) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
+                if (enabled && quantity < maxQuantity) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)  else MaterialTheme.colorScheme.onSurface.copy(
                     alpha = 0.12f
                 )
             ),
@@ -1248,8 +1300,9 @@ fun NoReviewsPrompt(productName: String, onWriteReviewClick: () -> Unit) {
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium
             )
-            Button(
-                shape = MaterialTheme.shapes.medium,
+            OutlinedButton(
+                modifier = Modifier.height(40.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 onClick = onWriteReviewClick
             ) {
                 Text(stringResource(Res.string.write_review_button))

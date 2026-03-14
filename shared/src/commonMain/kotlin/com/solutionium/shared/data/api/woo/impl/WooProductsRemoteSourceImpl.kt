@@ -17,8 +17,10 @@ import com.solutionium.shared.data.api.woo.converters.toBrand
 import com.solutionium.shared.data.api.woo.converters.toProductDetail
 import com.solutionium.shared.data.api.woo.converters.toProductThumbnail
 import com.solutionium.shared.data.api.woo.handleNetworkResponse
+import com.solutionium.shared.data.network.NetworkConfigProvider
 import com.solutionium.shared.data.network.adapter.NetworkResponse
 import com.solutionium.shared.data.network.clients.WooProductClient
+import com.solutionium.shared.data.local.TokenStore
 import com.solutionium.shared.data.network.response.CartCheckListResponse
 import com.solutionium.shared.data.model.Result
 import kotlinx.coroutines.sync.Mutex
@@ -31,7 +33,10 @@ import kotlin.time.ExperimentalTime
 
 internal class WooProductsRemoteSourceImpl(
 
-    private val productApi: WooProductClient
+    private val productApi: WooProductClient,
+    private val publicProductApi: WooProductClient,
+    private val networkConfigProvider: NetworkConfigProvider,
+    private val tokenStore: TokenStore,
 ) : WooProductsRemoteSource {
     private data class CacheEntry<T>(val timestampMs: Long, val value: T)
 
@@ -175,17 +180,50 @@ internal class WooProductsRemoteSourceImpl(
         queries: Map<String, String>
     ): Result<List<Review>, GeneralError> =
         handleNetworkResponse(
-            networkCall = { productApi.getProductReviews(page, queries) },
+            networkCall = { publicProductApi.getProductReviews(page, queries) },
             mapper = { responseList ->
                 responseList.map { it.toModel() }
             }
         )
 
+    override suspend fun getReviewCriteria(
+        productId: Int,
+        categoryIds: List<Int>,
+        criteriaPathOverride: String?,
+        languageCode: String?,
+    ): Result<List<String>, GeneralError> {
+        val criteriaPath = criteriaPathOverride?.takeIf { it.isNotBlank() }
+            ?: networkConfigProvider.get().reviewCriteriaPath.orEmpty()
+        if (criteriaPath.isBlank()) {
+            return Result.Success(emptyList())
+        }
+
+        return handleNetworkResponse(
+            networkCall = {
+                publicProductApi.getReviewCriteria(
+                    productId = productId,
+                    categoryIds = categoryIds,
+                    criteriaPathOverride = criteriaPath,
+                    languageCode = languageCode,
+                )
+            },
+            mapper = { envelope ->
+                envelope.data?.criteria?.filter { it.isNotBlank() } ?: emptyList()
+            },
+        )
+    }
+
     override suspend fun submitReview(
         review: NewReview
     ): Result<Review, GeneralError> =
         handleNetworkResponse(
-            networkCall = { productApi.submitReview(review.toRequestBody()) },
+            networkCall = {
+                val token = tokenStore.getToken()?.trim().orEmpty()
+                publicProductApi.submitReview(
+                    review = review.toRequestBody(),
+                    bearerToken = token.takeIf { it.isNotBlank() }?.let { "Bearer $it" },
+                )
+            },
             mapper = { response ->
                 response.toModel()
             }

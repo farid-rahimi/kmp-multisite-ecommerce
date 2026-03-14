@@ -3,6 +3,7 @@ package com.solutionium.shared.data.network.clients
 import com.solutionium.shared.data.network.request.ReviewRequest
 import com.solutionium.shared.data.network.response.CartCheckError
 import com.solutionium.shared.data.network.response.CartCheckListResponse
+import com.solutionium.shared.data.network.response.ReviewCriteriaEnvelopeResponse
 import com.solutionium.shared.data.network.response.WooAttributeListResponse
 import com.solutionium.shared.data.network.response.WooBrandListResponse
 import com.solutionium.shared.data.network.response.WooErrorResponse
@@ -14,15 +15,20 @@ import com.solutionium.shared.data.network.response.WooReviewListResponse
 import com.solutionium.shared.data.network.response.WooReviewResponse
 import com.solutionium.shared.data.network.safeRequest
 import io.ktor.client.HttpClient
+import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpHeaders
 import io.ktor.http.appendPathSegments
 import io.ktor.http.path
 
 
  class WooProductClient(
-    private val client: HttpClient
+    private val client: HttpClient,
+    private val reviewListPath: String = "wp-json/wc/v3/products/reviews/",
+    private val reviewSubmitPath: String = "wp-json/wc/v3/products/reviews/",
+    private val reviewCriteriaPath: String? = null,
 ) {
 
      suspend fun getProductDetails(productId: Int) =
@@ -82,18 +88,41 @@ import io.ktor.http.path
     ) = client.safeRequest<WooReviewListResponse, WooErrorResponse> {
         method = HttpMethod.Get
         url {
-            path("wp-json/wc/v3/products/reviews/")
+            path(reviewListPath)
             parameter("page", page)
             queries.forEach { (key, value) -> parameter(key, value) }
         }
     }
 
-    suspend fun submitReview(review: ReviewRequest) =
+    suspend fun submitReview(
+        review: ReviewRequest,
+        bearerToken: String? = null,
+    ) =
         client.safeRequest<WooReviewResponse, WooErrorResponse> {
             method = HttpMethod.Post
-            url { path("wp-json/wc/v3/products/reviews/") }
+            url { path(reviewSubmitPath) }
             setBody(review)
+            bearerToken?.trim()?.takeIf { it.isNotBlank() }?.let {
+                header(HttpHeaders.Authorization, it)
+            }
         }
+
+    suspend fun getReviewCriteria(
+        productId: Int,
+        categoryIds: List<Int> = emptyList(),
+        criteriaPathOverride: String? = null,
+        languageCode: String? = null,
+    ) = client.safeRequest<ReviewCriteriaEnvelopeResponse, WooErrorResponse> {
+        method = HttpMethod.Get
+        url {
+            path((criteriaPathOverride?.takeIf { it.isNotBlank() } ?: reviewCriteriaPath).orEmpty())
+            parameter("product_id", productId)
+            if (categoryIds.isNotEmpty()) {
+                parameter("category_ids", categoryIds.joinToString(","))
+            }
+            languageCode?.trim()?.takeIf { it.isNotBlank() }?.let { parameter("lang", it) }
+        }
+    }
 
     suspend fun getCartItemUpdate(
         queries: Map<String, String> = emptyMap(),

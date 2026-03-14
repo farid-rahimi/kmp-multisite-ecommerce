@@ -9,13 +9,21 @@ import com.solutionium.shared.data.api.woo.impl.WooOrderRemoteSourceImpl
 import com.solutionium.shared.data.api.woo.impl.WooProductsRemoteSourceImpl
 import com.solutionium.shared.data.api.woo.impl.WooUserRemoteSourceImpl
 import com.solutionium.shared.data.network.getNetworkDataModules
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 fun getApiModule() = setOf(apiModule) + getNetworkDataModules()
 
 
 val apiModule = module {
-    single<WooProductsRemoteSource> { WooProductsRemoteSourceImpl(get()) }
+    single<WooProductsRemoteSource> {
+        WooProductsRemoteSourceImpl(
+            productApi = get(named("WooAuthProductClient")),
+            publicProductApi = get(named("WooPublicProductClient")),
+            networkConfigProvider = get(),
+            tokenStore = get(),
+        )
+    }
     single<WooCategoryRemoteSource> { WooCategoryRemoteSourceImpl(get()) }
     single<WooCheckoutRemoteSource> { WooCheckoutRemoteSourceImpl(get(), get(), get()) }
     single<WooUserRemoteSource> { WooUserRemoteSourceImpl(get(), get()) }

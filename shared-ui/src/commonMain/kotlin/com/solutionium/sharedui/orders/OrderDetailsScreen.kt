@@ -11,26 +11,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,14 +41,16 @@ import com.solutionium.shared.data.model.LineItem
 import com.solutionium.shared.data.model.Order
 import com.solutionium.shared.viewmodel.OrderDetailsViewModel
 import com.solutionium.sharedui.common.component.FormattedPriceV3
+import com.solutionium.sharedui.common.component.PlatformTopBar
+import com.solutionium.sharedui.common.component.platformPrimaryButtonShape
 import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.discount
 import com.solutionium.sharedui.resources.my_orders
 import com.solutionium.sharedui.resources.payment_methods_section_title
 import com.solutionium.sharedui.resources.shipping
 import com.solutionium.sharedui.resources.shipping_address_section_title
 import com.solutionium.sharedui.resources.subtotal
 import com.solutionium.sharedui.resources.total
-import com.solutionium.sharedui.resources.discount
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,13 +63,9 @@ fun OrderDetailsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            PlatformTopBar(
                 title = { Text(stringResource(Res.string.my_orders)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                onBack = onBack,
             )
         },
     ) { paddingValues ->
@@ -104,7 +96,10 @@ fun OrderDetailsScreen(
                         color = MaterialTheme.colorScheme.error,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Button(onClick = viewModel::retry) {
+                    Button(
+                        onClick = viewModel::retry,
+                        shape = platformPrimaryButtonShape(),
+                    ) {
                         Text("Try again")
                     }
                 }
@@ -154,7 +149,7 @@ private fun OrderDetailsContent(
                     PriceRow(title = "Tax", amount = order.totalTax)
                     PriceRow(title = stringResource(Res.string.discount), amount = "-${order.discountTotal}")
                     PriceRow(title = "Fees", amount = order.feeTotal)
-                    Divider()
+                    HorizontalDivider()
                     PriceRow(
                         title = stringResource(Res.string.total),
                         amount = order.total,

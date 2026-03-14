@@ -55,6 +55,8 @@ fun AppConfigResponse.toModel(language: String?): AppConfig {
         appVersion = appVersion?.toModel(),
         contact = contact?.toModel(),
         searchTabs = searchTabs?.map { it.toModel(selectedLanguage) } ?: emptyList(),
+        reviewProvider = reviewProvider?.trim()?.lowercase()?.takeIf { it.isNotBlank() },
+        reviewCriteriaEndpoint = reviewCriteriaEndpoint?.trim()?.takeIf { it.isNotBlank() },
     )
 }
 

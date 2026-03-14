@@ -8,14 +8,9 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -28,6 +23,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.solutionium.shared.data.model.ProductThumbnail
+import com.solutionium.sharedui.common.component.PlatformTopBar
 import com.solutionium.sharedui.common.component.ProductThumbnailCard2
 import com.solutionium.sharedui.common.component.ProductThumbnailPlaceholder
 import org.koin.compose.koinInject
@@ -97,16 +93,9 @@ private fun ProductListScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            PlatformTopBar(
                 title = { Text(text = title ?: "Products") },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+                onBack = onBack,
             )
         },
         content = { padding ->

@@ -30,7 +30,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -93,30 +92,28 @@ fun CategoryScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState() // <-- Collect the refreshing state
 
 
-    Scaffold(
-        topBar = {
-            Spacer(modifier = Modifier.height(12.dp))
-            SearchAppBar(
-                query = uiState.searchQuery,
-                onQueryChanged = viewModel::onSearchQueryChanged,
-                onSearch = {
-                    navigateToProductList(
-                        mapOf(
-                            PRODUCT_ARG_SEARCH to uiState.searchQuery,
-                            PRODUCT_ARG_TITLE to searchTitle,
-                        )
+    Column(modifier = Modifier.fillMaxSize()) {
+        Spacer(modifier = Modifier.height(12.dp))
+        SearchAppBar(
+            query = uiState.searchQuery,
+            onQueryChanged = viewModel::onSearchQueryChanged,
+            onSearch = {
+                navigateToProductList(
+                    mapOf(
+                        PRODUCT_ARG_SEARCH to uiState.searchQuery,
+                        PRODUCT_ARG_TITLE to searchTitle,
                     )
-                },
-                onClose = {
-                    if (uiState.searchQuery.isNotEmpty()) {
-                        viewModel.clearSearch()
-                    } else {
-                        onNavigateBack()
-                    }
+                )
+            },
+            onClose = {
+                if (uiState.searchQuery.isNotEmpty()) {
+                    viewModel.clearSearch()
+                } else {
+                    onNavigateBack()
                 }
-            )
-        }
-    ) { paddingValues ->
+            }
+        )
+
         PullToRefreshBox(
             modifier = Modifier
                 .fillMaxSize(),
@@ -126,7 +123,6 @@ fun CategoryScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
                     .background(MaterialTheme.colorScheme.surface)
             ) {
                 CategoryContent(

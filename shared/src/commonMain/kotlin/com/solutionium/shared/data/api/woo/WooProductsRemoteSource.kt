@@ -47,5 +47,11 @@ interface WooProductsRemoteSource {
     }
 
     suspend fun getProductReviews(page: Int, queries: Map<String, String>): Result<List<Review>, GeneralError>
+    suspend fun getReviewCriteria(
+        productId: Int,
+        categoryIds: List<Int>,
+        criteriaPathOverride: String? = null,
+        languageCode: String? = null,
+    ): Result<List<String>, GeneralError>
     suspend fun submitReview(review: NewReview): Result<Review, GeneralError>
 }

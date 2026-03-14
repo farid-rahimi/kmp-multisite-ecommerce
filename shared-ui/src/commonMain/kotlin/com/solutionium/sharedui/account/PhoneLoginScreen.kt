@@ -21,14 +21,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -45,7 +45,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,35 +56,35 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.solutionium.sharedui.common.component.PlatformTopBar
+import com.solutionium.shared.util.PhoneNumberFormatter
+import com.solutionium.shared.viewmodel.AccountMessageType
+import com.solutionium.shared.viewmodel.PasswordResetStage
 import com.solutionium.sharedui.designsystem.theme.WooBrand
 import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.back
 import com.solutionium.sharedui.resources.close
 import com.solutionium.sharedui.resources.contact_support
-import com.solutionium.sharedui.resources.create_account
 import com.solutionium.sharedui.resources.country_code
+import com.solutionium.sharedui.resources.create_account
 import com.solutionium.sharedui.resources.email
+import com.solutionium.sharedui.resources.enter_otp
 import com.solutionium.sharedui.resources.forgot_password
 import com.solutionium.sharedui.resources.full_name
 import com.solutionium.sharedui.resources.language_menu
 import com.solutionium.sharedui.resources.login
+import com.solutionium.sharedui.resources.login_identifier
 import com.solutionium.sharedui.resources.login_or_signup
 import com.solutionium.sharedui.resources.login_with_otp_instead
 import com.solutionium.sharedui.resources.login_with_password
-import com.solutionium.sharedui.resources.login_identifier
-import com.solutionium.sharedui.resources.phone_number_optional
-import com.solutionium.sharedui.resources.reset_password
 import com.solutionium.sharedui.resources.password
 import com.solutionium.sharedui.resources.phone_number
+import com.solutionium.sharedui.resources.phone_number_optional
 import com.solutionium.sharedui.resources.privacy_policy
 import com.solutionium.sharedui.resources.request_otp
+import com.solutionium.sharedui.resources.reset_password
 import com.solutionium.sharedui.resources.signup
-import com.solutionium.sharedui.resources.username
-import com.solutionium.shared.viewmodel.AccountMessageType
 import com.solutionium.sharedui.resources.verify_otp
-import com.solutionium.shared.viewmodel.PasswordResetStage
-import com.solutionium.shared.util.PhoneNumberFormatter
-import com.solutionium.sharedui.resources.back
-import com.solutionium.sharedui.resources.enter_otp
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,7 +113,6 @@ fun PhoneLoginScreen(
     messageType: AccountMessageType?,
     onDismissError: () -> Unit,
     privacyPolicyContent: String,
-    onBack: () -> Unit,
     onLanguageClick: () -> Unit,
     onSupportClick: () -> Unit,
 ) {
@@ -133,7 +131,7 @@ fun PhoneLoginScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
+            PlatformTopBar(
                 title = { Text(screenTitle) },
                 actions = {
                     IconButton(onClick = { menuExpanded = true }) {

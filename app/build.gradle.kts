@@ -21,6 +21,8 @@ android {
             applicationId = "com.solutionium.woo"
             manifestPlaceholders["paymentReturnScheme"] = "solutioniuma"
             androidResources {
+
+                @Suppress("UnstableApiUsage")
                 localeFilters += listOf("en", "fa")
             }
             buildConfigField("String", "SITE_BRAND", "\"SITE_A\"")
@@ -35,6 +37,7 @@ android {
             applicationId = "ae.leparfum.shop"
             manifestPlaceholders["paymentReturnScheme"] = "solutioniumb"
             androidResources {
+                @Suppress("UnstableApiUsage")
                 localeFilters += listOf("en", "ar")
             }
             buildConfigField("String", "SITE_BRAND", "\"SITE_B\"")
@@ -58,6 +61,7 @@ android {
         language {
             // This tells Google Play to NEVER strip the following language resources.
             // All other languages will be stripped, which is what we want.
+            @Suppress("UnstableApiUsage")
             enableSplit = false
         }
     }
