@@ -4,7 +4,9 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
 import com.solutionium.shared.data.model.FilterCriterion
+import com.solutionium.shared.data.model.PRODUCT_ARG_FAVORITES_ONLY
 import com.solutionium.shared.data.model.PRODUCT_ARG_TITLE
+import com.solutionium.shared.data.model.ProductFilterKey
 import com.solutionium.shared.data.model.ProductThumbnail
 import com.solutionium.shared.data.model.toCartItem
 import com.solutionium.shared.domain.cart.AddToCartUseCase
@@ -23,6 +25,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -46,6 +50,7 @@ class ProductListViewModel(
 
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val isFavoritesMode = initialArgs[PRODUCT_ARG_FAVORITES_ONLY] == "1"
     private val filters: MutableList<FilterCriterion> =
         ProductListFilters().buildFilterCriteria(initialArgs)
     //private val filterFlow = MutableStateFlow(ProductListFilters().buildFilterCriteria(savedStateHandle))
@@ -58,7 +63,12 @@ class ProductListViewModel(
     init {
 
         val screenTitle: String? = initialArgs[PRODUCT_ARG_TITLE]
-        _state.update { it.copy(title = screenTitle) }
+        _state.update {
+            it.copy(
+                title = screenTitle,
+                isFavoritesMode = isFavoritesMode,
+            )
+        }
 
         observeCart()
         observeFavorites()
@@ -111,20 +121,26 @@ class ProductListViewModel(
     }
 
     val pagedList: Flow<PagingData<ProductThumbnail>> =
-        //filterFlow.flatMapLatest { currentFilters ->
-            productList(filters)
-                .map { pagingData ->
-                    val items = mutableListOf<ProductThumbnail>()
-                    pagingData.filter { productThumbnail ->
-                        items.contains(productThumbnail)
-                            .not()
-                            .also { shouldAdd ->
-                                if (shouldAdd) {
-                                    items.add(productThumbnail)
-                                }
-                            }
+        if (isFavoritesMode) {
+            observeFavoritesUseCase()
+                .flatMapLatest { favoriteIds ->
+                    if (favoriteIds.isEmpty()) {
+                        flowOf(PagingData.empty())
+                    } else {
+                        val dynamicFilters = filters
+                            .filterNot { it.key == ProductFilterKey.INCLUDE_IDS.apiKey }
+                            .toMutableList()
+                        dynamicFilters.add(
+                            FilterCriterion(
+                                ProductFilterKey.INCLUDE_IDS.apiKey,
+                                favoriteIds.joinToString(","),
+                            ),
+                        )
+                        productList(dynamicFilters).map(::deduplicatePagingData)
                     }
-                //}
+                }
+        } else {
+            productList(filters).map(::deduplicatePagingData)
         }.cachedIn(scope)
 
     fun addToCart(product: ProductThumbnail) {
@@ -158,5 +174,20 @@ class ProductListViewModel(
 
     fun clear() {
         scope.cancel()
+    }
+
+    private fun deduplicatePagingData(
+        pagingData: PagingData<ProductThumbnail>,
+    ): PagingData<ProductThumbnail> {
+        val items = mutableListOf<ProductThumbnail>()
+        return pagingData.filter { productThumbnail ->
+            items.contains(productThumbnail)
+                .not()
+                .also { shouldAdd ->
+                    if (shouldAdd) {
+                        items.add(productThumbnail)
+                    }
+                }
+        }
     }
 }

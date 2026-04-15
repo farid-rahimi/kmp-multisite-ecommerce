@@ -1,14 +1,19 @@
 package com.solutionium.sharedui.products
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -26,6 +31,9 @@ import com.solutionium.shared.data.model.ProductThumbnail
 import com.solutionium.sharedui.common.component.PlatformTopBar
 import com.solutionium.sharedui.common.component.ProductThumbnailCard2
 import com.solutionium.sharedui.common.component.ProductThumbnailPlaceholder
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.no_favorites_yet
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
@@ -34,6 +42,8 @@ fun ProductListScreen(
     onProductClick: (id: Int) -> Unit,
     onBack: () -> Unit,
     args: Map<String, String> = emptyMap(),
+    isLoggedIn: Boolean = true,
+    onRequireAuth: () -> Unit = {},
 ) {
     val viewModel = koinInject<com.solutionium.shared.viewmodel.ProductListViewModel>(
         parameters = { parametersOf(args) }
@@ -56,14 +66,20 @@ fun ProductListScreen(
             onProductClick = onProductClick,
             onBack = onBack,
             title = state.title,
-            toggleFavorite = viewModel::toggleFavorite,
+            toggleFavorite = { productId, isFavorite ->
+                if (isLoggedIn) viewModel.toggleFavorite(productId, isFavorite)
+                else onRequireAuth()
+            },
             discountedPrice = state::discountedPrice,
-            isFavorite = state::isFavorite,
+            isFavorite = { productId -> isLoggedIn && state.isFavorite(productId) },
             cartCounter = state::cartItemCount,
             onAddToCartClick = viewModel::addToCart,
             onRemoveFromCartClick = viewModel::removeFromCart,
             showStock = state.isSuperUser,
-            installmentPriceEnabled = state.installmentPriceEnabled
+            installmentPriceEnabled = state.installmentPriceEnabled,
+            showFavoritesEmptyState = state.isFavoritesMode &&
+                state.favoriteIds.isEmpty() &&
+                pagedList.loadState.refresh !is LoadState.Loading,
         )
     }
 }
@@ -89,29 +105,50 @@ private fun ProductListScreen(
     onAddToCartClick: (ProductThumbnail) -> Unit = {},
     onRemoveFromCartClick: (Int) -> Unit = {},
     showStock: Boolean = false,
-    installmentPriceEnabled: Boolean = false
+    installmentPriceEnabled: Boolean = false,
+    showFavoritesEmptyState: Boolean = false,
 ) {
     Scaffold(
         topBar = {
             PlatformTopBar(
-                title = { Text(text = title ?: "Products") },
+                title = {
+                    Text(
+                        text = title ?: "Products",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
                 onBack = onBack,
             )
         },
         content = { padding ->
-            ProductListContent(
-                contentPadding = padding,
-                pagedList = pagedList,
-                onProductClick = onProductClick,
-                toggleFavorite = toggleFavorite,
-                discountedPrice = discountedPrice,
-                isFavorite = isFavorite,
-                cartCounter = cartCounter,
-                onAddToCartClick = onAddToCartClick,
-                onRemoveFromCartClick = onRemoveFromCartClick,
-                showStock = showStock,
-                installmentPriceEnabled = installmentPriceEnabled
-            )
+            if (showFavoritesEmptyState) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.no_favorites_yet),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                ProductListContent(
+                    contentPadding = padding,
+                    pagedList = pagedList,
+                    onProductClick = onProductClick,
+                    toggleFavorite = toggleFavorite,
+                    discountedPrice = discountedPrice,
+                    isFavorite = isFavorite,
+                    cartCounter = cartCounter,
+                    onAddToCartClick = onAddToCartClick,
+                    onRemoveFromCartClick = onRemoveFromCartClick,
+                    showStock = showStock,
+                    installmentPriceEnabled = installmentPriceEnabled,
+                )
+            }
         },
     )
 }

@@ -16,7 +16,9 @@ data class BannerItem(
 data class Link(
     val title: String? = null,
     val type: LinkType, //product, products, attribute_term, brand, category, tag, external
-    val target: String
+    val target: String,
+    val orderBy: String? = null,
+    val order: String? = null,
 ) {
     val isProductLink: Boolean
         get() = type == LinkType.PRODUCT
@@ -81,6 +83,7 @@ data class Link(
 }
 
 enum class LinkType(val value: String) {
+    NONE("none"),
     PRODUCT("product"),
     PRODUCTS("products"),
     ATTRIBUTE_TERM("attribute_term"),

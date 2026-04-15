@@ -7,5 +7,5 @@ import org.koin.dsl.module
 fun getFavoriteDataModules() = setOf(favoriteDataModule, databaseModule) + getApiModule()
 
 val favoriteDataModule = module {
-    single<FavoriteRepository> { FavoriteRepositoryImpl(get(), get()) }
+    single<FavoriteRepository> { FavoriteRepositoryImpl(get(), get(), get(), get()) }
 }

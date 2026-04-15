@@ -1,6 +1,7 @@
 package com.solutionium.sharedui.common.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,9 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
 fun CartIQuantityButtons(
@@ -29,42 +28,55 @@ fun CartIQuantityButtons(
     onDecreaseQuantity: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val containerShape = RoundedCornerShape(20.dp)
     Row(
         modifier = modifier
+
             .background(
-                color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(8.dp)
+                color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
+                shape = containerShape,
             )
-            .clip(RoundedCornerShape(8.dp)), // Ensures the content (like ripple effects) is clipped to the shape
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                shape = containerShape,
+            ).padding(horizontal = 4.dp, vertical = 2.dp)
+            .clip(containerShape),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (quantity <= 1) {
             IconButton(
                 onClick = onDecreaseQuantity,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(30.dp),
             ) {
-                Icon(Icons.Outlined.Delete, tint = Color.Gray, contentDescription = "Remove")
+                Icon(Icons.Outlined.Delete, tint = MaterialTheme.colorScheme.onSurfaceVariant, contentDescription = "Remove")
             }
         } else {
             IconButton(
                 onClick = onDecreaseQuantity,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(30.dp),
             ) {
-                Icon(Icons.Filled.Remove, tint = Color.Gray, contentDescription = "Decrease")
+                Icon(Icons.Filled.Remove, tint = MaterialTheme.colorScheme.onSurfaceVariant, contentDescription = "Decrease")
             }
         }
 
         Text(
             text = "$quantity",
-            fontSize = 18.sp,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = 6.dp),
         )
         IconButton(
             onClick = onIncreaseQuantity,
             enabled = quantity < maxQuantity,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(30.dp),
         ) {
-            Icon(Icons.Default.Add, tint = Color.Gray, contentDescription = "Increase")
+            val tint = if (quantity < maxQuantity) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+            }
+            Icon(Icons.Default.Add, tint = tint, contentDescription = "Increase")
         }
     }
 }

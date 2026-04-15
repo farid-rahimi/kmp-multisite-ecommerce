@@ -8,6 +8,8 @@ data class AppConfig (
     val message: String? = null,
 
     val headerLogoUrl: String? = null,
+    val headerLogoLightUrl: String? = null,
+    val headerLogoDarkUrl: String? = null,
 
     val stories: List<StoryItem> = emptyList(),
 
@@ -70,6 +72,8 @@ data class SearchTabConfig(
     val type: String,
     val source: String,
     val sourceSlug: String? = null,
+    val sourceOrderBy: String? = null,
+    val sourceOrder: String? = null,
     val max: Int?,
     val viewType: SearchTabViewType,
     val more: SearchTabMore?,
@@ -83,7 +87,8 @@ data class SearchTabMore(
 enum class SearchTabViewType(val value: String) {
     SPOTLIGHT("spotlight"),
     CIRCLE_ROW("circle_row"),
-    GRID("grid");
+    GRID("grid"),
+    TEXT_CHIPS("text_chips");
 
     companion object {
         fun fromValue(value: String?): SearchTabViewType =

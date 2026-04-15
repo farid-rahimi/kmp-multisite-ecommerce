@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.solutionium.sharedui.resources.Res
 import com.solutionium.sharedui.resources.search_anything
 import org.jetbrains.compose.resources.stringResource
@@ -56,12 +57,12 @@ fun SearchAppBar(
             .fillMaxWidth()
             .height(60.dp),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 4.dp,
+        //shadowElevation = 4.dp,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = 16.dp, vertical = 0.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TextField(
@@ -77,7 +78,7 @@ fun SearchAppBar(
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     )
                 },
-                textStyle = MaterialTheme.typography.bodyMedium,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(lineHeight = 14.sp),
                 singleLine = true,
                 leadingIcon = {
                     Icon(

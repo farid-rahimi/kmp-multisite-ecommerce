@@ -18,14 +18,18 @@ interface WooUserRemoteSource {
         email: String,
         phone: String,
         pass: String,
+        requireEmailOtp: Boolean = false,
     ): Result<UserAccess, GeneralError>
-    suspend fun requestPasswordResetOtp(email: String): Result<Unit, GeneralError>
-    suspend fun verifyPasswordResetOtp(email: String, otp: String): Result<Unit, GeneralError>
+    suspend fun requestPasswordResetOtp(email: String, mode: String = "reset"): Result<Unit, GeneralError>
+    suspend fun verifyPasswordResetOtp(email: String, otp: String, mode: String = "reset"): Result<Unit, GeneralError>
     suspend fun resetPasswordByOtp(
         email: String,
         otp: String,
         newPassword: String,
     ): Result<Unit, GeneralError>
+    suspend fun requestDeleteAccountOtp(token: String?): Result<Unit, GeneralError>
+    suspend fun deleteAccountWithPassword(token: String?, password: String): Result<Unit, GeneralError>
+    suspend fun deleteAccountWithOtp(token: String?, otp: String): Result<Unit, GeneralError>
 
     suspend fun logout(token: String?): Result<Boolean, GeneralError>
     suspend fun getMe(token: String?): Result<UserDetails, GeneralError>

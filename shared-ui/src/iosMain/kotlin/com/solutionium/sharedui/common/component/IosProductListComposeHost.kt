@@ -20,6 +20,8 @@ class IosProductListComposeHost(
     private val initialTabIndex: Int = 0,
     private val showBottomBar: Boolean = true,
     private val lockTabToInitial: Boolean = false,
+    private val onCartCountChanged: ((Int) -> Unit)? = null,
+    private val onBottomBarVisibilityChanged: ((Int) -> Unit)? = null,
 ) {
     private val paymentReturnEvent = MutableStateFlow(PaymentReturnEvent())
 
@@ -49,6 +51,8 @@ class IosProductListComposeHost(
                             }
                         }
                     },
+                    onCartCountChanged = onCartCountChanged,
+                    onBottomBarVisibilityChanged = onBottomBarVisibilityChanged,
                     initialTabIndex = initialTabIndex,
                     showBottomBar = showBottomBar,
                     lockTabToInitial = lockTabToInitial,

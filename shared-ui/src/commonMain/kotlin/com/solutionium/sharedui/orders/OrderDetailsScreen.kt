@@ -17,7 +17,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -45,12 +44,15 @@ import com.solutionium.sharedui.common.component.PlatformTopBar
 import com.solutionium.sharedui.common.component.platformPrimaryButtonShape
 import com.solutionium.sharedui.resources.Res
 import com.solutionium.sharedui.resources.discount
+import com.solutionium.sharedui.resources.free
+import com.solutionium.sharedui.resources.includes_vat
 import com.solutionium.sharedui.resources.my_orders
 import com.solutionium.sharedui.resources.payment_methods_section_title
 import com.solutionium.sharedui.resources.shipping
 import com.solutionium.sharedui.resources.shipping_address_section_title
 import com.solutionium.sharedui.resources.subtotal
 import com.solutionium.sharedui.resources.total
+import com.solutionium.sharedui.resources.vat
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -143,12 +145,30 @@ private fun OrderDetailsContent(
 
         item {
             SectionCard(title = "Price Summary") {
+                val shippingAmount = order.shippingTotal.toMoneyDouble()
+                val taxAmount = order.totalTax.toMoneyDouble()
+                val discountAmount = order.discountTotal.toMoneyDouble()
+                val feeAmount = order.feeTotal.toMoneyDouble()
+
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     PriceRow(title = stringResource(Res.string.subtotal), amount = order.subtotal)
-                    PriceRow(title = stringResource(Res.string.shipping), amount = order.shippingTotal)
-                    PriceRow(title = "Tax", amount = order.totalTax)
-                    PriceRow(title = stringResource(Res.string.discount), amount = "-${order.discountTotal}")
-                    PriceRow(title = "Fees", amount = order.feeTotal)
+                    if (shippingAmount.isZeroMoney()) {
+                        LabelValueRow(
+                            title = stringResource(Res.string.shipping),
+                            value = stringResource(Res.string.free),
+                        )
+                    } else {
+                        PriceRow(title = stringResource(Res.string.shipping), amount = order.shippingTotal)
+                    }
+                    if (!taxAmount.isZeroMoney()) {
+                        PriceRow(title = stringResource(Res.string.vat), amount = order.totalTax)
+                    }
+                    if (!discountAmount.isZeroMoney()) {
+                        PriceRow(title = stringResource(Res.string.discount), amount = (-discountAmount).toString())
+                    }
+                    if (!feeAmount.isZeroMoney()) {
+                        PriceRow(title = "Fees", amount = order.feeTotal)
+                    }
                     HorizontalDivider()
                     PriceRow(
                         title = stringResource(Res.string.total),
@@ -278,6 +298,13 @@ private fun SectionCard(
 
 @Composable
 private fun OrderItemRow(item: LineItem) {
+    val itemTotalBeforeTax = item.total.toDoubleOrNull() ?: 0.0
+    val taxAmount = item.totalTax.toDoubleOrNull()
+        ?: item.subTotalTax.toDoubleOrNull()
+        ?: 0.0
+    val itemTotalAfterTax = itemTotalBeforeTax + taxAmount
+    val unitPriceAfterTax = if (item.quantity > 0) itemTotalAfterTax / item.quantity else itemTotalAfterTax
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -303,17 +330,70 @@ private fun OrderItemRow(item: LineItem) {
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                text = "Qty: ${item.quantity}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Qty: ${item.quantity} ×",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FormattedPriceV3(
+                    amount = unitPriceAfterTax,
+                    mainStyle = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                    smallDigitsSpanStyle = MaterialTheme.typography.labelSmall.toSpanStyle().copy(fontWeight = FontWeight.Medium),
+                )
+            }
         }
 
-        FormattedPriceV3(
-            amount = item.total.toDoubleOrNull() ?: 0.0,
-            mainStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-            smallDigitsSpanStyle = MaterialTheme.typography.bodySmall.toSpanStyle().copy(fontWeight = FontWeight.SemiBold),
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            FormattedPriceV3(
+                amount = itemTotalAfterTax,
+                mainStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                smallDigitsSpanStyle = MaterialTheme.typography.bodySmall.toSpanStyle().copy(fontWeight = FontWeight.SemiBold),
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(Res.string.includes_vat),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FormattedPriceV3(
+                    amount = taxAmount,
+                    mainStyle = MaterialTheme.typography.labelSmall,
+                    smallDigitsSpanStyle = MaterialTheme.typography.labelSmall.toSpanStyle(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LabelValueRow(
+    title: String,
+    value: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -347,6 +427,10 @@ private fun PriceRow(
         )
     }
 }
+
+private fun String.toMoneyDouble(): Double = toDoubleOrNull() ?: 0.0
+
+private fun Double.isZeroMoney(): Boolean = kotlin.math.abs(this) < 0.0001
 
 @Composable
 private fun AddressBlock(

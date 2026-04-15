@@ -63,7 +63,11 @@ internal class WooCheckoutRemoteSourceImpl(
 
     override suspend fun createOrder(orderData: NewOrderData): Result<Order, GeneralError> =
         handleNetworkResponse(
-            networkCall = { checkoutOrderApi.createOrder(orderData.toRequestBody()) },
+            networkCall = {
+                checkoutOrderApi.createOrder(
+                    orderData.toRequestBody(vatRate = networkConfigProvider.get().vatRate),
+                )
+            },
             mapper = { response -> response.toModel(networkConfigProvider.get().baseUrl) }
         )
 

@@ -30,6 +30,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -93,7 +94,7 @@ fun CategoryScreen(
 
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         SearchAppBar(
             query = uiState.searchQuery,
             onQueryChanged = viewModel::onSearchQueryChanged,
@@ -338,27 +339,29 @@ fun CategoryContent(
                                 navigateToProductList(args)
                             }
                         }
-                        val onMoreClick = {
-                            val moreLink = section.moreLink
-                            if (moreLink != null) {
-                                when (moreLink.type) {
-                                    com.solutionium.shared.data.model.LinkType.ALL_BRANDS,
-                                    com.solutionium.shared.data.model.LinkType.ATTRIBUTES -> viewModel.showAllItemsFromMore(section)
-                                    else -> {
-                                        val args = viewModel.toProductListArgsForMore(section)
-                                        if (args != null) {
-                                            navigateToProductList(args)
+                        val onMoreClick: (() -> Unit)? = section.moreLink
+                            ?.takeUnless { it.type == com.solutionium.shared.data.model.LinkType.NONE }
+                            ?.let {
+                                {
+                                    when (it.type) {
+                                        com.solutionium.shared.data.model.LinkType.ALL_BRANDS,
+                                        com.solutionium.shared.data.model.LinkType.ATTRIBUTES -> viewModel.showAllItemsFromMore(section)
+                                        else -> {
+                                            val args = viewModel.toProductListArgsForMore(section)
+                                            if (args != null) {
+                                                navigateToProductList(args)
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
 
                         when (section.viewType) {
                             SearchTabViewType.SPOTLIGHT -> {
                                 PerfumeSpotlightSection(
                                     spotlightTerms = section.items.filterIsInstance<AttributeTerm>(),
                                     title = section.title,
+                                    viewAllText = section.moreLink?.title ?: section.moreTitle ?: "All",
                                     imageFinder = { uiState.images[it] },
                                     onCategoryClick = onItemClick,
                                     onShopAllPerfumesClick = onMoreClick,
@@ -372,18 +375,28 @@ fun CategoryContent(
                                     imageFinder = { uiState.images[it] },
                                     onClick = onItemClick,
                                     onViewAllClick = onMoreClick,
-                                    viewAllText = section.moreTitle ?: section.moreLink?.title ?: "All",
+                                    viewAllText = section.moreLink?.title ?: section.moreTitle ?: "All",
                                 )
                             }
 
                             SearchTabViewType.GRID -> {
                                 ItemGridSection(
                                     title = section.title,
-                                    viewAllText = section.moreTitle ?: section.moreLink?.title ?: "All",
+                                    viewAllText = section.moreLink?.title ?: section.moreTitle ?: "All",
                                     items = section.items,
                                     imageFinder = { uiState.images[it] },
                                     onClick = onItemClick,
                                     onShopAllClick = onMoreClick,
+                                )
+                            }
+
+                            SearchTabViewType.TEXT_CHIPS -> {
+                                TextChipsSection(
+                                    title = section.title,
+                                    viewAllText = section.moreLink?.title ?: section.moreTitle ?: "All",
+                                    items = section.items,
+                                    onClick = onItemClick,
+                                    onViewAllClick = onMoreClick,
                                 )
                             }
                         }
@@ -441,15 +454,16 @@ fun CategoryContent(
 fun PerfumeSpotlightSection(
     spotlightTerms: List<AttributeTerm>,
     title: String,
+    viewAllText: String = "All",
     imageFinder: (Int) -> String? = { null },
     onCategoryClick: (categoryId: Int, title: String) -> Unit,
-    onShopAllPerfumesClick: () -> Unit
+    onShopAllPerfumesClick: (() -> Unit)?,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         SectionHeader(
             title = title,
             onViewAllClick = onShopAllPerfumesClick,
-            viewAllText = stringResource(Res.string.all_perfumes_title)
+            viewAllText = viewAllText
         )
 
         // Spotlight categories (e.g., For Him, For Her) could be larger cards or a LazyRow
@@ -521,7 +535,7 @@ fun ItemGridSection(
     items: List<DisplayableTerm>,
     imageFinder: (Int) -> String? = { null },
     onClick: (termId: Int, title: String) -> Unit,
-    onShopAllClick: () -> Unit
+    onShopAllClick: (() -> Unit)?,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         SectionHeader(title = title, onViewAllClick = onShopAllClick, viewAllText = viewAllText)
@@ -575,37 +589,28 @@ fun MediumItemCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-            Box( // Gradient overlay for text readability
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        Brush.radialGradient(
+                        Brush.verticalGradient(
                             colors = listOf(
-                                Color.Gray.copy(alpha = 0.1f),
-                                Color.Black.copy(alpha = 0.4f)
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.40f)
                             ),
-                            radius = 200f
-                            //startY = 180f * 0.4f // Gradient starts from 40% height
+                            startY = 120f
                         )
                     )
             )
             Text(
                 text = term.name,
                 fontSize = MaterialTheme.typography.labelLarge.fontSize,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 color = Color.White,
                 modifier = Modifier
-                    .align(Alignment.Center)
-            )
-
-            Text(
-                text = "(${term.count})",
-                fontSize = MaterialTheme.typography.labelMedium.fontSize,
-                maxLines = 1,
-                color = Color.White,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(8.dp)
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = 10.dp, vertical = 8.dp)
             )
         }
     }
@@ -617,7 +622,7 @@ fun SmallItemsSection(
     items: List<DisplayableTerm>,
     imageFinder: (Int) -> String? = { null },
     onClick: (id: Int, title: String) -> Unit,
-    onViewAllClick: () -> Unit,
+    onViewAllClick: (() -> Unit)?,
     viewAllText: String = "View All"
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -632,6 +637,56 @@ fun SmallItemsSection(
                     image = imageFinder(item.id),
                     onClick = { onClick(item.id, item.name) }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun TextChipsSection(
+    title: String,
+    items: List<DisplayableTerm>,
+    onClick: (id: Int, title: String) -> Unit,
+    onViewAllClick: (() -> Unit)?,
+    viewAllText: String = "View All",
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SectionHeader(title = title, onViewAllClick = onViewAllClick, viewAllText = viewAllText)
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            items(items, key = { it.id }) { item ->
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 0.dp,
+                    shadowElevation = 0.dp,
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f),
+                    ),
+                    modifier = Modifier.clickable { onClick(item.id, item.name) },
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = item.name,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        if (item.count > 0) {
+                            Text(
+                                text = "(${item.count})",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -687,7 +742,7 @@ fun SmallItemCard(
 }
 
 @Composable
-fun SectionHeader(title: String, onViewAllClick: () -> Unit, viewAllText: String = "View All") {
+fun SectionHeader(title: String, onViewAllClick: (() -> Unit)?, viewAllText: String = "View All") {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -700,15 +755,17 @@ fun SectionHeader(title: String, onViewAllClick: () -> Unit, viewAllText: String
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold
         )
-        TextButton(onClick = onViewAllClick) {
-            Text(viewAllText, fontWeight = FontWeight.Medium)
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(18.dp)
-                    .padding(start = 4.dp)
-            )
+        if (onViewAllClick != null) {
+            TextButton(onClick = onViewAllClick) {
+                Text(viewAllText, fontWeight = FontWeight.Medium)
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .padding(start = 4.dp)
+                )
+            }
         }
     }
 }

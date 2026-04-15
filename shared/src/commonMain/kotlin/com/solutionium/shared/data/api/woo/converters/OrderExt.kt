@@ -21,14 +21,14 @@ import com.solutionium.shared.data.network.request.ShippingLine
 import com.solutionium.shared.data.network.response.WooLineItem
 import com.solutionium.shared.data.network.response.WooOrderResponse
 
-fun NewOrderData.toRequestBody(): OrderRequest =
+fun NewOrderData.toRequestBody(vatRate: Double = 0.0): OrderRequest =
     OrderRequest(
         paymentMethod = paymentMethod,
         paymentMethodTitle = paymentMethodTitle,
         setPaid = setPaid,
         billing = billing.toRequestBody(),
         shipping = shipping.toRequestBody(),
-        lineItems = cartItems.map { it.toRequestBody() },
+        lineItems = cartItems.map { it.toRequestBody(vatRate = vatRate) },
         shippingLines = listOf(
             ShippingLine(
                 methodID = shippingMethod.id.toString(),
@@ -62,14 +62,23 @@ fun Address.toRequestBody(): WooAddress =
         phone = phone
     )
 
-fun CartItem.toRequestBody(): LineItemRequest =
+fun CartItem.toRequestBody(vatRate: Double = 0.0): LineItemRequest =
     LineItemRequest(
         productID = productId,
         quantity = quantity,
-        variationID = if (isDecant) null else variationId,
+        variationID = if (isDecant || variationId <= 0) null else variationId,
         name = if (isDecant) name else null,
-        subTotal = if (regularPrice != null) (regularPrice!! * quantity).toString() else (currentPrice * quantity).toString(),
-        total = if (isDecant || appOffer > 0) (currentPrice * quantity).toString() else null,
+        // Woo expects line subtotal/total as pre-tax values.
+        // We keep app prices tax-inclusive, so convert gross -> net when forcing line amounts.
+        // Force line amounts for any discounted line (normal sale, app offer, decant).
+        subTotal = if (hasLineDiscount()) {
+            val grossLineSubTotal = baseGrossUnitPrice() * quantity
+            calculateNetFromGross(grossLineSubTotal, vatRate).toString()
+        } else null,
+        total = if (hasLineDiscount()) {
+            val grossLineTotal = currentPrice * quantity
+            calculateNetFromGross(grossLineTotal, vatRate).toString()
+        } else null,
         metaData = if (isDecant) listOf(
             OrderMetadata(
                 key = "is_dec",
@@ -83,6 +92,24 @@ fun CartItem.toRequestBody(): LineItemRequest =
         //taxClass = "",
         //metaData = null
     )
+
+private fun CartItem.hasLineDiscount(): Boolean {
+    if (isDecant) return true
+    if (appOffer > 0.0) return true
+    val regular = regularPrice ?: return false
+    return regular > 0.0 && regular > currentPrice
+}
+
+private fun CartItem.baseGrossUnitPrice(): Double {
+    val regular = regularPrice
+    if (regular != null && regular > 0.0 && regular > currentPrice) {
+        return regular
+    }
+    if (appOffer > 0.0 && appOffer < 100.0) {
+        return currentPrice / (1.0 - (appOffer / 100.0))
+    }
+    return currentPrice
+}
 
 fun Metadata.toRequestBody(): OrderMetadata =
     OrderMetadata(
@@ -123,7 +150,9 @@ fun WooLineItem.toModel() = LineItem (
     productId = productID,
     quantity = quantity,
     total = total,
+    totalTax = totalTax,
     subTotal = subtotal,
+    subTotalTax = subtotalTax,
     imageUrl = image?.src
 
 )
@@ -154,3 +183,12 @@ private fun WooAddress.toModel() = Address(
 private fun Double.toStableMoneyString(): String = toString()
 
 private fun String.ensureTrailingSlash(): String = if (endsWith("/")) this else "$this/"
+
+private fun calculateNetFromGross(gross: Double, vatRatePercent: Double): Double {
+    val safeRate = vatRatePercent.coerceAtLeast(0.0)
+    if (safeRate == 0.0) return gross
+    // Project uses fractional VAT (e.g. 0.05 for 5%).
+    // Keep compatibility if a whole percent slips in (e.g. 5.0).
+    val normalizedRate = if (safeRate > 1.0) safeRate / 100.0 else safeRate
+    return gross / (1.0 + normalizedRate)
+}

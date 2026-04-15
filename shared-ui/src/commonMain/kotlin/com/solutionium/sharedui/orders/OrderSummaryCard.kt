@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.solutionium.shared.data.model.Order
 import com.solutionium.sharedui.common.component.FormattedPriceV3
+import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.total
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun OrderSummaryCard(
@@ -40,13 +43,50 @@ fun OrderSummaryCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         onClick = onClick,
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = "#${order.orderNumber.ifBlank { order.id.toString() }}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = beautifiedOrderDate(order.dateCreated),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                ) {
+                    Text(
+                        text = beautifiedStatus(order.status),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    )
+                }
+            }
+
             OrderItemImageStrip(order = order)
 
             Row(
@@ -55,35 +95,11 @@ fun OrderSummaryCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "#${order.orderNumber.ifBlank { order.id.toString() }}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = beautifiedOrderDate(order.dateCreated),
+                    text = stringResource(Res.string.total),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
                 OrderTotal(total = order.total)
-
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                ) {
-                    Text(
-                        text = beautifiedStatus(order.status),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    )
-                }
             }
         }
     }
@@ -131,8 +147,8 @@ private fun OrderItemImageStrip(order: Order) {
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(10.dp)),
                 )
             }
         }
@@ -141,16 +157,16 @@ private fun OrderItemImageStrip(order: Order) {
             Spacer(modifier = Modifier.width(6.dp))
             Box(
                 modifier = Modifier
-                    .height(32.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .height(30.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .padding(horizontal = 10.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = "+$remaining",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
@@ -160,14 +176,20 @@ private fun OrderItemImageStrip(order: Order) {
 
 @Composable
 fun OrderSummaryCardPlaceholder() {
-    Card {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+    ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .height(120.dp)
                 .padding(16.dp),
             contentAlignment = Alignment.Center,
         ) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(strokeWidth = 2.dp)
         }
     }
 }

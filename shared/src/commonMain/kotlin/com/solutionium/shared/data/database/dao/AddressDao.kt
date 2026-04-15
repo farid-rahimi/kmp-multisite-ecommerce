@@ -1,7 +1,6 @@
 package com.solutionium.shared.data.database.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -18,18 +17,21 @@ interface AddressDao {
     @Query("SELECT * FROM address WHERE userId = :userId")
     fun getAllAddress(userId: String): Flow<List<AddressEntity>>
 
-    @Query("SELECT * FROM address WHERE id = :id LIMIT 1")
-    fun getAddressById(id: Int): Flow<AddressEntity>
+    @Query("SELECT * FROM address WHERE id = :id AND userId = :userId LIMIT 1")
+    fun getAddressById(id: Int, userId: String): Flow<AddressEntity?>
 
 
-    @Delete
-    suspend fun deleteAddress(address: AddressEntity)
+    @Query("DELETE FROM address WHERE id = :id AND userId = :userId")
+    suspend fun deleteAddressById(id: Int, userId: String)
+
+    @Query("DELETE FROM address WHERE userId = :userId")
+    suspend fun deleteAllAddressesByUserId(userId: String)
 
     @Query("UPDATE address SET isDefault = :isDefault WHERE userId = :userId")
     suspend fun updateAllDefaultAddress(userId: String, isDefault: Boolean)
 
-    @Query("UPDATE address SET isDefault = :isDefault WHERE id = :id")
-    suspend fun updateDefaultAddress(id: Int, isDefault: Boolean)
+    @Query("UPDATE address SET isDefault = :isDefault WHERE id = :id AND userId = :userId")
+    suspend fun updateDefaultAddress(id: Int, userId: String, isDefault: Boolean)
 
     @Update
     suspend fun updateAddress(address: AddressEntity)

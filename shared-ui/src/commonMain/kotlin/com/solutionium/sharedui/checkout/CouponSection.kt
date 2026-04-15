@@ -31,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -49,6 +51,22 @@ fun CouponSection(
     errorText: @Composable () -> Unit,
 ) {
     var couponCode by remember { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    fun hideKeyboard() {
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+    }
+
+    fun applyCouponAndDismissKeyboard() {
+        val code = couponCode.trim()
+        if (code.isNotBlank()) {
+            onApplyCoupon(code)
+            couponCode = ""
+        }
+        hideKeyboard()
+    }
 
     Column {
         SectionTitle(stringResource(Res.string.discount_section_title))
@@ -59,18 +77,14 @@ fun CouponSection(
             onValueChange = { couponCode = it },
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(Res.string.enter_coupon_code)) },
-            shape = MaterialTheme.shapes.medium,
+            shape = MaterialTheme.shapes.small,
             singleLine = true,
             isError = hasError,
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
                 onDone = {
-                    if (couponCode.isNotBlank()) {
-                        onApplyCoupon(couponCode)
-                        // Clear the field after applying
-                        couponCode = ""
-                    }
-                } // Call the apply action when the keyboard "Go" is pressed
+                    applyCouponAndDismissKeyboard()
+                }
             ),
             trailingIcon = {
                 if (isLoading) {
@@ -78,11 +92,7 @@ fun CouponSection(
                 } else {
                     IconButton(
                         onClick = {
-                            if (couponCode.isNotBlank()) {
-                                onApplyCoupon(couponCode)
-                                // Clear the field after applying
-                                couponCode = ""
-                            }
+                            applyCouponAndDismissKeyboard()
                         },
                         enabled = couponCode.isNotBlank()
                     ) {

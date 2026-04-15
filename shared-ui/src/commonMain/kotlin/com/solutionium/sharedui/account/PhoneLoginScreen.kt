@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,15 +44,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -84,6 +88,7 @@ import com.solutionium.sharedui.resources.privacy_policy
 import com.solutionium.sharedui.resources.request_otp
 import com.solutionium.sharedui.resources.reset_password
 import com.solutionium.sharedui.resources.signup
+import com.solutionium.sharedui.resources.verification_code_sent_to_email
 import com.solutionium.sharedui.resources.verify_otp
 import org.jetbrains.compose.resources.stringResource
 
@@ -101,6 +106,10 @@ fun PhoneLoginScreen(
     onRequestOtp: () -> Unit,
     onPasswordLogin: () -> Unit,
     onPasswordSignup: (name: String, email: String, phone: String, password: String) -> Unit,
+    signupEmailOtpStage: PasswordResetStage,
+    onRequestSignupEmailOtp: (String) -> Unit,
+    onVerifySignupEmailOtp: (String, String) -> Unit,
+    onResetSignupEmailVerification: () -> Unit,
     passwordResetStage: PasswordResetStage,
     passwordResetEmail: String,
     passwordResetOtp: String,
@@ -132,7 +141,12 @@ fun PhoneLoginScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             PlatformTopBar(
-                title = { Text(screenTitle) },
+                title = {
+                    Text(
+                        text = screenTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
                 actions = {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "More options")
@@ -164,7 +178,8 @@ fun PhoneLoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(32.dp),
+                .imePadding()
+                .padding(horizontal = 24.dp, vertical = 32.dp),
         ) {
             if (showPrivacyDialog) {
                 PrivacyPolicyDialog(content = privacyPolicyContent, onDismiss = { showPrivacyDialog = false })
@@ -174,11 +189,13 @@ fun PhoneLoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(if (brand == WooBrand.SiteB) Alignment.TopCenter else Alignment.Center)
+                    .verticalScroll(rememberScrollState())
                     .padding(top = if (brand == WooBrand.SiteB) 24.dp else 0.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = if (brand == WooBrand.SiteB) Arrangement.Top else Arrangement.Center,
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
+                val authPanelColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
 
                 AnimatedVisibility(visible = !errorMessage.isNullOrBlank()) {
                     ErrorMessageCard(
@@ -189,100 +206,113 @@ fun PhoneLoginScreen(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
 
-            if (brand == WooBrand.SiteA) {
-                AnimatedVisibility(
-                    visible = !loginWithPassword,
-                    enter = fadeIn(animationSpec = tween(200)) + slideInVertically(),
-                    exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(),
-                ) {
-                    PhoneInputSection(
-                        phoneNumber = phoneNumber,
-                        onPhoneNumberChange = onPhoneNumberChange,
-                        onRequestOtp = onRequestOtp,
-                        isLoading = isLoading,
-                    )
-                }
-            } else {
-                Row(
+                AuthModeTabs(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
+                    selectedLeft = when (brand) {
+                        WooBrand.SiteA -> loginWithPassword
+                        WooBrand.SiteB -> siteBAuthMode == SiteBAuthMode.Login
+                    },
+                    leftText = stringResource(Res.string.login),
+                    rightText = stringResource(Res.string.signup),
+                    selectedColor = authPanelColor,
+                    unselectedColor = MaterialTheme.colorScheme.background,
+                    onLeftClick = {
+                        when (brand) {
+                            WooBrand.SiteA -> loginWithPassword = true
+                            WooBrand.SiteB -> {
+                                siteBAuthMode = SiteBAuthMode.Login
+                                onResetSignupEmailVerification()
+                            }
+                        }
+                    },
+                    onRightClick = {
+                        when (brand) {
+                            WooBrand.SiteA -> loginWithPassword = false
+                            WooBrand.SiteB -> {
+                                siteBAuthMode = SiteBAuthMode.Signup
+                                onCancelPasswordReset()
+                                onResetSignupEmailVerification()
+                            }
+                        }
+                    },
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    color = authPanelColor,
                 ) {
-                    Button(
-                        onClick = { siteBAuthMode = SiteBAuthMode.Login },
-                        modifier = Modifier.weight(1f),
-                        colors = if (siteBAuthMode == SiteBAuthMode.Login) {
-                            ButtonDefaults.buttonColors()
-                        } else {
-                            ButtonDefaults.outlinedButtonColors()
-                        },
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                     ) {
-                        Text(stringResource(Res.string.login))
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            siteBAuthMode = SiteBAuthMode.Signup
-                            onCancelPasswordReset()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = if (siteBAuthMode == SiteBAuthMode.Signup) {
-                            ButtonDefaults.buttonColors()
-                        } else {
-                            ButtonDefaults.outlinedButtonColors()
-                        },
-                    ) {
-                        Text(stringResource(Res.string.signup))
+                            AnimatedVisibility(
+                                visible = brand == WooBrand.SiteA && !loginWithPassword,
+                                enter = fadeIn(animationSpec = tween(200)) + slideInVertically(),
+                                exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(),
+                            ) {
+                                PhoneInputSection(
+                                    phoneNumber = phoneNumber,
+                                    onPhoneNumberChange = onPhoneNumberChange,
+                                    onRequestOtp = onRequestOtp,
+                                    isLoading = isLoading,
+                                )
+                            }
+
+                            AnimatedVisibility(
+                                visible = brand == WooBrand.SiteB && siteBAuthMode == SiteBAuthMode.Signup,
+                                enter = fadeIn(animationSpec = tween(200)) + slideInVertically(),
+                                exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(),
+                            ) {
+                                SignupInputSection(
+                                    isLoading = isLoading,
+                                    otpStage = signupEmailOtpStage,
+                                    onRequestEmailOtp = onRequestSignupEmailOtp,
+                                    onVerifyEmailOtp = onVerifySignupEmailOtp,
+                                    onResetEmailVerification = onResetSignupEmailVerification,
+                                    onSignup = onPasswordSignup,
+                                )
+                            }
+
+                            AnimatedVisibility(
+                                visible = (brand == WooBrand.SiteA && loginWithPassword) ||
+                                    (brand == WooBrand.SiteB && siteBAuthMode == SiteBAuthMode.Login && passwordResetStage == PasswordResetStage.Idle),
+                                enter = fadeIn(animationSpec = tween(200)) + slideInVertically(),
+                                exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(),
+                            ) {
+                                PasswordInputSection(
+                                    username = username,
+                                    onUsernameChange = onUsernameChange,
+                                    onPasswordChange = onPasswordChange,
+                                    onPasswordLogin = onPasswordLogin,
+                                    isLoading = isLoading,
+                                    showForgotPassword = brand == WooBrand.SiteB,
+                                    onForgotPasswordClick = onStartPasswordReset,
+                                )
+                            }
+
+                            AnimatedVisibility(
+                                visible = brand == WooBrand.SiteB &&
+                                    siteBAuthMode == SiteBAuthMode.Login &&
+                                    passwordResetStage != PasswordResetStage.Idle,
+                                enter = fadeIn(animationSpec = tween(200)) + slideInVertically(),
+                                exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(),
+                            ) {
+                                ForgotPasswordSection(
+                                    stage = passwordResetStage,
+                                    prefEmail = passwordResetEmail,
+                                    prefOtp = passwordResetOtp,
+                                    isLoading = isLoading,
+                                    onRequestOtp = onRequestPasswordResetOtp,
+                                    onVerifyOtp = onVerifyPasswordResetOtp,
+                                    onResetPassword = onResetPasswordByOtp,
+                                    onCancel = onCancelPasswordReset,
+                                )
+                            }
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            AnimatedVisibility(
-                visible = brand == WooBrand.SiteB && siteBAuthMode == SiteBAuthMode.Signup,
-                enter = fadeIn(animationSpec = tween(200)) + slideInVertically(),
-                exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(),
-            ) {
-                SignupInputSection(
-                    isLoading = isLoading,
-                    onSignup = onPasswordSignup,
-                )
-            }
-
-            AnimatedVisibility(
-                visible = (brand == WooBrand.SiteA && loginWithPassword) ||
-                    (brand == WooBrand.SiteB && siteBAuthMode == SiteBAuthMode.Login && passwordResetStage == PasswordResetStage.Idle),
-                enter = fadeIn(animationSpec = tween(200)) + slideInVertically(),
-                exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(),
-            ) {
-                PasswordInputSection(
-                    username = username,
-                    onUsernameChange = onUsernameChange,
-                    onPasswordChange = onPasswordChange,
-                    onPasswordLogin = onPasswordLogin,
-                    isLoading = isLoading,
-                    showForgotPassword = brand == WooBrand.SiteB,
-                    onForgotPasswordClick = onStartPasswordReset,
-                )
-            }
-
-            AnimatedVisibility(
-                visible = brand == WooBrand.SiteB &&
-                    siteBAuthMode == SiteBAuthMode.Login &&
-                    passwordResetStage != PasswordResetStage.Idle,
-                enter = fadeIn(animationSpec = tween(200)) + slideInVertically(),
-                exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(),
-            ) {
-                ForgotPasswordSection(
-                    stage = passwordResetStage,
-                    prefEmail = passwordResetEmail,
-                    prefOtp = passwordResetOtp,
-                    isLoading = isLoading,
-                    onRequestOtp = onRequestPasswordResetOtp,
-                    onVerifyOtp = onVerifyPasswordResetOtp,
-                    onResetPassword = onResetPasswordByOtp,
-                    onCancel = onCancelPasswordReset,
-                )
-            }
 
                 TextButton(
                     onClick = { showPrivacyDialog = true },
@@ -294,22 +324,54 @@ fun PhoneLoginScreen(
                     )
                 }
             }
+        }
+    }
+}
 
-            if (brand == WooBrand.SiteA) {
-                TextButton(
-                    onClick = { loginWithPassword = !loginWithPassword },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter),
-                ) {
-                    val text = if (loginWithPassword) {
-                        stringResource(Res.string.login_with_otp_instead)
-                    } else {
-                        stringResource(Res.string.login_with_password)
-                    }
-                    Text(text)
-                }
-            }
+@Composable
+private fun AuthModeTabs(
+    leftText: String,
+    rightText: String,
+    selectedLeft: Boolean,
+    selectedColor: androidx.compose.ui.graphics.Color,
+    unselectedColor: androidx.compose.ui.graphics.Color,
+    onLeftClick: () -> Unit,
+    onRightClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Button(
+            onClick = onLeftClick,
+            modifier = Modifier.weight(1f),
+            shape = MaterialTheme.shapes.medium,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (selectedLeft) selectedColor else unselectedColor,
+                contentColor = if (selectedLeft) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            ),
+            elevation = null,
+        ) {
+            Text(
+                text = leftText,
+                fontWeight = if (selectedLeft) FontWeight.Bold else FontWeight.Normal,
+            )
+        }
+        Button(
+            onClick = onRightClick,
+            modifier = Modifier.weight(1f),
+            shape = MaterialTheme.shapes.medium,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (!selectedLeft) selectedColor else unselectedColor,
+                contentColor = if (!selectedLeft) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            ),
+            elevation = null,
+        ) {
+            Text(
+                text = rightText,
+                fontWeight = if (!selectedLeft) FontWeight.Bold else FontWeight.Normal,
+            )
         }
     }
 }
@@ -581,104 +643,185 @@ private fun ForgotPasswordSection(
 @Composable
 private fun SignupInputSection(
     isLoading: Boolean,
+    otpStage: PasswordResetStage,
+    onRequestEmailOtp: (String) -> Unit,
+    onVerifyEmailOtp: (String, String) -> Unit,
+    onResetEmailVerification: () -> Unit,
     onSignup: (name: String, email: String, phone: String, password: String) -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var countryCode by remember { mutableStateOf("+971") }
     var phone by remember { mutableStateOf("") }
+    var otp by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var signupStep by remember { mutableStateOf(SiteBSignupStep.Form) }
+    var accountCreationTriggered by remember { mutableStateOf(false) }
+    var awaitingOtpSend by remember { mutableStateOf(false) }
+
+    val hasPhone = phone.isNotBlank()
+    val normalizedPhone = if (hasPhone) PhoneNumberFormatter.normalize(countryCode, phone) else ""
+    val isPhoneValid = !hasPhone || PhoneNumberFormatter.isValid(countryCode, phone)
+
+    LaunchedEffect(otpStage, signupStep, isLoading) {
+        if (signupStep == SiteBSignupStep.Otp && otpStage == PasswordResetStage.OtpVerified && !accountCreationTriggered && !isLoading) {
+            accountCreationTriggered = true
+            onSignup(name, email, normalizedPhone, password)
+        }
+    }
+    LaunchedEffect(otpStage, awaitingOtpSend, isLoading) {
+        if (awaitingOtpSend && otpStage == PasswordResetStage.OtpSent && !isLoading) {
+            signupStep = SiteBSignupStep.Otp
+            awaitingOtpSend = false
+        } else if (awaitingOtpSend && !isLoading && otpStage != PasswordResetStage.OtpSent) {
+            // Request finished but OTP was not sent (likely API error): stay on form.
+            awaitingOtpSend = false
+        }
+    }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text(stringResource(Res.string.full_name)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Full Name") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text(stringResource(Res.string.email)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Email") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedTextField(
-                value = countryCode,
-                onValueChange = {
-                    countryCode = PhoneNumberFormatter.sanitizeCountryCode(it)
-                    phone = phone.take(PhoneNumberFormatter.maxLocalInputDigits(countryCode))
-                },
-                label = { Text(stringResource(Res.string.country_code)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.weight(0.35f),
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = phone,
-                onValueChange = {
-                    phone = it.filter(Char::isDigit).take(PhoneNumberFormatter.maxLocalInputDigits(countryCode))
-                },
-                label = { Text(stringResource(Res.string.phone_number_optional)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                leadingIcon = { Icon(Icons.Filled.Phone, contentDescription = "Phone") },
-                modifier = Modifier.weight(0.65f),
-                singleLine = true,
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text(stringResource(Res.string.password)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Password") },
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                val description = if (passwordVisible) "Hide password" else "Show password"
-
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = image, description)
+        when (signupStep) {
+            SiteBSignupStep.Form -> {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(Res.string.full_name)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Full Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text(stringResource(Res.string.email)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedTextField(
+                        value = countryCode,
+                        onValueChange = {
+                            countryCode = PhoneNumberFormatter.sanitizeCountryCode(it)
+                            phone = phone.take(PhoneNumberFormatter.maxLocalInputDigits(countryCode))
+                        },
+                        label = { Text(stringResource(Res.string.country_code)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        modifier = Modifier.weight(0.35f),
+                        singleLine = true,
+                    )
+                    OutlinedTextField(
+                        value = phone,
+                        onValueChange = {
+                            phone = it.filter(Char::isDigit).take(PhoneNumberFormatter.maxLocalInputDigits(countryCode))
+                        },
+                        label = { Text(stringResource(Res.string.phone_number_optional)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        leadingIcon = { Icon(Icons.Filled.Phone, contentDescription = "Phone") },
+                        modifier = Modifier.weight(0.65f),
+                        singleLine = true,
+                    )
                 }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        val normalizedPhone = PhoneNumberFormatter.normalize(countryCode, phone)
-        Button(
-            onClick = {
-                onSignup(name, email, normalizedPhone, password)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = name.isNotBlank() &&
-                email.isNotBlank() &&
-                countryCode.isNotBlank() &&
-                phone.isNotBlank() &&
-                PhoneNumberFormatter.isCanonical(normalizedPhone) &&
-                password.isNotBlank() &&
-                !isLoading,
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-            } else {
-                Text(stringResource(Res.string.create_account))
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(Res.string.password)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Password") },
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        val description = if (passwordVisible) "Hide password" else "Show password"
+
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = image, description)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        onResetEmailVerification()
+                        otp = ""
+                        accountCreationTriggered = false
+                        awaitingOtpSend = true
+                        onRequestEmailOtp(email)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = name.isNotBlank() &&
+                        email.isNotBlank() &&
+                        isPhoneValid &&
+                        password.isNotBlank() &&
+                        !isLoading,
+                ) {
+                    if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    else Text(stringResource(Res.string.create_account))
+                }
+            }
+
+            SiteBSignupStep.Otp -> {
+                Text(
+                    text = stringResource(Res.string.verification_code_sent_to_email),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = email,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = otp,
+                    onValueChange = { otp = it.filter(Char::isDigit).take(4) },
+                    label = { Text(stringResource(Res.string.enter_otp)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { onVerifyEmailOtp(email, otp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = email.isNotBlank() && otp.length == 4 && !isLoading,
+                ) {
+                    if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    else Text(stringResource(Res.string.verify_otp))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                TextButton(
+                    onClick = {
+                        signupStep = SiteBSignupStep.Form
+                        onResetEmailVerification()
+                        otp = ""
+                        accountCreationTriggered = false
+                        awaitingOtpSend = false
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(Res.string.back))
+                }
             }
         }
     }
+}
+
+private enum class SiteBSignupStep {
+    Form,
+    Otp,
 }
 
 private enum class SiteBAuthMode {

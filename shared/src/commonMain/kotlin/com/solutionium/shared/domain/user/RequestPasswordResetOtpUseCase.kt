@@ -7,13 +7,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 interface RequestPasswordResetOtpUseCase {
-    operator fun invoke(email: String): Flow<Result<Unit, GeneralError>>
+    operator fun invoke(email: String, mode: String = "reset"): Flow<Result<Unit, GeneralError>>
 }
 
 class RequestPasswordResetOtpUseCaseImpl(
     private val userRepository: WooUserRepository,
 ) : RequestPasswordResetOtpUseCase {
-    override fun invoke(email: String): Flow<Result<Unit, GeneralError>> = flow {
-        emit(userRepository.requestPasswordResetOtp(email))
+    override fun invoke(email: String, mode: String): Flow<Result<Unit, GeneralError>> = flow {
+        emit(userRepository.requestPasswordResetOtp(email, mode))
     }
 }

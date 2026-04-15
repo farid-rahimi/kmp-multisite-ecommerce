@@ -1,17 +1,22 @@
 package com.solutionium.sharedui.navigation
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
@@ -35,6 +40,7 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.unit.dp
 import com.solutionium.shared.viewmodel.AccountViewModel
+import com.solutionium.shared.viewmodel.AccountStage
 import com.solutionium.shared.viewmodel.AddressViewModel
 import com.solutionium.shared.viewmodel.CartViewModel
 import com.solutionium.shared.viewmodel.CategoryViewModel
@@ -59,6 +65,7 @@ import com.solutionium.sharedui.common.component.platformCategoryTabIcon
 import com.solutionium.sharedui.common.component.platformHomeTabIcon
 import com.solutionium.sharedui.common.component.platformShowTabLabelsAlways
 import com.solutionium.sharedui.common.component.platformUsesCupertinoChrome
+import com.solutionium.sharedui.common.component.rememberPlatformShareAction
 import com.solutionium.sharedui.checkout.CheckoutScreen
 import com.solutionium.sharedui.home.HomeScreen
 import com.solutionium.sharedui.home.PlatformStoryViewer
@@ -74,6 +81,7 @@ import com.solutionium.sharedui.resources.tab_home
 import com.solutionium.sharedui.review.ReviewListScreen
 import com.solutionium.shared.data.model.PRODUCT_ARG_IDS
 import com.solutionium.shared.data.model.PRODUCT_ARG_TITLE
+import com.solutionium.shared.data.model.PRODUCT_ARG_FAVORITES_ONLY
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -117,6 +125,8 @@ fun SharedShopRoot(
     paymentReturnStatus: String? = null,
     paymentReturnOrderId: Int? = null,
     onPaymentReturnConsumed: () -> Unit = {},
+    onCartCountChanged: ((Int) -> Unit)? = null,
+    onBottomBarVisibilityChanged: ((Int) -> Unit)? = null,
     initialTabIndex: Int = 0,
     showBottomBar: Boolean = true,
     lockTabToInitial: Boolean = false,
@@ -131,12 +141,16 @@ fun SharedShopRoot(
     var storyStartIndex by remember { mutableStateOf(0) }
     var showAuthSheet by remember { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
+    val shareAction = rememberPlatformShareAction()
 
     val homeViewModel = koinInject<HomeViewModel>()
     val homeState by homeViewModel.state.collectAsState()
     val categoryViewModel = koinInject<CategoryViewModel>()
     val cartViewModel = koinInject<CartViewModel>()
+    val cartState by cartViewModel.uiState.collectAsState()
     val accountViewModel = koinInject<AccountViewModel>()
+    val accountState by accountViewModel.state.collectAsState()
+    val orderListViewModel = koinInject<OrderListViewModel>()
 
     DisposableEffect(homeViewModel) {
         onDispose { homeViewModel.clear() }
@@ -149,6 +163,9 @@ fun SharedShopRoot(
     }
     DisposableEffect(accountViewModel) {
         onDispose { accountViewModel.clear() }
+    }
+    DisposableEffect(orderListViewModel) {
+        onDispose { orderListViewModel.clear() }
     }
 
     fun stackFor(tab: MainTab) = when (tab) {
@@ -181,13 +198,38 @@ fun SharedShopRoot(
         homeState.appOffersLoading &&
         homeState.featuredLoading &&
         homeState.onSalesLoading
-    val shouldShowBottomBar = showBottomBar && !isFirstLoading
-    val useTransparentRoot = true//!showBottomBar && platformUsesCupertinoChrome()
+    val shouldHideBottomBarForRoute = when (topRoute) {
+        is TabRoute.Checkout,
+        is TabRoute.AddressEdit,
+        is TabRoute.OrderDetails -> true
+        else -> false
+    }
+    val shouldShowNativeBottomBar = !isFirstLoading && !shouldHideBottomBarForRoute
+    val shouldShowBottomBar = showBottomBar && !isFirstLoading && !shouldHideBottomBarForRoute
+    val useTransparentRoot = false
     val activeStack = stackFor(activeTab)
     val shouldHandleBack = showStoryViewer ||
         activeStack.isNotEmpty() ||
         (!lockTabToInitial && activeTab != MainTab.Home)
     val isIos = remember { platformUsesCupertinoChrome() }
+    val isUserLoggedIn = remember(accountState.stage) {
+        when (accountState.stage) {
+            AccountStage.LoggedIn,
+            AccountStage.EditProfile,
+            AccountStage.AccountSettings,
+            AccountStage.ViewWalletTransactions,
+            AccountStage.ChangeLanguage -> true
+            else -> false
+        }
+    }
+
+    LaunchedEffect(cartState.cartItemCount) {
+        onCartCountChanged?.invoke(cartState.cartItemCount)
+    }
+
+    LaunchedEffect(shouldShowNativeBottomBar) {
+        onBottomBarVisibilityChanged?.invoke(if (shouldShowNativeBottomBar) 1 else 0)
+    }
 
 
     LaunchedEffect(paymentReturnStatus, paymentReturnOrderId) {
@@ -271,6 +313,7 @@ fun SharedShopRoot(
                             selected = activeTab == MainTab.Cart,
                             title = stringResource(MainTab.Cart.title),
                             icon = platformCartTabIcon(activeTab == MainTab.Cart),
+                            badgeCount = cartState.cartItemCount,
                             onClick = { switchTab(MainTab.Cart) },
                         )
                         CupertinoTabItem(
@@ -301,7 +344,13 @@ fun SharedShopRoot(
                         NavigationBarItem(
                             selected = activeTab == MainTab.Cart,
                             onClick = { switchTab(MainTab.Cart) },
-                            icon = { Icon(platformCartTabIcon(activeTab == MainTab.Cart), contentDescription = null) },
+                            icon = {
+                                TabIconWithBadge(
+                                    icon = platformCartTabIcon(activeTab == MainTab.Cart),
+                                    contentDescription = null,
+                                    badgeCount = cartState.cartItemCount,
+                                )
+                            },
                             label = { Text(stringResource(MainTab.Cart.title)) },
                             alwaysShowLabel = platformShowTabLabelsAlways(),
                         )
@@ -359,6 +408,8 @@ fun SharedShopRoot(
                                                 showStoryViewer = true
                                             },
                                             viewModel = homeViewModel,
+                                            isLoggedIn = isUserLoggedIn,
+                                            onRequireAuth = { showAuthSheet = true },
                                         )
                                     }
 
@@ -390,7 +441,7 @@ fun SharedShopRoot(
                                                     ),
                                                 )
                                             },
-                                            onNavigateToAccount = { switchTab(MainTab.Account) },
+                                            onRequireAuth = { showAuthSheet = true },
                                         )
                                     }
 
@@ -403,6 +454,7 @@ fun SharedShopRoot(
                                                         mapOf(
                                                             PRODUCT_ARG_TITLE to title,
                                                             PRODUCT_ARG_IDS to ids,
+                                                            PRODUCT_ARG_FAVORITES_ONLY to "1",
                                                         ),
                                                     ),
                                                 )
@@ -411,6 +463,7 @@ fun SharedShopRoot(
                                             onOrderClick = { orderId -> push(TabRoute.OrderDetails(orderId)) },
                                             viewModel = accountViewModel,
                                             onBack = {},
+                                            clearOnDispose = false,
                                         )
                                     }
                                 }
@@ -428,6 +481,8 @@ fun SharedShopRoot(
                                     },
                                     onBack = { pop() },
                                     args = route.args,
+                                    isLoggedIn = isUserLoggedIn,
+                                    onRequireAuth = { showAuthSheet = true },
                                 )
                             }
 
@@ -442,6 +497,9 @@ fun SharedShopRoot(
                                     viewModel = viewModel,
                                     onBackClick = { pop() },
                                     navigateToProductList = { args -> push(TabRoute.ProductList(args)) },
+                                    onShareClick = { title, url -> shareAction(title, url) },
+                                    isLoggedIn = isUserLoggedIn,
+                                    onRequireAuth = { showAuthSheet = true },
                                     onAllReviewClicked = { productId, categoryIds ->
                                         push(
                                             TabRoute.Review(
@@ -477,14 +535,10 @@ fun SharedShopRoot(
                             }
 
                             TabRoute.OrderList -> {
-                                val viewModel = koinInject<OrderListViewModel>()
-                                DisposableEffect(viewModel) {
-                                    onDispose { viewModel.clear() }
-                                }
                                 OrderListScreen(
                                     onOrderClick = { orderId -> push(TabRoute.OrderDetails(orderId)) },
                                     onBack = { pop() },
-                                    viewModel = viewModel,
+                                    viewModel = orderListViewModel,
                                 )
                             }
 
@@ -610,6 +664,7 @@ private fun androidx.compose.foundation.layout.RowScope.CupertinoTabItem(
     selected: Boolean,
     title: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    badgeCount: Int = 0,
     onClick: () -> Unit,
 ) {
     val activeTint = MaterialTheme.colorScheme.primary
@@ -627,11 +682,12 @@ private fun androidx.compose.foundation.layout.RowScope.CupertinoTabItem(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Icon(
-                imageVector = icon,
+            TabIconWithBadge(
+                icon = icon,
                 contentDescription = title,
+                badgeCount = badgeCount,
                 tint = tint,
-                modifier = Modifier.size(22.dp),
+                iconSize = 22.dp,
             )
             Text(
                 text = title,
@@ -640,6 +696,62 @@ private fun androidx.compose.foundation.layout.RowScope.CupertinoTabItem(
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                 maxLines = 1,
             )
+        }
+    }
+}
+
+@Composable
+private fun TabIconWithBadge(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String?,
+    badgeCount: Int,
+    tint: Color? = null,
+    iconSize: androidx.compose.ui.unit.Dp = 24.dp,
+) {
+    Box(
+        modifier = Modifier.size(iconSize + 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (tint == null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                modifier = Modifier.size(iconSize),
+            )
+        } else {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = tint,
+                modifier = Modifier.size(iconSize),
+            )
+        }
+
+        if (badgeCount > 0) {
+            val text = if (badgeCount > 99) "99+" else badgeCount.toString()
+            val isSingleDigit = text.length == 1
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 4.dp, y = (-4).dp)
+                    .height(16.dp)
+                    .defaultMinSize(minWidth = 16.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.error,
+                        shape = if (isSingleDigit) CircleShape else RoundedCornerShape(8.dp),
+                    )
+                    .padding(horizontal = if (isSingleDigit) 0.dp else 4.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = text,
+                    color = MaterialTheme.colorScheme.onError,
+                    fontSize = 9.sp,
+                    lineHeight = 9.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+            }
         }
     }
 }

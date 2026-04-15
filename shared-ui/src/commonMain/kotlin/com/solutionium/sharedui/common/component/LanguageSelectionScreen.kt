@@ -36,11 +36,14 @@ fun LanguageSelectionScreen(
         )
     }
 
-    Surface(modifier = Modifier
-        .fillMaxSize()
-        .padding(32.dp)) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.surface,
+    ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

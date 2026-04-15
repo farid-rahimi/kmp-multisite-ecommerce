@@ -12,6 +12,7 @@ if (!defined('ABSPATH')) {
 
 final class Woo_App_Config_Manager {
     const OPTION_KEY = 'woo_app_config_json';
+    const DASHBOARD_LABELS_OPTION_KEY = 'woo_app_config_dashboard_labels';
     const REVIEW_SETTINGS_OPTION_KEY = 'woo_app_review_settings';
     const REVIEW_CRITERIA_OPTION_KEY = 'woo_app_review_criteria_rows';
     const QUERY_VAR = 'woo_app_config_test';
@@ -88,6 +89,7 @@ final class Woo_App_Config_Manager {
         }
 
         wp_enqueue_media();
+        wp_enqueue_script('jquery-ui-sortable');
 
         $css = '
             .wam-wrap { max-width: 1300px; }
@@ -117,14 +119,27 @@ final class Woo_App_Config_Manager {
             .wam-field { display: flex; flex-direction: column; gap: 6px; }
             .wam-field label { font-weight: 600; }
             .wam-field input[type="text"], .wam-field input[type="number"], .wam-field input[type="url"], .wam-field select, .wam-field textarea { width: 100%; }
+            .wam-field.wam-field-full { grid-column: 1/-1; }
             .wam-row-list { display: grid; gap: 12px; }
             .wam-row { border: 1px solid #e4e7ec; border-radius: 10px; background: #fcfcfd; }
             .wam-row-head { padding: 10px 12px; border-bottom: 1px solid #eaecf0; display: flex; justify-content: space-between; align-items: center; }
+            .wam-row-head-main { display: inline-flex; align-items: center; gap: 8px; }
+            .wam-drag-handle { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; color: #667085; cursor: grab; user-select: none; font-size: 14px; line-height: 1; }
+            .wam-drag-handle:hover { background: #eef2f7; color: #344054; }
+            .wam-drag-handle:active { cursor: grabbing; }
+            .wam-row-placeholder { border: 1px dashed #98a2b3; border-radius: 10px; background: #f8fafc; min-height: 44px; }
             .wam-row-body { padding: 12px; }
             .wam-row.is-collapsed .wam-row-body { display: none; }
             .wam-inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
             .wam-media-wrap { display: flex; gap: 8px; align-items: center; }
             .wam-hidden { display:none; }
+            .wam-i18n-wrap { position: relative; display: flex; align-items: center; gap: 8px; }
+            .wam-i18n-values { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-height: 32px; }
+            .wam-i18n-pill { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #d0d5dd; background: #f8fafc; color: #344054; border-radius: 999px; padding: 4px 10px; font-size: 11px; line-height: 1; max-width: 31%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .wam-i18n-pill b { font-weight: 700; color: #101828; }
+            .wam-i18n-popup { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: min(360px, 95vw); background: #fff; border: 1px solid #d0d5dd; border-radius: 10px; box-shadow: 0 12px 32px rgba(16,24,40,.18); padding: 12px; display: grid; gap: 10px; }
+            .wam-i18n-popup.wam-hidden { display: none !important; }
+            .wam-i18n-popup-actions { display: flex; justify-content: flex-end; }
             @media (max-width: 1180px) { .wam-grid { grid-template-columns: 1fr; } .wam-field-grid { grid-template-columns: 1fr; } }
         ';
 
@@ -156,6 +171,25 @@ final class Woo_App_Config_Manager {
                     });
                 }
 
+                function bindSortable(scope){
+                    if(!window.jQuery || !jQuery.fn || !jQuery.fn.sortable) return;
+                    jQuery(scope).find(".wam-row-list").each(function(){
+                        var $list = jQuery(this);
+                        if($list.data("wam-sortable") === "1") return;
+                        $list.sortable({
+                            items: "> .wam-row",
+                            handle: ".wam-drag-handle",
+                            placeholder: "wam-row-placeholder",
+                            forcePlaceholderSize: true,
+                            tolerance: "pointer",
+                            update: function(){
+                                reindexRows($list.get(0));
+                            }
+                        });
+                        $list.data("wam-sortable", "1");
+                    });
+                }
+
                 function addRow(listSelector, templateSelector){
                     var list = document.querySelector(listSelector);
                     var tpl = document.querySelector(templateSelector);
@@ -166,6 +200,8 @@ final class Woo_App_Config_Manager {
                     bindMediaPicker(clone);
                     bindAutoFill(clone);
                     bindCollapsible(clone);
+                    bindI18nEditors(clone);
+                    bindSortable(list);
                 }
 
                 function removeRow(btn){
@@ -239,11 +275,67 @@ final class Woo_App_Config_Manager {
                     });
                 }
 
+                function refreshI18nPreview(input){
+                    var preview = input.closest(".wam-i18n-wrap").querySelector(".wam-i18n-pill[data-lang=\'" + input.dataset.i18nLang + "\']");
+                    if(!preview) return;
+                    var value = (input.value || "").trim();
+                    preview.setAttribute("title", value);
+                    preview.querySelector("span").textContent = value || "—";
+                }
+
+                function closeAllI18nPopups(except){
+                    document.querySelectorAll(".wam-i18n-popup").forEach(function(p){
+                        if(except && p === except) return;
+                        p.classList.add("wam-hidden");
+                    });
+                }
+
+                function bindI18nEditors(scope){
+                    scope.querySelectorAll(".wam-i18n-edit").forEach(function(btn){
+                        if(btn.dataset.bound === "1") return;
+                        btn.dataset.bound = "1";
+                        btn.addEventListener("click", function(e){
+                            e.preventDefault();
+                            var wrap = btn.closest(".wam-i18n-wrap");
+                            if(!wrap) return;
+                            var popup = wrap.querySelector(".wam-i18n-popup");
+                            if(!popup) return;
+                            var willOpen = popup.classList.contains("wam-hidden");
+                            closeAllI18nPopups(popup);
+                            popup.classList.toggle("wam-hidden", !willOpen);
+                        });
+                    });
+
+                    scope.querySelectorAll(".wam-i18n-close").forEach(function(btn){
+                        if(btn.dataset.bound === "1") return;
+                        btn.dataset.bound = "1";
+                        btn.addEventListener("click", function(e){
+                            e.preventDefault();
+                            var popup = btn.closest(".wam-i18n-popup");
+                            if(popup) popup.classList.add("wam-hidden");
+                        });
+                    });
+
+                    scope.querySelectorAll(".wam-i18n-input").forEach(function(input){
+                        if(input.dataset.bound === "1") return;
+                        input.dataset.bound = "1";
+                        input.addEventListener("input", function(){ refreshI18nPreview(input); });
+                        refreshI18nPreview(input);
+                    });
+                }
+
                 document.addEventListener("DOMContentLoaded", function(){
                     bindMediaPicker(document);
                     bindDynamicButtons();
                     bindAutoFill(document);
                     bindCollapsible(document);
+                    bindI18nEditors(document);
+                    bindSortable(document);
+                    document.addEventListener("click", function(e){
+                        if(!e.target.closest(".wam-i18n-wrap")){
+                            closeAllI18nPopups(null);
+                        }
+                    });
                 });
             })();
         ';
@@ -719,6 +811,14 @@ final class Woo_App_Config_Manager {
         $search_tabs = isset($config['search_tab']) && is_array($config['search_tab']) ? $config['search_tab'] : [];
         $stories = isset($config['stories']) && is_array($config['stories']) ? $config['stories'] : [];
         $banners = isset($config['home_banner']) && is_array($config['home_banner']) ? $config['home_banner'] : [];
+        $dashboard_labels = get_option(self::DASHBOARD_LABELS_OPTION_KEY, [
+            'search_tab' => [],
+            'stories' => [],
+            'home_banner' => [],
+        ]);
+        if (!is_array($dashboard_labels)) {
+            $dashboard_labels = ['search_tab' => [], 'stories' => [], 'home_banner' => []];
+        }
         $images = isset($config['images']) && is_array($config['images']) ? $config['images'] : [];
         $review_criteria = is_array($reviewCriteriaRows) ? $reviewCriteriaRows : [];
         $shipping_options = self::get_shipping_method_options();
@@ -727,7 +827,7 @@ final class Woo_App_Config_Manager {
         $yithEnabled = !empty($reviewSettings['enable_yith']) && $yithActive;
 
         if (empty($search_tabs)) {
-            $search_tabs[] = ['id' => 1, 'enabled' => true, 'title' => '', 'title_ar' => '', 'title_fa' => '', 'type' => 'attribute', 'source' => '', 'source_slug' => '', 'max' => '', 'veiw_type' => 'spotlight', 'more' => ['title' => '', 'link' => ['title' => '', 'type' => 'all_products', 'target' => '']]];
+            $search_tabs[] = ['id' => 1, 'enabled' => true, 'title' => '', 'title_ar' => '', 'title_fa' => '', 'type' => 'attribute', 'source' => '', 'source_slug' => '', 'source_orderby' => 'menu_order', 'source_order' => 'asc', 'max' => '', 'veiw_type' => 'spotlight', 'more' => ['title' => '', 'link' => ['title' => '', 'type' => 'all_products', 'target' => '', 'orderby' => 'menu_order', 'order' => 'asc']]];
         }
 
         ?>
@@ -747,10 +847,17 @@ final class Woo_App_Config_Manager {
                         <label>Message</label>
                         <input type="text" name="cfg[message]" value="<?php echo esc_attr(self::g($config, ['message'], '')); ?>">
                     </div>
-                    <div class="wam-field" style="grid-column:1/-1;">
-                        <label>Header Logo</label>
+                    <div class="wam-field">
+                        <label>Header Logo (Light)</label>
                         <div class="wam-media-wrap">
-                            <input type="url" name="cfg[header_logo]" value="<?php echo esc_attr(self::g($config, ['header_logo'], '')); ?>" placeholder="https://...">
+                            <input type="url" name="cfg[header_logo_light]" value="<?php echo esc_attr(self::g($config, ['header_logo_light'], self::g($config, ['header_logo'], ''))); ?>" placeholder="https://...">
+                            <button class="button wam-pick-media" type="button">Select from Media</button>
+                        </div>
+                    </div>
+                    <div class="wam-field">
+                        <label>Header Logo (Dark)</label>
+                        <div class="wam-media-wrap">
+                            <input type="url" name="cfg[header_logo_dark]" value="<?php echo esc_attr(self::g($config, ['header_logo_dark'], self::g($config, ['header_logo'], ''))); ?>" placeholder="https://...">
                             <button class="button wam-pick-media" type="button">Select from Media</button>
                         </div>
                     </div>
@@ -785,7 +892,7 @@ final class Woo_App_Config_Manager {
                 </div>
                 <div class="wam-card-body">
                     <div id="wam-search-tab-list" class="wam-row-list">
-                        <?php foreach ($search_tabs as $i => $row) { self::render_search_tab_row($i, $row, $brands, $attrs, $attr_terms); } ?>
+                        <?php foreach ($search_tabs as $i => $row) { self::render_search_tab_row($i, $row, $brands, $attrs, $attr_terms, self::s(self::g($dashboard_labels, ['search_tab', $i, 'title'], ''))); } ?>
                     </div>
                     <div class="wam-actions"><button type="button" class="button wam-add-search-tab">+ Add Search Tab Row</button></div>
                 </div>
@@ -797,7 +904,7 @@ final class Woo_App_Config_Manager {
                 </div>
                 <div class="wam-card-body">
                     <div id="wam-story-list" class="wam-row-list">
-                        <?php foreach ($stories as $i => $row) { self::render_story_row($i, $row, $brands, $attr_terms); } ?>
+                        <?php foreach ($stories as $i => $row) { self::render_story_row($i, $row, $brands, $attr_terms, self::s(self::g($dashboard_labels, ['stories', $i, 'title'], ''))); } ?>
                     </div>
                     <div class="wam-actions"><button type="button" class="button wam-add-story">+ Add Story</button></div>
                 </div>
@@ -809,7 +916,7 @@ final class Woo_App_Config_Manager {
                 </div>
                 <div class="wam-card-body">
                     <div id="wam-banner-list" class="wam-row-list">
-                        <?php foreach ($banners as $i => $row) { self::render_banner_row($i, $row, $brands, $attr_terms); } ?>
+                        <?php foreach ($banners as $i => $row) { self::render_banner_row($i, $row, $brands, $attr_terms, self::s(self::g($dashboard_labels, ['home_banner', $i, 'title'], ''))); } ?>
                     </div>
                     <div class="wam-actions"><button type="button" class="button wam-add-banner">+ Add Banner</button></div>
                 </div>
@@ -860,15 +967,15 @@ final class Woo_App_Config_Manager {
         </form>
 
         <template id="wam-search-tab-template">
-            <?php self::render_search_tab_row('__INDEX__', ['id' => '', 'enabled' => true, 'title' => '', 'title_ar' => '', 'title_fa' => '', 'type' => 'attribute', 'source' => '', 'source_slug' => '', 'max' => '', 'veiw_type' => 'spotlight', 'more' => ['title' => '', 'link' => ['title' => '', 'type' => 'all_products', 'target' => '']]], $brands, $attrs, $attr_terms); ?>
+            <?php self::render_search_tab_row('__INDEX__', ['id' => '', 'enabled' => true, 'title' => '', 'title_ar' => '', 'title_fa' => '', 'type' => 'attribute', 'source' => '', 'source_slug' => '', 'source_orderby' => 'menu_order', 'source_order' => 'asc', 'max' => '', 'veiw_type' => 'spotlight', 'more' => ['title' => '', 'title_ar' => '', 'title_fa' => '', 'link' => ['title' => '', 'title_ar' => '', 'title_fa' => '', 'type' => 'all_products', 'target' => '', 'orderby' => 'menu_order', 'order' => 'asc']]], $brands, $attrs, $attr_terms, ''); ?>
         </template>
 
         <template id="wam-story-template">
-            <?php self::render_story_row('__INDEX__', ['id' => '', 'title' => '', 'subtitle' => '', 'media_url' => '', 'link' => ['title' => '', 'type' => 'products', 'target' => '']], $brands, $attr_terms); ?>
+            <?php self::render_story_row('__INDEX__', ['id' => '', 'title' => '', 'subtitle' => '', 'media_url' => '', 'link' => ['title' => '', 'type' => 'products', 'target' => '']], $brands, $attr_terms, ''); ?>
         </template>
 
         <template id="wam-banner-template">
-            <?php self::render_banner_row('__INDEX__', ['id' => '', 'title' => '', 'subtitle' => '', 'src' => '', 'link' => ['title' => '', 'type' => 'products', 'target' => '']], $brands, $attr_terms); ?>
+            <?php self::render_banner_row('__INDEX__', ['id' => '', 'title' => '', 'subtitle' => '', 'src' => '', 'link' => ['title' => '', 'type' => 'products', 'target' => '']], $brands, $attr_terms, ''); ?>
         </template>
         <template id="wam-image-template">
             <?php self::render_image_row('__INDEX__', ['term_id' => '', 'src' => '']); ?>
@@ -879,31 +986,82 @@ final class Woo_App_Config_Manager {
         <?php
     }
 
-    private static function render_search_tab_row($i, $row, $brands, $attrs, $attr_terms) {
+    private static function render_search_tab_row($i, $row, $brands, $attrs, $attr_terms, $admin_title = '') {
         $prefix = 'cfg[search_tab][' . $i . ']';
         ?>
         <div class="wam-row is-collapsed">
-            <div class="wam-row-head"><button type="button" class="wam-collapse-toggle wam-is-collapsed"><span class="wam-caret">▾</span><strong>Search Row</strong></button><button type="button" class="button-link-delete wam-remove-row">Remove</button></div>
+            <div class="wam-row-head"><div class="wam-row-head-main"><span class="wam-drag-handle" title="Drag to reorder" aria-hidden="true">⋮⋮</span><button type="button" class="wam-collapse-toggle wam-is-collapsed"><span class="wam-caret">▾</span><strong><?php echo esc_html($admin_title !== '' ? $admin_title : 'Search Row'); ?></strong></button></div><button type="button" class="button-link-delete wam-remove-row">Remove</button></div>
             <div class="wam-row-body">
                 <div class="wam-field-grid">
+                    <div class="wam-field wam-field-full"><label>Dashboard Row Title</label><input type="text" name="meta_labels[search_tab][<?php echo esc_attr($i); ?>][title]" value="<?php echo esc_attr($admin_title); ?>" placeholder="e.g. Brands Row"></div>
                     <div class="wam-field"><label>ID</label><input type="number" name="<?php echo esc_attr($prefix); ?>[id]" value="<?php echo esc_attr(self::g($row, ['id'], '')); ?>"></div>
                     <div class="wam-field"><label>Enabled</label><select name="<?php echo esc_attr($prefix); ?>[enabled]"><?php self::option_bool(self::g($row, ['enabled'], true)); ?></select></div>
-                    <div class="wam-field"><label>Title (EN)</label><input type="text" name="<?php echo esc_attr($prefix); ?>[title]" value="<?php echo esc_attr(self::g($row, ['title'], '')); ?>"></div>
-                    <div class="wam-field"><label>Title (AR)</label><input type="text" name="<?php echo esc_attr($prefix); ?>[title_ar]" value="<?php echo esc_attr(self::g($row, ['title_ar'], '')); ?>"></div>
-                    <div class="wam-field"><label>Title (FA)</label><input type="text" name="<?php echo esc_attr($prefix); ?>[title_fa]" value="<?php echo esc_attr(self::g($row, ['title_fa'], '')); ?>"></div>
+                    <div class="wam-field wam-field-full">
+                        <label>Title</label>
+                        <div class="wam-i18n-wrap">
+                            <div class="wam-i18n-values">
+                                <span class="wam-i18n-pill" data-lang="en"><b>EN</b> <span><?php echo esc_html(self::g($row, ['title'], '') ?: '—'); ?></span></span>
+                                <span class="wam-i18n-pill" data-lang="ar"><b>AR</b> <span><?php echo esc_html(self::g($row, ['title_ar'], '') ?: '—'); ?></span></span>
+                                <span class="wam-i18n-pill" data-lang="fa"><b>FA</b> <span><?php echo esc_html(self::g($row, ['title_fa'], '') ?: '—'); ?></span></span>
+                            </div>
+                            <button type="button" class="button button-small wam-i18n-edit">Edit</button>
+                            <div class="wam-i18n-popup wam-hidden">
+                                <div class="wam-field"><label>EN</label><input class="wam-i18n-input" data-i18n-lang="en" type="text" name="<?php echo esc_attr($prefix); ?>[title]" value="<?php echo esc_attr(self::g($row, ['title'], '')); ?>"></div>
+                                <div class="wam-field"><label>AR</label><input class="wam-i18n-input" data-i18n-lang="ar" type="text" name="<?php echo esc_attr($prefix); ?>[title_ar]" value="<?php echo esc_attr(self::g($row, ['title_ar'], '')); ?>"></div>
+                                <div class="wam-field"><label>FA</label><input class="wam-i18n-input" data-i18n-lang="fa" type="text" name="<?php echo esc_attr($prefix); ?>[title_fa]" value="<?php echo esc_attr(self::g($row, ['title_fa'], '')); ?>"></div>
+                                <div class="wam-i18n-popup-actions"><button type="button" class="button button-secondary wam-i18n-close">Done</button></div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="wam-field"><label>Type</label><select name="<?php echo esc_attr($prefix); ?>[type]"><?php self::options(self::g($row, ['type'], 'attribute'), ['attribute'=>'attribute','attributes'=>'attributes','brand_ids'=>'brand_ids','products'=>'products','categories'=>'categories','tag'=>'tag']); ?></select></div>
-                    <div class="wam-field"><label>View Type</label><select name="<?php echo esc_attr($prefix); ?>[veiw_type]"><?php self::options(self::g($row, ['veiw_type'], 'spotlight'), ['spotlight'=>'spotlight','circle_row'=>'circle_row','grid'=>'grid','list'=>'list']); ?></select></div>
+                    <div class="wam-field"><label>View Type</label><select name="<?php echo esc_attr($prefix); ?>[veiw_type]"><?php self::options(self::g($row, ['veiw_type'], 'spotlight'), ['spotlight'=>'spotlight','circle_row'=>'circle_row','grid'=>'grid','text_chips'=>'text_chips','list'=>'list']); ?></select></div>
 
                     <div class="wam-field"><label>Source (manual)</label><input class="wam-source" type="text" name="<?php echo esc_attr($prefix); ?>[source]" value="<?php echo esc_attr(self::g($row, ['source'], '')); ?>" placeholder="e.g. 67,163,71"></div>
                     <div class="wam-field"><label>Source Slug (Attribute)</label><select name="<?php echo esc_attr($prefix); ?>[source_slug]"><option value="">- Select -</option><?php foreach ($attrs as $a) { echo '<option value="' . esc_attr($a['slug']) . '" ' . selected(self::g($row, ['source_slug'], ''), $a['slug'], false) . '>' . esc_html($a['name']) . ' (' . esc_html($a['slug']) . ')</option>'; } ?></select></div>
+                    <div class="wam-field"><label>Source Order By</label><select name="<?php echo esc_attr($prefix); ?>[source_orderby]"><?php self::options(self::g($row, ['source_orderby'], 'menu_order'), ['menu_order'=>'menu_order','name'=>'name','count'=>'count','id'=>'id','slug'=>'slug']); ?></select></div>
+                    <div class="wam-field"><label>Source Order</label><select name="<?php echo esc_attr($prefix); ?>[source_order]"><?php self::options(self::g($row, ['source_order'], 'asc'), ['asc'=>'asc','desc'=>'desc']); ?></select></div>
                     <div class="wam-field"><label>Source Brands (auto-fill Source)</label><select class="wam-brand-source" multiple><?php foreach ($brands as $b) { echo '<option value="' . esc_attr($b['id']) . '">' . esc_html($b['name']) . '</option>'; } ?></select></div>
                     <div class="wam-field"><label>Max</label><input type="number" name="<?php echo esc_attr($prefix); ?>[max]" value="<?php echo esc_attr(self::g($row, ['max'], '')); ?>"></div>
 
-                    <div class="wam-field"><label>More Title</label><input type="text" name="<?php echo esc_attr($prefix); ?>[more][title]" value="<?php echo esc_attr(self::g($row, ['more', 'title'], '')); ?>"></div>
-                    <div class="wam-field"><label>More Link Title</label><input type="text" name="<?php echo esc_attr($prefix); ?>[more][link][title]" value="<?php echo esc_attr(self::g($row, ['more', 'link', 'title'], '')); ?>"></div>
-                    <div class="wam-field"><label>More Link Type</label><select name="<?php echo esc_attr($prefix); ?>[more][link][type]"><?php self::options(self::g($row, ['more', 'link', 'type'], 'all_products'), ['all_products'=>'all_products','all_brands'=>'all_brands','products'=>'products','categories'=>'categories','brand'=>'brand','attribute'=>'attribute','attributes'=>'attributes','tag'=>'tag']); ?></select></div>
+                    <div class="wam-field wam-field-full">
+                        <label>More Page Title</label>
+                        <div class="wam-i18n-wrap">
+                            <div class="wam-i18n-values">
+                                <span class="wam-i18n-pill" data-lang="en"><b>EN</b> <span><?php echo esc_html(self::g($row, ['more', 'title'], '') ?: '—'); ?></span></span>
+                                <span class="wam-i18n-pill" data-lang="ar"><b>AR</b> <span><?php echo esc_html(self::g($row, ['more', 'title_ar'], '') ?: '—'); ?></span></span>
+                                <span class="wam-i18n-pill" data-lang="fa"><b>FA</b> <span><?php echo esc_html(self::g($row, ['more', 'title_fa'], '') ?: '—'); ?></span></span>
+                            </div>
+                            <button type="button" class="button button-small wam-i18n-edit">Edit</button>
+                            <div class="wam-i18n-popup wam-hidden">
+                                <div class="wam-field"><label>EN</label><input class="wam-i18n-input" data-i18n-lang="en" type="text" name="<?php echo esc_attr($prefix); ?>[more][title]" value="<?php echo esc_attr(self::g($row, ['more', 'title'], '')); ?>"></div>
+                                <div class="wam-field"><label>AR</label><input class="wam-i18n-input" data-i18n-lang="ar" type="text" name="<?php echo esc_attr($prefix); ?>[more][title_ar]" value="<?php echo esc_attr(self::g($row, ['more', 'title_ar'], '')); ?>"></div>
+                                <div class="wam-field"><label>FA</label><input class="wam-i18n-input" data-i18n-lang="fa" type="text" name="<?php echo esc_attr($prefix); ?>[more][title_fa]" value="<?php echo esc_attr(self::g($row, ['more', 'title_fa'], '')); ?>"></div>
+                                <div class="wam-i18n-popup-actions"><button type="button" class="button button-secondary wam-i18n-close">Done</button></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wam-field wam-field-full">
+                        <label>More Link Text</label>
+                        <div class="wam-i18n-wrap">
+                            <div class="wam-i18n-values">
+                                <span class="wam-i18n-pill" data-lang="en"><b>EN</b> <span><?php echo esc_html(self::g($row, ['more', 'link', 'title'], '') ?: '—'); ?></span></span>
+                                <span class="wam-i18n-pill" data-lang="ar"><b>AR</b> <span><?php echo esc_html(self::g($row, ['more', 'link', 'title_ar'], '') ?: '—'); ?></span></span>
+                                <span class="wam-i18n-pill" data-lang="fa"><b>FA</b> <span><?php echo esc_html(self::g($row, ['more', 'link', 'title_fa'], '') ?: '—'); ?></span></span>
+                            </div>
+                            <button type="button" class="button button-small wam-i18n-edit">Edit</button>
+                            <div class="wam-i18n-popup wam-hidden">
+                                <div class="wam-field"><label>EN</label><input class="wam-i18n-input" data-i18n-lang="en" type="text" name="<?php echo esc_attr($prefix); ?>[more][link][title]" value="<?php echo esc_attr(self::g($row, ['more', 'link', 'title'], '')); ?>"></div>
+                                <div class="wam-field"><label>AR</label><input class="wam-i18n-input" data-i18n-lang="ar" type="text" name="<?php echo esc_attr($prefix); ?>[more][link][title_ar]" value="<?php echo esc_attr(self::g($row, ['more', 'link', 'title_ar'], '')); ?>"></div>
+                                <div class="wam-field"><label>FA</label><input class="wam-i18n-input" data-i18n-lang="fa" type="text" name="<?php echo esc_attr($prefix); ?>[more][link][title_fa]" value="<?php echo esc_attr(self::g($row, ['more', 'link', 'title_fa'], '')); ?>"></div>
+                                <div class="wam-i18n-popup-actions"><button type="button" class="button button-secondary wam-i18n-close">Done</button></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wam-field"><label>More Link Type</label><select name="<?php echo esc_attr($prefix); ?>[more][link][type]"><?php self::options(self::g($row, ['more', 'link', 'type'], 'all_products'), ['none'=>'none','all_products'=>'all_products','all_brands'=>'all_brands','products'=>'products','categories'=>'categories','brand'=>'brand','attribute'=>'attribute','attributes'=>'attributes','tag'=>'tag']); ?></select></div>
                     <div class="wam-field"><label>More Link Target</label><input class="wam-link-target" type="text" name="<?php echo esc_attr($prefix); ?>[more][link][target]" value="<?php echo esc_attr(self::g($row, ['more', 'link', 'target'], '')); ?>" placeholder="e.g. 67 or scent:123"></div>
+                    <div class="wam-field"><label>More Link Order By (Attributes)</label><select name="<?php echo esc_attr($prefix); ?>[more][link][orderby]"><?php self::options(self::g($row, ['more', 'link', 'orderby'], 'menu_order'), ['menu_order'=>'menu_order','name'=>'name','count'=>'count','id'=>'id','slug'=>'slug']); ?></select></div>
+                    <div class="wam-field"><label>More Link Order (Attributes)</label><select name="<?php echo esc_attr($prefix); ?>[more][link][order]"><?php self::options(self::g($row, ['more', 'link', 'order'], 'asc'), ['asc'=>'asc','desc'=>'desc']); ?></select></div>
                     <div class="wam-field"><label>Select Brand for Target</label><select class="wam-brand-target"><option value="">- Select -</option><?php foreach ($brands as $b) { echo '<option value="' . esc_attr($b['id']) . '">' . esc_html($b['name']) . '</option>'; } ?></select></div>
                     <div class="wam-field"><label>Select Attribute Term for Target</label><select class="wam-attr-target"><option value="">- Select -</option><?php foreach ($attr_terms as $t) { echo '<option value="' . esc_attr($t['value']) . '">' . esc_html($t['label']) . '</option>'; } ?></select></div>
                 </div>
@@ -912,13 +1070,14 @@ final class Woo_App_Config_Manager {
         <?php
     }
 
-    private static function render_story_row($i, $row, $brands, $attr_terms) {
+    private static function render_story_row($i, $row, $brands, $attr_terms, $admin_title = '') {
         $prefix = 'cfg[stories][' . $i . ']';
         ?>
         <div class="wam-row is-collapsed">
-            <div class="wam-row-head"><button type="button" class="wam-collapse-toggle wam-is-collapsed"><span class="wam-caret">▾</span><strong>Story</strong></button><button type="button" class="button-link-delete wam-remove-row">Remove</button></div>
+            <div class="wam-row-head"><div class="wam-row-head-main"><span class="wam-drag-handle" title="Drag to reorder" aria-hidden="true">⋮⋮</span><button type="button" class="wam-collapse-toggle wam-is-collapsed"><span class="wam-caret">▾</span><strong><?php echo esc_html($admin_title !== '' ? $admin_title : 'Story'); ?></strong></button></div><button type="button" class="button-link-delete wam-remove-row">Remove</button></div>
             <div class="wam-row-body">
                 <div class="wam-field-grid">
+                    <div class="wam-field wam-field-full"><label>Dashboard Row Title</label><input type="text" name="meta_labels[stories][<?php echo esc_attr($i); ?>][title]" value="<?php echo esc_attr($admin_title); ?>" placeholder="e.g. Story Hero 1"></div>
                     <div class="wam-field"><label>ID</label><input type="number" name="<?php echo esc_attr($prefix); ?>[id]" value="<?php echo esc_attr(self::g($row, ['id'], '')); ?>"></div>
                     <div class="wam-field"><label>Title</label><input type="text" name="<?php echo esc_attr($prefix); ?>[title]" value="<?php echo esc_attr(self::g($row, ['title'], '')); ?>"></div>
                     <div class="wam-field"><label>Subtitle</label><input type="text" name="<?php echo esc_attr($prefix); ?>[subtitle]" value="<?php echo esc_attr(self::g($row, ['subtitle'], '')); ?>"></div>
@@ -934,13 +1093,14 @@ final class Woo_App_Config_Manager {
         <?php
     }
 
-    private static function render_banner_row($i, $row, $brands, $attr_terms) {
+    private static function render_banner_row($i, $row, $brands, $attr_terms, $admin_title = '') {
         $prefix = 'cfg[home_banner][' . $i . ']';
         ?>
         <div class="wam-row is-collapsed">
-            <div class="wam-row-head"><button type="button" class="wam-collapse-toggle wam-is-collapsed"><span class="wam-caret">▾</span><strong>Banner</strong></button><button type="button" class="button-link-delete wam-remove-row">Remove</button></div>
+            <div class="wam-row-head"><div class="wam-row-head-main"><span class="wam-drag-handle" title="Drag to reorder" aria-hidden="true">⋮⋮</span><button type="button" class="wam-collapse-toggle wam-is-collapsed"><span class="wam-caret">▾</span><strong><?php echo esc_html($admin_title !== '' ? $admin_title : 'Banner'); ?></strong></button></div><button type="button" class="button-link-delete wam-remove-row">Remove</button></div>
             <div class="wam-row-body">
                 <div class="wam-field-grid">
+                    <div class="wam-field wam-field-full"><label>Dashboard Row Title</label><input type="text" name="meta_labels[home_banner][<?php echo esc_attr($i); ?>][title]" value="<?php echo esc_attr($admin_title); ?>" placeholder="e.g. Main Hero Banner"></div>
                     <div class="wam-field"><label>ID</label><input type="number" name="<?php echo esc_attr($prefix); ?>[id]" value="<?php echo esc_attr(self::g($row, ['id'], '')); ?>"></div>
                     <div class="wam-field"><label>Title</label><input type="text" name="<?php echo esc_attr($prefix); ?>[title]" value="<?php echo esc_attr(self::g($row, ['title'], '')); ?>"></div>
                     <div class="wam-field"><label>Subtitle</label><input type="text" name="<?php echo esc_attr($prefix); ?>[subtitle]" value="<?php echo esc_attr(self::g($row, ['subtitle'], '')); ?>"></div>
@@ -960,7 +1120,7 @@ final class Woo_App_Config_Manager {
         $prefix = 'cfg[images][' . $i . ']';
         ?>
         <div class="wam-row is-collapsed">
-            <div class="wam-row-head"><button type="button" class="wam-collapse-toggle wam-is-collapsed"><span class="wam-caret">▾</span><strong>Image Row</strong></button><button type="button" class="button-link-delete wam-remove-row">Remove</button></div>
+            <div class="wam-row-head"><div class="wam-row-head-main"><span class="wam-drag-handle" title="Drag to reorder" aria-hidden="true">⋮⋮</span><button type="button" class="wam-collapse-toggle wam-is-collapsed"><span class="wam-caret">▾</span><strong>Image Row</strong></button></div><button type="button" class="button-link-delete wam-remove-row">Remove</button></div>
             <div class="wam-row-body">
                 <div class="wam-field-grid">
                     <div class="wam-field"><label>Term ID</label><input type="number" name="<?php echo esc_attr($prefix); ?>[term_id]" value="<?php echo esc_attr(self::g($row, ['term_id'], '')); ?>"></div>
@@ -981,7 +1141,7 @@ final class Woo_App_Config_Manager {
         $criteriaFaText = is_array($criteriaFa) ? implode("\n", $criteriaFa) : '';
         ?>
         <div class="wam-row is-collapsed">
-            <div class="wam-row-head"><button type="button" class="wam-collapse-toggle wam-is-collapsed"><span class="wam-caret">▾</span><strong>Review Criteria Row</strong></button><button type="button" class="button-link-delete wam-remove-row">Remove</button></div>
+            <div class="wam-row-head"><div class="wam-row-head-main"><span class="wam-drag-handle" title="Drag to reorder" aria-hidden="true">⋮⋮</span><button type="button" class="wam-collapse-toggle wam-is-collapsed"><span class="wam-caret">▾</span><strong>Review Criteria Row</strong></button></div><button type="button" class="button-link-delete wam-remove-row">Remove</button></div>
             <div class="wam-row-body">
                 <div class="wam-field-grid">
                     <div class="wam-field">
@@ -1016,12 +1176,17 @@ final class Woo_App_Config_Manager {
         }
 
         $cfg = $post['cfg'];
+        $meta_labels = isset($post['meta_labels']) && is_array($post['meta_labels']) ? $post['meta_labels'] : [];
         $reviewCfg = isset($post['review_cfg']) && is_array($post['review_cfg']) ? $post['review_cfg'] : [];
         $existing = self::get_config_array();
 
         $existing['status'] = self::s(self::g($cfg, ['status'], 'ok'));
         $existing['message'] = self::s(self::g($cfg, ['message'], 'Config managed from WordPress admin'));
-        $existing['header_logo'] = self::u(self::g($cfg, ['header_logo'], ''));
+        $headerLogoLight = self::u(self::g($cfg, ['header_logo_light'], self::g($cfg, ['header_logo'], '')));
+        $headerLogoDark = self::u(self::g($cfg, ['header_logo_dark'], self::g($cfg, ['header_logo'], '')));
+        $existing['header_logo_light'] = $headerLogoLight;
+        $existing['header_logo_dark'] = $headerLogoDark;
+        $existing['header_logo'] = $headerLogoLight !== '' ? $headerLogoLight : $headerLogoDark;
         $existing['free_shipping_method_id'] = self::s(self::g($cfg, ['free_shipping_method_id'], ''));
 
         $existing['app_version'] = [
@@ -1053,14 +1218,22 @@ final class Woo_App_Config_Manager {
                     'type' => self::s(self::g($row, ['type'], 'attribute')),
                     'source' => self::s(self::g($row, ['source'], '')),
                     'source_slug' => self::s(self::g($row, ['source_slug'], '')),
+                    'source_orderby' => self::s(self::g($row, ['source_orderby'], 'menu_order')),
+                    'source_order' => self::s(self::g($row, ['source_order'], 'asc')),
                     'max' => self::i(self::g($row, ['max'], 0)),
                     'veiw_type' => self::s(self::g($row, ['veiw_type'], 'spotlight')),
                     'more' => [
                         'title' => self::s(self::g($row, ['more', 'title'], '')),
+                        'title_ar' => self::s(self::g($row, ['more', 'title_ar'], '')),
+                        'title_fa' => self::s(self::g($row, ['more', 'title_fa'], '')),
                         'link' => [
                             'title' => self::s(self::g($row, ['more', 'link', 'title'], '')),
+                            'title_ar' => self::s(self::g($row, ['more', 'link', 'title_ar'], '')),
+                            'title_fa' => self::s(self::g($row, ['more', 'link', 'title_fa'], '')),
                             'type' => self::s(self::g($row, ['more', 'link', 'type'], 'all_products')),
                             'target' => self::s(self::g($row, ['more', 'link', 'target'], '')),
+                            'orderby' => self::s(self::g($row, ['more', 'link', 'orderby'], 'menu_order')),
+                            'order' => self::s(self::g($row, ['more', 'link', 'order'], 'asc')),
                         ],
                     ],
                 ];
@@ -1091,6 +1264,22 @@ final class Woo_App_Config_Manager {
         }
         $manualReviewCriteriaRows = self::sanitize_review_criteria_rows(self::g($cfg, ['review_criteria'], []));
         update_option(self::REVIEW_CRITERIA_OPTION_KEY, $manualReviewCriteriaRows, false);
+
+        $labels = ['search_tab' => [], 'stories' => [], 'home_banner' => []];
+        foreach (['search_tab', 'stories', 'home_banner'] as $sectionKey) {
+            $rows = self::g($meta_labels, [$sectionKey], []);
+            if (!is_array($rows)) {
+                continue;
+            }
+            foreach ($rows as $idx => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $title = self::s(self::g($row, ['title'], ''));
+                $labels[$sectionKey][(string) $idx] = ['title' => $title];
+            }
+        }
+        update_option(self::DASHBOARD_LABELS_OPTION_KEY, $labels, false);
 
         $yithEnabled = self::b(self::g($reviewCfg, ['enable_yith'], false)) && self::is_yith_reviews_available();
         $reviewSettings = [
@@ -2041,6 +2230,15 @@ final class Woo_App_Config_Manager {
         if (!isset($decoded['message'])) {
             $decoded['message'] = 'Config generated from WordPress admin.';
         }
+        if (!isset($decoded['header_logo'])) {
+            $decoded['header_logo'] = '';
+        }
+        if (!isset($decoded['header_logo_light'])) {
+            $decoded['header_logo_light'] = self::s(self::g($decoded, ['header_logo'], ''));
+        }
+        if (!isset($decoded['header_logo_dark'])) {
+            $decoded['header_logo_dark'] = self::s(self::g($decoded, ['header_logo'], ''));
+        }
         foreach (['stories', 'search_tab', 'home_banner', 'images', 'payment_discount', 'payment_force_enabled'] as $k) {
             if (!isset($decoded[$k]) || !is_array($decoded[$k])) {
                 $decoded[$k] = [];
@@ -2083,6 +2281,8 @@ final class Woo_App_Config_Manager {
             'status' => 'ok',
             'message' => 'Config managed from WordPress admin',
             'header_logo' => '',
+            'header_logo_light' => '',
+            'header_logo_dark' => '',
             'payment_discount' => [],
             'payment_force_enabled' => [],
             'bacs_details' => ['card_number' => '', 'iban_number' => '', 'account_holder' => '', 'contact_number' => ''],

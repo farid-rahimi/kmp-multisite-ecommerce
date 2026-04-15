@@ -165,6 +165,8 @@ data class LineItem(
     val productId: Int,
     val quantity: Int,
     val total: String,
+    val totalTax: String = "0",
     val subTotal: String?,
+    val subTotalTax: String = "0",
     val imageUrl: String?
 )

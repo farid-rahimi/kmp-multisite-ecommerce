@@ -28,6 +28,8 @@ fun AppConfigResponse.toModel(language: String?): AppConfig {
         message = message,
 
         headerLogoUrl = headerLogo,
+        headerLogoLightUrl = headerLogoLight?.takeIf { it.isNotBlank() } ?: headerLogo,
+        headerLogoDarkUrl = headerLogoDark?.takeIf { it.isNotBlank() } ?: headerLogo,
 
         stories = stories?.map { it.toModel(selectedLanguage) } ?: emptyList(),
 
@@ -72,6 +74,8 @@ fun ConfigLink.toModel(language: String) = Link(
     title = localizeTextOrNull(language, en = title, ar = titleAr, fa = titleFa),
     type = LinkType.fromValue(type.orEmpty()) ?: LinkType.EXTERNAL,
     target = target.orEmpty(),
+    orderBy = orderby?.trim()?.takeIf { it.isNotBlank() },
+    order = order?.trim()?.takeIf { it.isNotBlank() },
 )
 
 fun StoryItemR.toModel(language: String) = StoryItem(
@@ -109,6 +113,8 @@ fun SearchTabResponse.toModel(language: String) = SearchTabConfig(
     type = type.orEmpty().trim().lowercase(),
     source = source.orEmpty(),
     sourceSlug = sourceSlug?.trim()?.takeIf { it.isNotEmpty() },
+    sourceOrderBy = sourceOrderBy?.trim()?.takeIf { it.isNotBlank() },
+    sourceOrder = sourceOrder?.trim()?.takeIf { it.isNotBlank() },
     max = max,
     viewType = SearchTabViewType.fromValue(viewType ?: viewTypeTypo),
     more = more?.toModel(language),

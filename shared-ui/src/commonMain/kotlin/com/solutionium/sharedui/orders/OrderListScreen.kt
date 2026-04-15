@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -35,7 +36,12 @@ fun OrderListScreen(
     Scaffold(
         topBar = {
             PlatformTopBar(
-                title = { Text(stringResource(Res.string.my_orders)) },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.my_orders),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
                 onBack = onBack,
             )
         },

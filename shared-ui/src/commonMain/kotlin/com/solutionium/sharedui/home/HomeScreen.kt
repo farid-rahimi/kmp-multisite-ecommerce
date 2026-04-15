@@ -28,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,11 +62,19 @@ fun HomeScreen(
     navigateToProductList: (params: Map<String, String>) -> Unit = {},
     onStoryClick: (StoryItem) -> Unit,
     viewModel: HomeViewModel,
+    isLoggedIn: Boolean = true,
+    onRequireAuth: () -> Unit = {},
     onUpdateNowClick: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
     val bannerState by viewModel.bannerState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val isDarkTheme = isSystemInDarkTheme()
+    val headerLogoUrl = if (isDarkTheme) {
+        state.headerLogoDarkUrl ?: state.headerLogoLightUrl
+    } else {
+        state.headerLogoLightUrl ?: state.headerLogoDarkUrl
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         PullToRefreshBox(
@@ -77,7 +86,7 @@ fun HomeScreen(
                 contentPadding = PaddingValues(top = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                state.headerLogoUrl?.let {
+                headerLogoUrl?.let {
                     item {
                         Spacer(modifier = Modifier.height(18.dp))
                         PlatformHeaderLogo(it, Modifier.height(32.dp))
@@ -127,8 +136,11 @@ fun HomeScreen(
                             title = title,
                             items = state.newArrivals,
                             installmentPriceEnabled = state.installmentPriceEnabled,
-                            toggleFavorite = viewModel::toggleFavorite,
-                            isFavorite = state::isFavorite,
+                            toggleFavorite = { productId, isFavorite ->
+                                if (isLoggedIn) viewModel.toggleFavorite(productId, isFavorite)
+                                else onRequireAuth()
+                            },
+                            isFavorite = { productId -> isLoggedIn && state.isFavorite(productId) },
                             discountedPrice = state::discountedPrice,
                             cartCounter = state::cartItemCount,
                             onProductClick = onProductClick,
@@ -151,8 +163,11 @@ fun HomeScreen(
                             title = title,
                             items = state.appOffers,
                             installmentPriceEnabled = state.installmentPriceEnabled,
-                            toggleFavorite = viewModel::toggleFavorite,
-                            isFavorite = state::isFavorite,
+                            toggleFavorite = { productId, isFavorite ->
+                                if (isLoggedIn) viewModel.toggleFavorite(productId, isFavorite)
+                                else onRequireAuth()
+                            },
+                            isFavorite = { productId -> isLoggedIn && state.isFavorite(productId) },
                             discountedPrice = state::discountedPrice,
                             cartCounter = state::cartItemCount,
                             onProductClick = onProductClick,
@@ -180,8 +195,11 @@ fun HomeScreen(
                             title = title,
                             items = state.onSales,
                             installmentPriceEnabled = state.installmentPriceEnabled,
-                            toggleFavorite = viewModel::toggleFavorite,
-                            isFavorite = state::isFavorite,
+                            toggleFavorite = { productId, isFavorite ->
+                                if (isLoggedIn) viewModel.toggleFavorite(productId, isFavorite)
+                                else onRequireAuth()
+                            },
+                            isFavorite = { productId -> isLoggedIn && state.isFavorite(productId) },
                             discountedPrice = state::discountedPrice,
                             cartCounter = state::cartItemCount,
                             onProductClick = onProductClick,
@@ -209,8 +227,11 @@ fun HomeScreen(
                             title = title,
                             items = state.featured,
                             installmentPriceEnabled = state.installmentPriceEnabled,
-                            toggleFavorite = viewModel::toggleFavorite,
-                            isFavorite = state::isFavorite,
+                            toggleFavorite = { productId, isFavorite ->
+                                if (isLoggedIn) viewModel.toggleFavorite(productId, isFavorite)
+                                else onRequireAuth()
+                            },
+                            isFavorite = { productId -> isLoggedIn && state.isFavorite(productId) },
                             discountedPrice = state::discountedPrice,
                             cartCounter = state::cartItemCount,
                             onProductClick = onProductClick,

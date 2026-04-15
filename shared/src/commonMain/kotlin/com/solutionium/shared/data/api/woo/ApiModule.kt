@@ -29,6 +29,6 @@ val apiModule = module {
     single<WooUserRemoteSource> { WooUserRemoteSourceImpl(get(), get()) }
     single<WooOrderRemoteSource> { WooOrderRemoteSourceImpl(get(), get()) }
     single<WooCouponRemoteSource> { WooCouponRemoteSourceImpl(get()) }
-    single<WooFavoriteRemoteSource> { WooFavoriteRemoteSourceImpl(get()) }
+    single<WooFavoriteRemoteSource> { WooFavoriteRemoteSourceImpl(get(), get()) }
     single<WooConfigRemoteSource> { WooConfigRemoteSourceImpl(get()) }
 }

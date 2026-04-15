@@ -10,6 +10,10 @@ data class AppConfigResponse (
 
     @SerialName("header_logo")
     val headerLogo: String? = null,
+    @SerialName("header_logo_light")
+    val headerLogoLight: String? = null,
+    @SerialName("header_logo_dark")
+    val headerLogoDark: String? = null,
 
     @SerialName("stories")
     val stories: List<StoryItemR>? = null,
@@ -98,7 +102,9 @@ data class ConfigLink (
     @SerialName("title_fa")
     val titleFa: String? = null,
     val type: String? = null,
-    val target: String? = null
+    val target: String? = null,
+    val orderby: String? = null,
+    val order: String? = null,
 )
 
 @Serializable
@@ -178,6 +184,10 @@ data class SearchTabResponse(
     val source: String? = null,
     @SerialName("source_slug")
     val sourceSlug: String? = null,
+    @SerialName("source_orderby")
+    val sourceOrderBy: String? = null,
+    @SerialName("source_order")
+    val sourceOrder: String? = null,
     val max: Int? = null,
     @SerialName("veiw_type")
     val viewTypeTypo: String? = null,

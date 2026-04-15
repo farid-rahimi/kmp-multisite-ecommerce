@@ -2,6 +2,7 @@ package com.solutionium.sharedui.account
 
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -41,7 +42,8 @@ fun AccountAuthBottomSheet(
             onOrderClick = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.92f),
+                .fillMaxHeight(0.92f)
+                .imePadding(),
             viewModel = viewModel,
             onBack = onDismiss,
             clearOnDispose = false,

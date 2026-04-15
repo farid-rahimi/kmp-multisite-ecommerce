@@ -15,6 +15,7 @@ data class AccountUIState(
     val isVerifyingOtp: Boolean = false,
     val isSubmittingUserDetails: Boolean = false,
     val isLoggingOut: Boolean = false,
+    val isDeletingAccount: Boolean = false,
     val phoneNumber: String? = null,
     val email: String? = null,
     val name: String? = null,
@@ -22,6 +23,7 @@ data class AccountUIState(
     val passwordResetStage: PasswordResetStage = PasswordResetStage.Idle,
     val passwordResetEmail: String = "",
     val passwordResetOtp: String = "",
+    val signupEmailOtpStage: PasswordResetStage = PasswordResetStage.EmailInput,
     val username: String = "",
     val password: String = "",
     val userDetails: UserDetails? = null,
@@ -34,6 +36,7 @@ data class AccountUIState(
     val messageType: AccountMessageType? = null,
     val validationErrors: FieldErrors = FieldErrors(),
     val showLogoutConfirmDialog: Boolean = false, // Add this new state
+    val deleteAccountOtpRequested: Boolean = false,
     val currentLanguage: String = "none",
     val privacyPolicy: String = "",
 
@@ -44,6 +47,7 @@ data class AccountUIState(
 enum class AccountStage{
     Error,
     EditProfile,
+    AccountSettings,
     ViewWalletTransactions,
     LoggedIn,
     NewUserDetailsInput,

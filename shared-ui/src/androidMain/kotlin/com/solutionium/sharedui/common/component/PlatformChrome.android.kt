@@ -6,6 +6,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.graphics.Shape
@@ -16,6 +17,8 @@ import androidx.compose.ui.unit.dp
 actual fun platformUsesCupertinoChrome(): Boolean = false
 
 actual fun platformBackIcon(): ImageVector = Icons.AutoMirrored.Filled.ArrowBack
+
+actual fun platformShareIcon(): ImageVector = Icons.Filled.Share
 
 actual fun platformHomeTabIcon(selected: Boolean): ImageVector = Icons.Filled.Home
 
@@ -31,4 +34,4 @@ actual fun platformBottomNavHeight(): Dp = 88.dp
 
 actual fun platformShowTabLabelsAlways(): Boolean = true
 
-actual fun platformPrimaryButtonShape(): Shape = RoundedCornerShape(14.dp)
+actual fun platformPrimaryButtonShape(): Shape = RoundedCornerShape(20.dp)

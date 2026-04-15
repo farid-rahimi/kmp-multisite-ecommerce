@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AddCircle
@@ -42,6 +44,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -64,13 +67,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.solutionium.sharedui.common.component.FormattedPriceV3
 import com.solutionium.sharedui.common.component.LanguageSelectionScreen
 import com.solutionium.sharedui.common.component.PlatformTopBar
 import com.solutionium.sharedui.common.component.platformPrimaryButtonShape
+import com.solutionium.sharedui.common.component.platformUsesCupertinoChrome
 import com.solutionium.sharedui.designsystem.theme.LocalWooBrand
+import com.solutionium.sharedui.designsystem.theme.WooBrand
 import com.solutionium.sharedui.home.PlatformContactSupportDialog
 import com.solutionium.sharedui.orders.OrderSummaryCard
 import com.solutionium.sharedui.resources.Res
+import com.solutionium.sharedui.resources.account_settings
 import com.solutionium.sharedui.resources.cancel
 import com.solutionium.sharedui.resources.contact_support
 import com.solutionium.sharedui.resources.credit_prefix
@@ -122,7 +129,8 @@ fun AccountScreen(
     val hideOuterTopBar = state.stage == AccountStage.LoggedOut ||
         state.stage == AccountStage.OtpVerification ||
         state.stage == AccountStage.EditProfile ||
-        state.stage == AccountStage.NewUserDetailsInput
+        state.stage == AccountStage.NewUserDetailsInput ||
+        state.stage == AccountStage.AccountSettings
 
     BackHandler(enabled = hasInnerAccountStage || hasPasswordResetFlow) {
         when {
@@ -181,7 +189,10 @@ fun AccountScreen(
                 PlatformTopBar(
                     title = {
                         if (state.stage != AccountStage.ChangeLanguage && state.stage != AccountStage.LoggedOut) {
-                            Text(stringResource(Res.string.feature_account_title))
+                            Text(
+                                text = stringResource(Res.string.feature_account_title),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
                         }
                     },
                     actions = {
@@ -210,6 +221,15 @@ fun AccountScreen(
                                         menuExpanded = false
                                     },
                                 )
+                                if (state.stage == AccountStage.LoggedIn) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(Res.string.account_settings)) },
+                                        onClick = {
+                                            menuExpanded = false
+                                            viewModel.onNavigateToAccountSettings()
+                                        },
+                                    )
+                                }
                             }
                         }
                     },
@@ -245,8 +265,18 @@ fun AccountScreen(
                         onRequestOtp = viewModel::requestOtp,
                         onPasswordLogin = viewModel::loginWithPassword,
                         onPasswordSignup = { name, email, phone, password ->
-                            viewModel.signupWithPassword(name, email, phone, password)
+                            viewModel.signupWithPassword(
+                                name = name,
+                                email = email,
+                                phone = phone,
+                                password = password,
+                                requireEmailOtp = brand == WooBrand.SiteB,
+                            )
                         },
+                        signupEmailOtpStage = state.signupEmailOtpStage,
+                        onRequestSignupEmailOtp = viewModel::requestSignupEmailOtp,
+                        onVerifySignupEmailOtp = viewModel::verifySignupEmailOtp,
+                        onResetSignupEmailVerification = viewModel::resetSignupEmailVerification,
                         passwordResetStage = state.passwordResetStage,
                         passwordResetEmail = state.passwordResetEmail,
                         passwordResetOtp = state.passwordResetOtp,
@@ -294,15 +324,12 @@ fun AccountScreen(
                         onWalletClick = viewModel::onNavigateToWalletHistory,
                         latestOrder = state.latestOrder,
                         isLoadingLatestOrder = state.isLoadingLatestOrder,
-                        onLogout = viewModel::onLogoutClicked,
                         onOrderClick = onOrderClick,
                         onEditProfile = viewModel::onNavigateToEditProfile,
                         onManageAddresses = onAddressClick,
                         onFavoriteClick = { title ->
                             viewModel.onMyFavoritesClicked {
-                                if (it.isNotEmpty()) {
-                                    onFavoriteClick(title, it)
-                                }
+                                onFavoriteClick(title, it)
                             }
                         },
                         onOrdersClick = onOrdersClick,
@@ -323,6 +350,18 @@ fun AccountScreen(
                         onNavigateBack = viewModel::onNavigateBackToAccount,
                     )
 
+                    AccountStage.AccountSettings -> AccountSettingsSubScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        isDeleting = state.isDeletingAccount,
+                        isRequestingOtp = state.isRequestingOtp,
+                        otpRequested = state.deleteAccountOtpRequested,
+                        onNavigateBack = viewModel::onNavigateBackToAccount,
+                        onRequestOtp = viewModel::requestDeleteAccountOtp,
+                        onDeleteWithPassword = viewModel::deleteAccountWithPassword,
+                        onDeleteWithOtp = viewModel::deleteAccountWithOtp,
+                        onLogout = viewModel::onLogoutClicked,
+                    )
+
                     AccountStage.ChangeLanguage -> LanguageSelectionScreen(
                         currentLang = state.currentLanguage,
                         onLanguageSelected = { viewModel.setLanguage(it) },
@@ -337,7 +376,7 @@ fun AccountScreen(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 12.dp),
+                .padding(bottom = if (platformUsesCupertinoChrome()) 92.dp else 12.dp),
         )
     }
 }
@@ -354,7 +393,6 @@ fun UserAccountScreen(
     latestOrder: Order?,
     isLoadingLatestOrder: Boolean = false,
     onOrderClick: (orderId: Int) -> Unit,
-    onLogout: () -> Unit,
     onEditProfile: () -> Unit,
     onManageAddresses: () -> Unit,
     onFavoriteClick: (favoriteTitle: String) -> Unit,
@@ -362,22 +400,10 @@ fun UserAccountScreen(
 ) {
     LazyColumn(
         modifier = modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Text(user?.displayName ?: "", style = MaterialTheme.typography.headlineMedium)
-            Text(
-                "${user?.firstName ?: ""} ${user?.lastName ?: ""}",
-                style = MaterialTheme.typography.titleSmall,
-            )
-            Text(user?.email ?: "", style = MaterialTheme.typography.titleMedium)
-            if (user?.isSuperUser == true) {
-                Text("Super User", style = MaterialTheme.typography.titleSmall)
-            } else {
-                Text(user?.phoneNumber ?: "", style = MaterialTheme.typography.titleSmall)
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider()
+            AccountProfileCard(user = user)
         }
 
         if (showWallet) {
@@ -395,19 +421,35 @@ fun UserAccountScreen(
             Text(
                 stringResource(Res.string.latest_order_title),
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 2.dp),
             )
-            Spacer(modifier = Modifier.height(4.dp))
         }
 
         item {
             if (isLoadingLatestOrder) {
-                CircularProgressIndicator(modifier = Modifier.padding(vertical = 16.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 20.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             } else if (latestOrder == null) {
-                Text(
-                    stringResource(Res.string.no_orders_yet),
-                    modifier = Modifier.padding(vertical = 16.dp),
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = CardDefaults.shape,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.no_orders_yet),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
             } else {
                 OrderSummaryCard(
                     order = latestOrder,
@@ -416,68 +458,109 @@ fun UserAccountScreen(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-
         item {
-            AccountActionItem(
-                text = stringResource(Res.string.order_history),
-                icon = Icons.AutoMirrored.Filled.ListAlt,
-                onClick = onOrdersClick,
-            )
-            HorizontalDivider()
-        }
-
-        item {
-            AccountActionItem(
-                text = stringResource(Res.string.manage_addresses),
-                icon = Icons.Default.LocationOn,
-                onClick = onManageAddresses,
-            )
-            HorizontalDivider()
-        }
-
-        item {
-            val favoriteTitle: String = stringResource(Res.string.my_favorites)
-            AccountActionItem(
-                text = favoriteTitle,
-                icon = Icons.Default.Favorite,
-                onClick = { onFavoriteClick(favoriteTitle) },
-            )
-            HorizontalDivider()
-        }
-
-        item {
-            AccountActionItem(
-                text = stringResource(Res.string.edit_profile),
-                icon = Icons.Default.Person,
-                onClick = onEditProfile,
-            )
-            HorizontalDivider()
-        }
-
-        item { Spacer(modifier = Modifier.height(24.dp)) }
-
-        item {
-            Button(
-                onClick = onLogout,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading,
-                shape = platformPrimaryButtonShape(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                } else {
-                    Text(stringResource(Res.string.logout), color = MaterialTheme.colorScheme.onError)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        Icons.AutoMirrored.Filled.Logout,
-                        contentDescription = "Logout",
-                        tint = MaterialTheme.colorScheme.onError,
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    AccountActionItem(
+                        text = stringResource(Res.string.order_history),
+                        icon = Icons.AutoMirrored.Filled.ListAlt,
+                        onClick = onOrdersClick,
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+
+                    AccountActionItem(
+                        text = stringResource(Res.string.manage_addresses),
+                        icon = Icons.Default.LocationOn,
+                        onClick = onManageAddresses,
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+
+                    val favoriteTitle: String = stringResource(Res.string.my_favorites)
+                    AccountActionItem(
+                        text = favoriteTitle,
+                        icon = Icons.Default.Favorite,
+                        onClick = { onFavoriteClick(favoriteTitle) },
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+
+                    AccountActionItem(
+                        text = stringResource(Res.string.edit_profile),
+                        icon = Icons.Default.Person,
+                        onClick = onEditProfile,
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+    }
+}
+
+@Composable
+private fun AccountProfileCard(user: UserDetails?) {
+    val primaryName = when {
+        !user?.displayName.isNullOrBlank() -> user?.displayName.orEmpty()
+        else -> listOf(user?.firstName.orEmpty(), user?.lastName.orEmpty())
+            .filter { it.isNotBlank() }
+            .joinToString(" ")
+    }.ifBlank { "-" }
+    val secondaryInfo = user?.email
+        ?.takeIf { it.isNotBlank() }
+        ?: user?.phoneNumber
+            ?.takeIf { it.isNotBlank() }
+            ?: ""
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.size(44.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = primaryName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (secondaryInfo.isNotBlank()) {
+                    Text(
+                        text = secondaryInfo,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
     }
 }
@@ -490,13 +573,15 @@ fun WalletBalanceCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         onClick = onWalletClick,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -508,19 +593,27 @@ fun WalletBalanceCard(
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp))
                 } else {
-                    Text(
-                        text = balance.toLong().toString(),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
+                    FormattedPriceV3(
+                        amount = balance,
+                        mainStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                        smallDigitsSpanStyle = MaterialTheme.typography.titleMedium.toSpanStyle().copy(fontWeight = FontWeight.SemiBold),
                     )
                 }
             }
-            Icon(
-                imageVector = Icons.Filled.AccountBalanceWallet,
-                contentDescription = "Wallet",
-                modifier = Modifier.size(36.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(44.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Filled.AccountBalanceWallet,
+                        contentDescription = "Wallet",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
         }
     }
 }
@@ -539,12 +632,34 @@ fun AccountActionItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(horizontal = 6.dp, vertical = 10.dp),
         ) {
-            Icon(icon, contentDescription = text, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(text, style = MaterialTheme.typography.bodyLarge)
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.size(34.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        icon,
+                        contentDescription = text,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
             Spacer(Modifier.weight(1f))
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -560,7 +675,12 @@ fun ViewWalletTransactionsSubScreen(
         modifier = modifier,
         topBar = {
             PlatformTopBar(
-                title = { Text(stringResource(Res.string.wallet_history)) },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.wallet_history),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
                 onBack = onNavigateBack,
             )
         },

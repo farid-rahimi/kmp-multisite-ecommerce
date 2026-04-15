@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,6 +31,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,34 +44,46 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.solutionium.sharedui.common.component.PlatformTopBar
-import com.solutionium.sharedui.common.component.platformPrimaryButtonShape
+import com.solutionium.sharedui.designsystem.theme.LocalWooBrand
+import com.solutionium.sharedui.designsystem.theme.WooBrand
 import com.solutionium.sharedui.resources.Res
 import com.solutionium.sharedui.resources.an_unexpected_error_occurred
 import com.solutionium.sharedui.resources.add_new_address
 import com.solutionium.sharedui.resources.address_line_1
+import com.solutionium.sharedui.resources.address_line_1_site_b
 import com.solutionium.sharedui.resources.address_line_2_optional
+import com.solutionium.sharedui.resources.area
 import com.solutionium.sharedui.resources.address_line_cannot_be_empty
 import com.solutionium.sharedui.resources.address_title_optional
 import com.solutionium.sharedui.resources.address_title_support_text
 import com.solutionium.sharedui.resources.cancel
 import com.solutionium.sharedui.resources.city
 import com.solutionium.sharedui.resources.city_cannot_be_empty
+import com.solutionium.sharedui.resources.country_code
 import com.solutionium.sharedui.resources.default_address
 import com.solutionium.sharedui.resources.delete
 import com.solutionium.sharedui.resources.delete_address
 import com.solutionium.sharedui.resources.delete_address_text
+import com.solutionium.sharedui.resources.discard
 import com.solutionium.sharedui.resources.edit
 import com.solutionium.sharedui.resources.edit_address
 import com.solutionium.sharedui.resources.enter_a_valid_phone_number
+import com.solutionium.sharedui.resources.emirate
 import com.solutionium.sharedui.resources.first_name
 import com.solutionium.sharedui.resources.first_name_cannot_be_empty
 import com.solutionium.sharedui.resources.last_name
@@ -79,13 +94,17 @@ import com.solutionium.sharedui.resources.phone
 import com.solutionium.sharedui.resources.phone_number
 import com.solutionium.sharedui.resources.postal_code_cannot_be_empty
 import com.solutionium.sharedui.resources.postal_code_title
-import com.solutionium.sharedui.resources.save_address
+import com.solutionium.sharedui.resources.save
+import com.solutionium.sharedui.resources.save_changes
 import com.solutionium.sharedui.resources.state_cannot_be_empty
 import com.solutionium.sharedui.resources.state_province
+import com.solutionium.sharedui.resources.unsaved_changes
+import com.solutionium.sharedui.resources.unsaved_changes_message
 import com.solutionium.shared.data.model.Address
 import com.solutionium.shared.viewmodel.AddressField
 import com.solutionium.shared.viewmodel.AddressValidationError
 import com.solutionium.shared.viewmodel.AddressViewModel
+import com.solutionium.shared.util.PhoneNumberFormatter
 import org.jetbrains.compose.resources.stringResource
 import kotlin.text.isNullOrBlank
 
@@ -101,7 +120,12 @@ fun AddressListScreen(
     Scaffold(
         topBar = {
             PlatformTopBar(
-                title = { Text(stringResource(Res.string.my_addresses)) },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.my_addresses),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
                 onBack = onBackNavigation,
                 actions = {
                     IconButton(onClick = { onNavigateToEditAddress(null) }) {
@@ -330,7 +354,7 @@ fun DeleteConfirmationDialog(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditAddressScreen(
     onSaved: () -> Unit,
@@ -339,6 +363,68 @@ fun AddEditAddressScreen(
 ) {
     val uiState by viewModel.state.collectAsState()
     val scrollState = rememberScrollState()
+    val brand = LocalWooBrand.current
+    val isSiteB = brand == WooBrand.SiteB
+    val emirates = remember {
+        listOf(
+            "Abu Dhabi",
+            "Dubai",
+            "Sharjah",
+            "Ajman",
+            "Umm Al Quwain",
+            "Ras Al Khaimah",
+            "Fujairah",
+        )
+    }
+    var countryCode by remember(uiState.phoneNumber) { mutableStateOf(PhoneNumberFormatter.splitForUi(uiState.phoneNumber.orEmpty()).countryCode) }
+    var localPhone by remember(uiState.phoneNumber) { mutableStateOf(PhoneNumberFormatter.splitForUi(uiState.phoneNumber.orEmpty()).localNumber) }
+    val normalizedPhone = if (localPhone.isBlank()) "" else PhoneNumberFormatter.normalize(countryCode, localPhone)
+    var initialSnapshot by remember(uiState.addressId) { mutableStateOf<AddressFormSnapshot?>(null) }
+    var showUnsavedChangesDialog by remember { mutableStateOf(false) }
+    val currentSnapshot =
+        AddressFormSnapshot(
+            title = uiState.title.orEmpty(),
+            firstName = uiState.firstName,
+            lastName = uiState.lastName,
+            state = uiState.state,
+            city = uiState.city,
+            addressLine1 = uiState.addressLine1,
+            addressLine2 = uiState.addressLine2.orEmpty(),
+            postalCode = uiState.postalCode,
+            phone = normalizedPhone,
+        )
+    LaunchedEffect(uiState.isLoading, uiState.addressId) {
+        if (!uiState.isLoading && initialSnapshot == null) {
+            initialSnapshot = currentSnapshot
+        }
+    }
+    val hasUnsavedChanges = initialSnapshot != null && initialSnapshot != currentSnapshot
+    val requiredFieldsFilled =
+        uiState.firstName.isNotBlank() &&
+            uiState.lastName.isNotBlank() &&
+            uiState.state.isNotBlank() &&
+            uiState.city.isNotBlank() &&
+            uiState.addressLine1.isNotBlank() &&
+            (isSiteB || uiState.postalCode.isNotBlank()) &&
+            normalizedPhone.isNotBlank()
+    val canSave =
+        !uiState.isSaving &&
+            !uiState.isLoading &&
+            requiredFieldsFilled &&
+            PhoneNumberFormatter.isCanonical(normalizedPhone)
+    val saveAction = {
+        viewModel.onPhoneNumberChange(normalizedPhone)
+        viewModel.saveAddress(onSuccess = onSaved, isSiteB = isSiteB)
+    }
+    val backAction = {
+        if (hasUnsavedChanges) {
+            showUnsavedChangesDialog = true
+        } else {
+            onBack()
+        }
+    }
+
+    BackHandler(enabled = true) { backAction() }
 
     Scaffold(
         topBar = {
@@ -350,34 +436,57 @@ fun AddEditAddressScreen(
                         } else {
                             stringResource(Res.string.edit_address)
                         },
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 },
-                onBack = onBack,
+                onBack = backAction,
+                actions = {
+                    Button(
+                        onClick = saveAction,
+                        enabled = canSave,
+                        shape = RoundedCornerShape(999.dp),
+                        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 8.dp),
+                        modifier = Modifier
+                            .padding(end = 14.dp)
+                            .heightIn(min = 40.dp),
+                    ) {
+                        if (uiState.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Text(stringResource(Res.string.save))
+                        }
+                    }
+                },
             )
         },
-        bottomBar = {
-            Surface(shadowElevation = 8.dp) {
-                Button(
-                    onClick = { viewModel.saveAddress(onSuccess = onSaved) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .height(52.dp),
-                    enabled = !uiState.isSaving && !uiState.isLoading,
-                    shape = platformPrimaryButtonShape(),
-                ) {
-                    if (uiState.isSaving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                        )
-                    } else {
-                        Text(stringResource(Res.string.save_address))
-                    }
-                }
-            }
-        },
     ) { paddingValues ->
+        if (showUnsavedChangesDialog) {
+            AlertDialog(
+                onDismissRequest = { showUnsavedChangesDialog = false },
+                title = { Text(stringResource(Res.string.unsaved_changes)) },
+                text = { Text(stringResource(Res.string.unsaved_changes_message)) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showUnsavedChangesDialog = false
+                            saveAction()
+                        },
+                    ) { Text(stringResource(Res.string.save_changes)) }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showUnsavedChangesDialog = false
+                            onBack()
+                        },
+                    ) { Text(stringResource(Res.string.discard)) }
+                },
+            )
+        }
+
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier
@@ -395,8 +504,9 @@ fun AddEditAddressScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
+                .imePadding()
                 .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             uiState.generalError?.let {
                 Text(
@@ -415,78 +525,126 @@ fun AddEditAddressScreen(
                 isRequired = false,
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AddressTextField(
-                    modifier = Modifier.weight(1f),
-                    value = uiState.firstName,
-                    onValueChange = viewModel::onFirstNameChange,
-                    label = stringResource(Res.string.first_name),
-                    errorMessage = uiState.errorMessages[AddressField.FIRST_NAME],
-                    imeAction = ImeAction.Next,
-                )
-                AddressTextField(
-                    modifier = Modifier.weight(1f),
-                    value = uiState.lastName,
-                    onValueChange = viewModel::onLastNameChange,
-                    label = stringResource(Res.string.last_name),
-                    errorMessage = uiState.errorMessages[AddressField.LAST_NAME],
-                    imeAction = ImeAction.Next,
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AddressTextField(
+                        modifier = Modifier.weight(1f),
+                        value = uiState.firstName,
+                        onValueChange = viewModel::onFirstNameChange,
+                        label = stringResource(Res.string.first_name),
+                        errorMessage = uiState.errorMessages[AddressField.FIRST_NAME],
+                        imeAction = ImeAction.Next,
+                    )
+                    AddressTextField(
+                        modifier = Modifier.weight(1f),
+                        value = uiState.lastName,
+                        onValueChange = viewModel::onLastNameChange,
+                        label = stringResource(Res.string.last_name),
+                        errorMessage = uiState.errorMessages[AddressField.LAST_NAME],
+                        imeAction = ImeAction.Next,
+                    )
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AddressTextField(
+                        modifier = Modifier.weight(0.35f),
+                        value = countryCode,
+                        onValueChange = {
+                            countryCode = PhoneNumberFormatter.sanitizeCountryCode(it)
+                            localPhone = localPhone.take(PhoneNumberFormatter.maxLocalInputDigits(countryCode))
+                            viewModel.onPhoneNumberChange(
+                                if (localPhone.isBlank()) "" else PhoneNumberFormatter.normalize(countryCode, localPhone),
+                            )
+                        },
+                        label = stringResource(Res.string.country_code),
+                        keyboardType = KeyboardType.Phone,
+                        imeAction = ImeAction.Next,
+                        isRequired = false,
+                    )
+                    AddressTextField(
+                        modifier = Modifier.weight(0.65f),
+                        value = localPhone,
+                        onValueChange = {
+                            localPhone = it.filter(Char::isDigit).take(PhoneNumberFormatter.maxLocalInputDigits(countryCode))
+                            viewModel.onPhoneNumberChange(
+                                if (localPhone.isBlank()) "" else PhoneNumberFormatter.normalize(countryCode, localPhone),
+                            )
+                        },
+                        label = stringResource(Res.string.phone_number),
+                        errorMessage = uiState.errorMessages[AddressField.PHONE_NUMBER],
+                        keyboardType = KeyboardType.Phone,
+                        imeAction = ImeAction.Next,
+                    )
+                }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AddressTextField(
-                    modifier = Modifier.weight(1f),
-                    value = uiState.state,
-                    onValueChange = viewModel::onStateChange,
-                    label = stringResource(Res.string.state_province),
-                    errorMessage = uiState.errorMessages[AddressField.STATE],
-                    imeAction = ImeAction.Next,
-                )
-                AddressTextField(
-                    modifier = Modifier.weight(1f),
-                    value = uiState.city,
-                    onValueChange = viewModel::onCityChange,
-                    label = stringResource(Res.string.city),
-                    errorMessage = uiState.errorMessages[AddressField.CITY],
-                    imeAction = ImeAction.Next,
-                )
+            if (isSiteB) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    EmirateDropdown(
+                        modifier = Modifier.weight(1f),
+                        value = uiState.state,
+                        onValueChange = viewModel::onStateChange,
+                        options = emirates,
+                    )
+                    AddressTextField(
+                        modifier = Modifier.weight(1f),
+                        value = uiState.city,
+                        onValueChange = viewModel::onCityChange,
+                        label = stringResource(Res.string.area),
+                        errorMessage = uiState.errorMessages[AddressField.CITY],
+                        imeAction = ImeAction.Next,
+                    )
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AddressTextField(
+                        modifier = Modifier.weight(1f),
+                        value = uiState.state,
+                        onValueChange = viewModel::onStateChange,
+                        label = stringResource(Res.string.state_province),
+                        errorMessage = uiState.errorMessages[AddressField.STATE],
+                        imeAction = ImeAction.Next,
+                    )
+                    AddressTextField(
+                        modifier = Modifier.weight(1f),
+                        value = uiState.city,
+                        onValueChange = viewModel::onCityChange,
+                        label = stringResource(Res.string.city),
+                        errorMessage = uiState.errorMessages[AddressField.CITY],
+                        imeAction = ImeAction.Next,
+                    )
+                }
             }
 
             AddressTextField(
                 value = uiState.addressLine1,
                 onValueChange = viewModel::onAddressLine1Change,
-                label = stringResource(Res.string.address_line_1),
+                label = if (isSiteB) stringResource(Res.string.address_line_1_site_b) else stringResource(Res.string.address_line_1),
                 errorMessage = uiState.errorMessages[AddressField.ADDRESS_LINE_1],
                 imeAction = ImeAction.None,
                 singleLine = false,
             )
-            AddressTextField(
-                value = uiState.addressLine2 ?: "",
-                onValueChange = viewModel::onAddressLine2Change,
-                label = stringResource(Res.string.address_line_2_optional),
-                imeAction = ImeAction.Next,
-                isRequired = false,
-                singleLine = false,
-            )
-            AddressTextField(
-                value = uiState.postalCode,
-                onValueChange = viewModel::onPostalCodeChange,
-                label = stringResource(Res.string.postal_code_title),
-                errorMessage = uiState.errorMessages[AddressField.POSTAL_CODE],
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next,
-            )
-            AddressTextField(
-                value = uiState.phoneNumber,
-                onValueChange = viewModel::onPhoneNumberChange,
-                label = stringResource(Res.string.phone_number),
-                errorMessage = uiState.errorMessages[AddressField.PHONE_NUMBER],
-                keyboardType = KeyboardType.Phone,
-                imeAction = ImeAction.Done,
-            )
+            if (!isSiteB) {
+                AddressTextField(
+                    value = uiState.addressLine2 ?: "",
+                    onValueChange = viewModel::onAddressLine2Change,
+                    label = stringResource(Res.string.address_line_2_optional),
+                    imeAction = ImeAction.Next,
+                    isRequired = false,
+                    singleLine = false,
+                )
+                AddressTextField(
+                    value = uiState.postalCode,
+                    onValueChange = viewModel::onPostalCodeChange,
+                    label = stringResource(Res.string.postal_code_title),
+                    errorMessage = uiState.errorMessages[AddressField.POSTAL_CODE],
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next,
+                )
+            }
+            
 
-            Spacer(modifier = Modifier.height(60.dp))
+            Spacer(modifier = Modifier.height(120.dp))
         }
     }
 }
@@ -503,6 +661,7 @@ fun AddressTextField(
     imeAction: ImeAction = ImeAction.Default,
     isRequired: Boolean = true,
     singleLine: Boolean = true,
+    readOnly: Boolean = false,
 ) {
     val effectiveLabel = if (isRequired) "$label*" else label
     OutlinedTextField(
@@ -511,6 +670,7 @@ fun AddressTextField(
         label = { Text(effectiveLabel) },
         modifier = modifier.fillMaxWidth(),
         isError = errorMessage != null,
+        readOnly = readOnly,
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType,
             imeAction = imeAction,
@@ -529,6 +689,60 @@ fun AddressTextField(
     )
 }
 
+@Composable
+private fun EmirateDropdown(
+    value: String,
+    options: List<String>,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        AddressTextField(
+            value = value,
+            onValueChange = {},
+            label = stringResource(Res.string.emirate),
+            readOnly = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp),
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(top = 8.dp)
+                .heightIn(min = 56.dp),
+        ) {
+            Button(
+                onClick = { expanded = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
+                    contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0f),
+                ),
+                shape = RoundedCornerShape(8.dp),
+            ) {}
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.92f),
+        ) {
+            options.forEach { emirate ->
+                DropdownMenuItem(
+                    text = { Text(emirate) },
+                    onClick = {
+                        onValueChange(emirate)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
 private fun AddressValidationError.toStringRes() = when (this) {
     AddressValidationError.FIRST_NAME_EMPTY -> Res.string.first_name_cannot_be_empty
     AddressValidationError.LAST_NAME_EMPTY -> Res.string.last_name_cannot_be_empty
@@ -538,3 +752,15 @@ private fun AddressValidationError.toStringRes() = when (this) {
     AddressValidationError.POSTAL_CODE_EMPTY -> Res.string.postal_code_cannot_be_empty
     AddressValidationError.INVALID_PHONE -> Res.string.enter_a_valid_phone_number
 }
+
+private data class AddressFormSnapshot(
+    val title: String,
+    val firstName: String,
+    val lastName: String,
+    val state: String,
+    val city: String,
+    val addressLine1: String,
+    val addressLine2: String,
+    val postalCode: String,
+    val phone: String,
+)

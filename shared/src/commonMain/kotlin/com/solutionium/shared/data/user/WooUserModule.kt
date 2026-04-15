@@ -8,6 +8,6 @@ import org.koin.dsl.module
 fun getUserDataModules() = setOf(userDataModule, databaseModule, localModule) + getApiModule()
 
 val userDataModule = module {
-    single<WooUserRepository> { WooUserRepositoryImpl(get(), get(), get(), get()) }
+    single<WooUserRepository> { WooUserRepositoryImpl(get(), get(), get(), get(), get(), get()) }
     single<StoryViewRepository> { StoryViewRepositoryImpl(get()) }
 }

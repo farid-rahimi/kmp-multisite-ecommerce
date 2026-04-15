@@ -13,6 +13,7 @@ interface SignupByUserPassUseCase {
         email: String,
         phone: String,
         password: String,
+        requireEmailOtp: Boolean = false,
     ): Flow<Result<ActionType, GeneralError>>
 }
 
@@ -24,7 +25,8 @@ class SignupByUserPassUseCaseImpl(
         email: String,
         phone: String,
         password: String,
+        requireEmailOtp: Boolean,
     ): Flow<Result<ActionType, GeneralError>> = flow {
-        emit(userRepository.signupUserPass(name, email, phone, password))
+        emit(userRepository.signupUserPass(name, email, phone, password, requireEmailOtp))
     }
 }

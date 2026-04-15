@@ -70,7 +70,7 @@ fun EditProfileSubScreen(
     var phoneEdited by remember(userDetails.phoneNumber) { mutableStateOf(false) }
     val normalizedPhone = PhoneNumberFormatter.normalize(countryCode, phoneDigits)
     val hasPhoneInput = countryCode.filter(Char::isDigit).isNotBlank() || phoneDigits.isNotBlank()
-    val isRealtimePhoneInvalid = phoneEdited && hasPhoneInput && !PhoneNumberFormatter.isCanonical(normalizedPhone)
+    val isRealtimePhoneInvalid = phoneEdited && hasPhoneInput && !PhoneNumberFormatter.isValid(countryCode, phoneDigits)
     val showPhoneError = validationErrors.phoneErrorKey != null || isRealtimePhoneInvalid
 
     Scaffold(
@@ -84,6 +84,7 @@ fun EditProfileSubScreen(
                         } else {
                             stringResource(Res.string.edit_profile)
                         },
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 },
                 onBack = onNavigateBack,

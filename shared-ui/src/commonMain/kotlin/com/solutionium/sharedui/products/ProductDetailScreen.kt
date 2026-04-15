@@ -50,7 +50,6 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Delete
@@ -111,6 +110,7 @@ import com.solutionium.shared.viewmodel.ProductDetailViewModel
 import com.solutionium.sharedui.common.component.PlatformTopBar
 import com.solutionium.sharedui.common.component.PriceView2
 import com.solutionium.sharedui.common.component.ReviewSummaryItemCard
+import com.solutionium.sharedui.common.component.platformShareIcon
 import com.solutionium.sharedui.common.component.platformUsesCupertinoChrome
 import com.solutionium.sharedui.resources.Res
 import com.solutionium.sharedui.resources.add_to_cart
@@ -200,7 +200,9 @@ fun ProductDetailScreen(
     onAllReviewClicked: (Int, List<Int>) -> Unit,
     navigateToProductList: (Map<String, String>) -> Unit = {},
     onBackClick: () -> Unit,
-    onShareClick: (String, String) -> Unit = { _, _ -> }
+    onShareClick: (String, String) -> Unit = { _, _ -> },
+    isLoggedIn: Boolean = true,
+    onRequireAuth: () -> Unit = {},
 ) {
     val uiState by viewModel.state.collectAsState()
 
@@ -241,7 +243,7 @@ fun ProductDetailScreen(
             topBar = {
                 ProductDetailTopAppBar(
                     productName = uiState.product?.name,
-                    isFavorite = uiState.isFavorite(),
+                    isFavorite = isLoggedIn && uiState.isFavorite(),
                     scrollAlpha = (scrollState.value / 1200f).coerceIn(0f, 1f),
                     onBackClick = onBackClick,
                     onShareClick = {
@@ -250,7 +252,10 @@ fun ProductDetailScreen(
                             uiState.product?.permalink ?: "",
                         )
                     },
-                    onFavoriteClick = { viewModel.toggleFavorite() },
+                    onFavoriteClick = {
+                        if (isLoggedIn) viewModel.toggleFavorite()
+                        else onRequireAuth()
+                    },
                 )
             },
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -419,7 +424,7 @@ private fun ProductDetailTopAppBar(
                 onClick = onShareClick,
                 modifier = Modifier
             ) {
-                Icon(Icons.Filled.Share, contentDescription = "Share")
+                Icon(platformShareIcon(), contentDescription = "Share")
             }
             IconButton(
                 onClick = onFavoriteClick,

@@ -126,7 +126,8 @@ private fun PlatformStoryPreviewItem(
         Text(
             text = story.title,
             fontSize = 12.sp,
-            maxLines = 1,
+            lineHeight = 13.sp,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
         )

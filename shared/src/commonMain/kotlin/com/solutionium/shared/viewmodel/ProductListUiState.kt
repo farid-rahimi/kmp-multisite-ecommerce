@@ -5,6 +5,7 @@ import com.solutionium.shared.data.model.CartItem
 data class ProductListUiState(
     val isLoading: Boolean,
     val title: String? = null,
+    val isFavoritesMode: Boolean = false,
     val cartItems: List<CartItem> = emptyList(),
     val favoriteIds: List<Int> = emptyList(),
     val paymentDiscount: Double? = null,

@@ -5,6 +5,7 @@ import com.solutionium.shared.domain.user.DeleteAddressUseCase
 import com.solutionium.shared.domain.user.LoadAddressesUseCase
 import com.solutionium.shared.domain.user.SaveAddressUseCase
 import com.solutionium.shared.domain.user.SetDefaultAddressUseCase
+import com.solutionium.shared.util.PhoneNumberFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -111,11 +112,15 @@ class AddressViewModel(
         _state.update { it.copy(phoneNumber = value, errorMessages = it.errorMessages - AddressField.PHONE_NUMBER) }
     }
 
-    fun saveAddress(onSuccess: () -> Unit) {
-        if (!validateFields()) return
+    fun saveAddress(
+        onSuccess: () -> Unit,
+        isSiteB: Boolean = false,
+    ) {
+        if (!validateFields(isSiteB)) return
         _state.update { it.copy(isSaving = true, generalError = null) }
         scope.launch {
             val uiState = _state.value
+            val normalizedPhone = uiState.phoneNumber?.trim().orEmpty()
             val addressToSave = Address(
                 id = uiState.addressId,
                 title = uiState.title,
@@ -124,9 +129,9 @@ class AddressViewModel(
                 state = uiState.state.trim(),
                 city = uiState.city.trim(),
                 address1 = uiState.addressLine1.trim(),
-                address2 = uiState.addressLine2?.trim()?.ifBlank { null },
-                postcode = uiState.postalCode.trim(),
-                phone = uiState.phoneNumber?.trim(),
+                address2 = if (isSiteB) null else uiState.addressLine2?.trim()?.ifBlank { null },
+                postcode = if (isSiteB) "" else uiState.postalCode.trim(),
+                phone = normalizedPhone,
                 company = null,
                 country = "",
                 email = null,
@@ -143,7 +148,7 @@ class AddressViewModel(
         }
     }
 
-    private fun validateFields(): Boolean {
+    private fun validateFields(isSiteB: Boolean): Boolean {
         val errors = mutableMapOf<String, AddressValidationError>()
         val uiState = _state.value
         if (uiState.firstName.isBlank()) errors[AddressField.FIRST_NAME] = AddressValidationError.FIRST_NAME_EMPTY
@@ -151,8 +156,9 @@ class AddressViewModel(
         if (uiState.state.isBlank()) errors[AddressField.STATE] = AddressValidationError.STATE_EMPTY
         if (uiState.city.isBlank()) errors[AddressField.CITY] = AddressValidationError.CITY_EMPTY
         if (uiState.addressLine1.isBlank()) errors[AddressField.ADDRESS_LINE_1] = AddressValidationError.ADDRESS_LINE_EMPTY
-        if (uiState.postalCode.isBlank()) errors[AddressField.POSTAL_CODE] = AddressValidationError.POSTAL_CODE_EMPTY
-        if (uiState.phoneNumber?.isBlank() != false || (uiState.phoneNumber.length < 10)) {
+        if (!isSiteB && uiState.postalCode.isBlank()) errors[AddressField.POSTAL_CODE] = AddressValidationError.POSTAL_CODE_EMPTY
+        val phone = uiState.phoneNumber?.trim().orEmpty()
+        if (phone.isBlank() || !PhoneNumberFormatter.isCanonical(phone)) {
             errors[AddressField.PHONE_NUMBER] = AddressValidationError.INVALID_PHONE
         }
         _state.update { it.copy(errorMessages = errors) }

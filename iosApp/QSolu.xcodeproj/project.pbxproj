@@ -13,6 +13,8 @@
 		C62CE3A32F576D5E00314D6E /* vazir_bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF62F4E5276002A6B2F /* vazir_bold.ttf */; };
 		C62CE3A42F576D5E00314D6E /* vazir_black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF72F4E5276002A6B2F /* vazir_black.ttf */; };
 		C62CE3A52F576D5E00314D6E /* vazir_thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF82F4E5276002A6B2F /* vazir_thin.ttf */; };
+		C6C9553C2F6E8A3400787BA8 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = C6C9553B2F6E8A3400787BA8 /* FirebaseAnalytics */; };
+		C6C9553E2F6E8A3400787BA8 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = C6C9553D2F6E8A3400787BA8 /* FirebaseCrashlytics */; };
 		C6CBFDF92F4E5276002A6B2F /* vazir_light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF32F4E5276002A6B2F /* vazir_light.ttf */; };
 		C6CBFDFA2F4E5276002A6B2F /* vazir_medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF42F4E5276002A6B2F /* vazir_medium.ttf */; };
 		C6CBFDFB2F4E5276002A6B2F /* vazir_regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6CBFDF52F4E5276002A6B2F /* vazir_regular.ttf */; };
@@ -63,6 +65,7 @@
 		C62CE3C72F577CD300314D6E /* Exceptions for "QSolu" folder in "QSolu" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"GoogleService-Info.plist",
 				Info.plist,
 			);
 			target = C669B5A62F4E3F6000A15E5B /* QSolu */;
@@ -96,6 +99,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C6C9553C2F6E8A3400787BA8 /* FirebaseAnalytics in Frameworks */,
+				C6C9553E2F6E8A3400787BA8 /* FirebaseCrashlytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,6 +175,7 @@
 				C62CE39D2F576D5E00314D6E /* Sources */,
 				C62CE39E2F576D5E00314D6E /* Frameworks */,
 				C62CE39F2F576D5E00314D6E /* Resources */,
+				C6C9553F2F6E8C2200787BA8 /* [firebase_crashlytics] Crashlytics Upload Symbols */,
 			);
 			buildRules = (
 			);
@@ -180,6 +186,8 @@
 			);
 			name = QSoluSiteB;
 			packageProductDependencies = (
+				C6C9553B2F6E8A3400787BA8 /* FirebaseAnalytics */,
+				C6C9553D2F6E8A3400787BA8 /* FirebaseCrashlytics */,
 			);
 			productName = QSoluSiteB;
 			productReference = C62CE3A92F576D5E00314D6E /* QSoluSiteB.app */;
@@ -286,6 +294,9 @@
 			);
 			mainGroup = C669B59E2F4E3F6000A15E5B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C6C9553A2F6E8A3400787BA8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C669B5A82F4E3F6000A15E5B /* Products */;
 			projectDirPath = "";
@@ -360,7 +371,31 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :shared-ui:embedAndSignAppleFrameworkForXcode\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
+			shellScript = "set -e\nif [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :shared-ui:embedAndSignAppleFrameworkForXcode\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
+		};
+		C6C9553F2F6E8C2200787BA8 /* [firebase_crashlytics] Crashlytics Upload Symbols */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}.debug.dylib",
+			);
+			name = "[firebase_crashlytics] Crashlytics Upload Symbols";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
 		};
 		C6E17E002F4E414F00369EAB /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -436,10 +471,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = LeParfumAppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = 99B4UM433W;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Info-SiteB.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Le Parfum";
@@ -453,7 +489,11 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.9;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = ae.leparfum.shop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SITE_BRAND = SITE_B;
@@ -475,10 +515,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = LeParfumAppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = 99B4UM433W;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Info-SiteB.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Le Parfum";
@@ -492,7 +533,11 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.9;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = ae.leparfum.shop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SITE_BRAND = SITE_B;
@@ -540,10 +585,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -558,7 +604,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -607,6 +653,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -615,7 +662,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -698,7 +745,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.solutionium.QSoluTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -719,7 +766,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.solutionium.QSoluTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -820,6 +867,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C6C9553A2F6E8A3400787BA8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.11.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C6C9553B2F6E8A3400787BA8 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C6C9553A2F6E8A3400787BA8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		C6C9553D2F6E8A3400787BA8 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C6C9553A2F6E8A3400787BA8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C669B59F2F4E3F6000A15E5B /* Project object */;
 }

@@ -27,6 +27,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.ExperimentalTime
 
 
@@ -44,9 +45,12 @@ internal class WooProductsRemoteSourceImpl(
     private val productDetailByIdCache = mutableMapOf<Int, CacheEntry<ProductDetail>>()
     private val productDetailBySlugCache = mutableMapOf<String, CacheEntry<ProductDetail>>()
     private val productListCache = mutableMapOf<String, CacheEntry<List<ProductThumbnail>>>()
+    private val brandListCache = mutableMapOf<String, CacheEntry<List<Brand>>>()
+    private val attributeTermsCache = mutableMapOf<String, CacheEntry<List<AttributeTerm>>>()
 
     private val productDetailCacheTtlMs = 30.minutes.inWholeMilliseconds
     private val productListCacheTtlMs = 30.minutes.inWholeMilliseconds
+    private val taxonomyCacheTtlMs = 6.hours.inWholeMilliseconds
 
     @OptIn(ExperimentalTime::class)
     private fun nowMs(): Long = Clock.System.now().toEpochMilliseconds()
@@ -62,6 +66,18 @@ internal class WooProductsRemoteSourceImpl(
             .joinToString("&") { (k, v) -> "$k=$v" }
         return "page=$page|$normalizedQueries"
     }
+
+    private fun normalizedQueriesKey(queries: Map<String, String>): String =
+        queries
+            .toList()
+            .sortedBy { it.first }
+            .joinToString("&") { (k, v) -> "$k=$v" }
+
+    private fun brandCacheKey(queries: Map<String, String>): String =
+        "brands|${normalizedQueriesKey(queries)}"
+
+    private fun attributeTermsCacheKey(attributeId: Int, queries: Map<String, String>): String =
+        "attr=$attributeId|${normalizedQueriesKey(queries)}"
 
     override suspend fun getProductDetails(productId: Int): Result<ProductDetail, GeneralError> {
         val now = nowMs()
@@ -154,26 +170,77 @@ internal class WooProductsRemoteSourceImpl(
 
     override suspend fun getBrandList(
         queries: Map<String, String>
-    ): Result<List<Brand>, GeneralError> =
-        handleNetworkResponse(
+    ): Result<List<Brand>, GeneralError> {
+        val key = brandCacheKey(queries)
+        val now = nowMs()
+        cacheMutex.withLock {
+            val cached = brandListCache[key]
+            if (cached != null && isFresh(cached.timestampMs, taxonomyCacheTtlMs, now)) {
+                return Result.Success(cached.value)
+            }
+        }
+
+        val networkResult = handleNetworkResponse(
             networkCall = { productApi.getProductBrands(queries) },
             mapper = { brandResponseList ->
                 brandResponseList.map { it.toBrand() }
             }
         )
+        if (networkResult is Result.Success) {
+            cacheMutex.withLock {
+                brandListCache[key] = CacheEntry(now, networkResult.data)
+            }
+        }
+        return networkResult
+    }
 
 
 
     override suspend fun getAttributeTerms(
         attributeId: Int,
         queries: Map<String, String>
-    ): Result<List<AttributeTerm>, GeneralError> =
-        handleNetworkResponse(
-            networkCall = { productApi.getAttributeTerms(attributeId, queries) },
-            mapper = { responseList ->
-                responseList.map { it.toAttributeTerm() }
+    ): Result<List<AttributeTerm>, GeneralError> {
+        val key = attributeTermsCacheKey(attributeId, queries)
+        val now = nowMs()
+        cacheMutex.withLock {
+            val cached = attributeTermsCache[key]
+            if (cached != null && isFresh(cached.timestampMs, taxonomyCacheTtlMs, now)) {
+                return Result.Success(cached.value)
             }
-        )
+        }
+
+        suspend fun requestTerms(requestQueries: Map<String, String>): Result<List<AttributeTerm>, GeneralError> =
+            handleNetworkResponse(
+                networkCall = { productApi.getAttributeTerms(attributeId, requestQueries) },
+                mapper = { responseList ->
+                    responseList.map { it.toAttributeTerm() }
+                }
+            )
+
+        val requestedOrderBy = queries["orderby"]?.trim()?.lowercase().orEmpty()
+        var networkResult = requestTerms(queries)
+
+        // Some Woo setups reject `orderby=menu_order` for attribute terms.
+        // Keep UX stable by falling back to supported sort parameters.
+        if (networkResult is Result.Failure && requestedOrderBy == "menu_order") {
+            val fallbackByName = queries.toMutableMap().apply { put("orderby", "name") }
+            networkResult = requestTerms(fallbackByName)
+            if (networkResult is Result.Failure) {
+                val fallbackWithoutSort = queries.toMutableMap().apply {
+                    remove("orderby")
+                    remove("order")
+                }
+                networkResult = requestTerms(fallbackWithoutSort)
+            }
+        }
+
+        if (networkResult is Result.Success) {
+            cacheMutex.withLock {
+                attributeTermsCache[key] = CacheEntry(now, networkResult.data)
+            }
+        }
+        return networkResult
+    }
 
     override suspend fun getProductReviews(
         page: Int,

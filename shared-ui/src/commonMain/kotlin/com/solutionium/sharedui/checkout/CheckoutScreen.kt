@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
@@ -85,6 +87,7 @@ import com.solutionium.shared.viewmodel.FeeKeys
 import com.solutionium.shared.viewmodel.PlaceOrderStatus
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.absoluteValue
+import kotlin.math.max
 
 
 @Composable
@@ -121,6 +124,7 @@ fun CheckoutScreen(
                 state = state,
                 viewModel = viewModel,
                 onAddEditAddressClick = onAddEditAddressClick,
+                onBackToCart = onBack,
             )
         }
 
@@ -138,6 +142,9 @@ fun CheckoutScreen(
             OrderSuccessfulScreen(
                 orderId = status.orderId,
                 orderTotal = status.orderTotal,
+                orderSubtotal = status.orderSubtotal,
+                orderDiscount = status.orderDiscount,
+                vatRate = status.vatRate,
                 onContinueShopping = onContinueShopping
             )
         }
@@ -146,6 +153,9 @@ fun CheckoutScreen(
             OrderSuccessfulBACSScreen(
                 orderId = status.orderId,
                 orderTotal = status.orderTotal,
+                orderSubtotal = status.orderSubtotal,
+                orderDiscount = status.orderDiscount,
+                vatRate = status.vatRate,
                 bacsDetails = status.bacsDetails,
                 onContinueShopping = onContinueShopping
             )
@@ -182,6 +192,7 @@ fun CheckoutFormScreen(
     state: CheckoutUiState,
     viewModel: CheckoutViewModel,
     onAddEditAddressClick: (addressId: Int?) -> Unit,
+    onBackToCart: () -> Unit,
 ) {
 
     var showAllItems by remember { mutableStateOf(false) }
@@ -248,6 +259,7 @@ fun CheckoutFormScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = { // Sticky button goes into the bottomBar slot
             Surface(
                 modifier = Modifier
@@ -260,7 +272,7 @@ fun CheckoutFormScreen(
                     // Optional: for background and elevation
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                     //shadowElevation = 8.dp,
                     //color = MaterialTheme.colorScheme.surface
@@ -276,8 +288,8 @@ fun CheckoutFormScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 6.dp)
-                            .height(50.dp),
-                        shape = MaterialTheme.shapes.medium,
+                            .height(48.dp),
+                        shape = RoundedCornerShape(24.dp),
                         enabled = state.selectedShippingMethod != null &&
                                 state.selectedPaymentGateway != null &&
                                 state.shippingAddress != null &&
@@ -290,6 +302,8 @@ fun CheckoutFormScreen(
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
+
+                    Spacer(Modifier.height(16.dp))
                 }
             }
         }
@@ -306,6 +320,19 @@ fun CheckoutFormScreen(
 
 
             item { Spacer(modifier = Modifier.height(8.dp)) }
+            item {
+                TextButton(
+                    onClick = onBackToCart,
+                    modifier = Modifier.padding(top = 4.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(Res.string.back_to_cart))
+                }
+            }
 //            item {
 //                Spacer(modifier = Modifier.height(8.dp))
 //                SectionTitle("Review Your Order")
@@ -375,7 +402,7 @@ fun CheckoutFormScreen(
                         else state.shippingMethods,
                     selectedMethod = state.selectedShippingMethod,
                     onMethodSelected = viewModel::selectShipping,
-                    subTotal = state.subTotal,
+                    subTotal = state.cartItems.sumOf { it.currentPrice * it.quantity },
                     isLoading = state.isLoadingShippingMethods
                 )
             }
@@ -469,7 +496,7 @@ fun WalletPaymentSection(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 FormattedPriceV3(
-                    amount = walletBalance.toLong(),
+                    amount = walletBalance,
                     mainStyle = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -492,7 +519,7 @@ fun WalletPaymentSection(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 4.dp, top = 4.dp)
                 )
-                FormattedPriceV3(amountToUse.toLong())
+                FormattedPriceV3(amountToUse)
             }
 
         }
@@ -722,7 +749,7 @@ fun OrderSummaryCard(
     //var isExpanded by rememberSaveable { mutableStateOf(false) }
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     ) {
@@ -766,13 +793,15 @@ fun OrderSummaryCard(
                 )
 
                 // The total amount is also always visible
-                FormattedPriceV3(
-                    amount = state.total.toLong(),
-                    mainStyle = TextStyle(
+                SummaryPriceWithVat(
+                    amount = state.total,
+                    vatRate = state.vatRate,
+                    showVatNote = true,
+                    amountStyle = TextStyle(
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                        color = MaterialTheme.colorScheme.primary,
+                    ),
                 )
                 // The expand/collapse icon
 
@@ -805,7 +834,7 @@ fun OrderSummaryCard(
 
                     // The total amount is also always visible
                     FormattedPriceV3(
-                        amount = state.total.toLong() / 4,
+                        amount = state.total / 4.0,
                         mainStyle = TextStyle(
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
@@ -832,11 +861,58 @@ fun OrderSummaryCard(
 
                     SummaryRow(
                         stringResource(Res.string.subtotal),
-                        valueComposable = { FormattedPriceV3(state.subTotal.toLong()) }) // Pass Long or adapt
+                        valueComposable = {
+                            SummaryPriceWithVat(
+                                amount = state.subTotal,
+                                vatRate = state.vatRate,
+                                showVatNote = false,
+                            )
+                        },
+                    )
+                    if (state.normalOfferDiscount > 0) {
+                        SummaryRow(
+                            label = stringResource(Res.string.offers),
+                            valueComposable = {
+                                SummaryPriceWithVat(
+                                    amount = state.normalOfferDiscount,
+                                    vatRate = state.vatRate,
+                                    showVatNote = false,
+                                    amountStyle = TextStyle(
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0A7F52),
+                                    ),
+                                )
+                            },
+                        )
+                    }
+                    if (state.appOnlyOfferDiscount > 0) {
+                        SummaryRow(
+                            label = stringResource(Res.string.app_offers),
+                            valueComposable = {
+                                SummaryPriceWithVat(
+                                    amount = state.appOnlyOfferDiscount,
+                                    vatRate = state.vatRate,
+                                    showVatNote = false,
+                                    amountStyle = TextStyle(
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0A7F52),
+                                    ),
+                                )
+                            },
+                        )
+                    }
                     SummaryRow(
                         label = stringResource(Res.string.shipping),
                         valueComposable = {
-                            if (state.shippingCost > 0) FormattedPriceV3(state.shippingCost.toLong())
+                            if (state.shippingCost > 0) {
+                                SummaryPriceWithVat(
+                                    amount = state.shippingCost,
+                                    vatRate = state.vatRate,
+                                    showVatNote = false,
+                                )
+                            }
                             else Text(
                                 stringResource(Res.string.free),
                                 color = Color(0xFF0A7F52)
@@ -848,10 +924,11 @@ fun OrderSummaryCard(
                             SummaryRow(
                                 label = if (feeName == FeeKeys.PAYMENT_DISCOUNT ) stringResource(Res.string.payment_discount) else feeName,
                                 valueComposable = {
-                                    FormattedPriceV3(
-                                        //amount = feeAmount.toLong().times(-1L), // Assuming feeAmount is in smallest unit
-                                        amount = feeAmount.toLong().absoluteValue,
-                                        mainStyle = TextStyle(
+                                    SummaryPriceWithVat(
+                                        amount = feeAmount.absoluteValue,
+                                        vatRate = state.vatRate,
+                                        showVatNote = false,
+                                        amountStyle = TextStyle(
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (feeAmount < 0) Color(0xFF0A7F52) else Color.DarkGray
@@ -865,7 +942,7 @@ fun OrderSummaryCard(
                     if (state.useWallet) {
                         SummaryRow(stringResource(Res.string.paid_by_wallet), valueComposable = {
                             FormattedPriceV3(
-                                state.paidByWallet.toLong(),
+                                state.paidByWallet,
                                 mainStyle = TextStyle(
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
@@ -877,9 +954,11 @@ fun OrderSummaryCard(
 
                     if (state.totalDiscount > 0) {
                         SummaryRow(stringResource(Res.string.discounts), valueComposable = {
-                            FormattedPriceV3(
-                                state.totalDiscount.toLong(),
-                                mainStyle = TextStyle(
+                            SummaryPriceWithVat(
+                                amount = state.totalDiscount,
+                                vatRate = state.vatRate,
+                                showVatNote = false,
+                                amountStyle = TextStyle(
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF0A7F52)
@@ -933,6 +1012,46 @@ fun SummaryRow(
             Text(value.toString(), style = valueStyle, color = MaterialTheme.colorScheme.onSurface)
         }
     }
+}
+
+@Composable
+private fun SummaryPriceWithVat(
+    amount: Double,
+    vatRate: Double,
+    showVatNote: Boolean = false,
+    amountStyle: TextStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+) {
+    val vatAmount = calculateVatFromGrossAmount(amount, vatRate)
+    Column(horizontalAlignment = Alignment.End) {
+        FormattedPriceV3(
+            amount = amount,
+            mainStyle = amountStyle,
+        )
+        if (showVatNote && vatAmount > 0.0) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "${stringResource(Res.string.includes_vat)}:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                FormattedPriceV3(
+                    amount = vatAmount,
+                    mainStyle = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                )
+            }
+        }
+    }
+}
+
+private fun calculateVatFromGrossAmount(amount: Double, vatRate: Double): Double {
+    if (amount <= 0.0 || vatRate <= 0.0) return 0.0
+    val normalizedRate = if (vatRate > 1.0) vatRate / 100.0 else vatRate
+    val net = amount / (1.0 + normalizedRate)
+    return max(amount - net, 0.0)
 }
 
 // For cases where value is a composable itself (like the styled total)
@@ -1203,11 +1322,28 @@ private fun checkoutErrorToText(error: CheckoutError): String {
 
 @Composable
 fun MapCouponErrorToText(error: CouponError) {
-
+    val couponCodeArg = error.arg?.takeIf { it.isNotBlank() } ?: ""
     when (error.errorType) {
-        CouponErrorType.Expired -> Text(stringResource(Res.string.coupon_error_expired))
-        CouponErrorType.AlreadyApplied -> Text(stringResource(Res.string.coupon_error_already_applied))
-        CouponErrorType.NotExist -> Text(stringResource(Res.string.coupon_error_not_exist))
+        CouponErrorType.Expired -> Text(
+            stringResource(
+                Res.string.coupon_error_expired,
+                couponCodeArg,
+            ),
+        )
+
+        CouponErrorType.AlreadyApplied -> Text(
+            stringResource(
+                Res.string.coupon_error_already_applied,
+                couponCodeArg,
+            ),
+        )
+
+        CouponErrorType.NotExist -> Text(
+            stringResource(
+                Res.string.coupon_error_not_exist,
+                couponCodeArg,
+            ),
+        )
         CouponErrorType.MinSpend -> Text(
             stringResource(
                 Res.string.coupon_error_min_spend,

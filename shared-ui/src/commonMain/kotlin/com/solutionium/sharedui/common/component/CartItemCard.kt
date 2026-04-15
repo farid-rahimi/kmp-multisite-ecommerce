@@ -1,8 +1,10 @@
 package com.solutionium.sharedui.common.component
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,42 +47,50 @@ fun CartItemCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(2.dp),
-        colors = CardDefaults.cardColors()
-            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
-        shape = MaterialTheme.shapes.medium
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(horizontal = 10.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            AsyncImage(
-                model = cartItem.imageUrl,
-                contentDescription = null,
+            Box(
                 modifier = Modifier
-                    .size(36.dp),
-                contentScale = ContentScale.Crop
-            )
+                    .size(40.dp)
+                    .background(Color.White, shape = RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                AsyncImage(
+                    model = cartItem.imageUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(36.dp),
+                    contentScale = ContentScale.Crop,
+                )
+            }
             Text(
                 modifier = Modifier.weight(1f),
                 text = cartItem.name,
-                fontSize = 14.sp,
-                color = Color.Gray,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = "X",
-                fontSize = 12.sp,
-                color = Color.LightGray
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 modifier = Modifier.padding(end = 4.dp),
                 text = "${cartItem.quantity}",
-                fontSize = 16.sp,
-                color = Color.Black
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
             )
         }
     }
@@ -99,40 +110,53 @@ fun CartItemCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(horizontal = 4.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 14.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            AsyncImage(
-                model = cartItem.imageUrl,
-                contentDescription = null,
+            Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(72.dp)
+                    .background(Color.White, shape = RoundedCornerShape(12.dp))
                     .clickable { onProductClick() },
-                contentScale = ContentScale.Crop,
-
+                contentAlignment = Alignment.Center,
+            ) {
+                AsyncImage(
+                    model = cartItem.imageUrl,
+                    contentDescription = null,
+                    modifier = Modifier.size(66.dp),
+                    contentScale = ContentScale.Crop,
                 )
+            }
             Column(
                 modifier = Modifier
-                    .padding(end = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(end = 8.dp)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(9.dp),
             ) {
 
                 Text(
                     text = cartItem.name,
-                    fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
 
 
@@ -142,19 +166,19 @@ fun CartItemCard(
                                 Text(
                                     text = stringResource(Res.string.installment_pay),
                                     fontSize = 10.sp,
-                                    color = Color.Gray
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     " x 4 ",
                                     fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 PriceView2(
                                     cartItem.currentPrice / 4,
                                     cartItem.isOnSale,
                                     cartItem.regularPrice?.let { it / 4 },
-                                    magnifier = 1.2
+                                    magnifier = 1.15,
 
                                 )
                             }
@@ -163,14 +187,14 @@ fun CartItemCard(
                                     Text(
                                         text = stringResource(Res.string.full_pay),
                                         fontSize = 10.sp,
-                                        color = Color.Gray
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     PriceView2(
                                         it,
                                         cartItem.isOnSale,
                                         cartItem.regularPrice,
-                                        magnifier = 0.9
+                                        magnifier = 0.9,
                                     )
                                 }
                             }
@@ -179,11 +203,10 @@ fun CartItemCard(
                                 cartItem.currentPrice,
                                 cartItem.isOnSale,
                                 cartItem.regularPrice,
-                                magnifier = 1.1
+                                magnifier = 1.05,
                             )
                         }
                     }
-//
 
                     Spacer(modifier = Modifier.weight(1f))
 
@@ -203,7 +226,7 @@ fun CartItemCard(
                             Text(
                                 text = "${attribute.name}: ${attribute.option}",
                                 fontSize = 12.sp,
-                                color = Color.DarkGray
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                 }
@@ -215,12 +238,13 @@ fun CartItemCard(
 
         // Validation Message Display
         if (cartItem.requiresAttention && validationMessage != null) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             InfoBox(
                 message = validationMessage,
                 icon = Icons.Default.Warning,
                 color = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 12.dp),
             )
         }
     }
@@ -237,12 +261,12 @@ fun InfoBox(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(color, shape = RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .background(color, shape = RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Icon(imageVector = icon, contentDescription = null, tint = contentColor)
-        Spacer(modifier = Modifier.width(8.dp))
         Text(text = message, color = contentColor, style = MaterialTheme.typography.bodyMedium)
     }
 }

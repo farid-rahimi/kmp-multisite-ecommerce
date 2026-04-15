@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Solu Mobile Auth Login Endpoint
  * Description: Adds /wp-json/woo-mobile-auth/v1/login_user endpoint and Bearer-token auth compatibility for mobile apps.
- * Version: 1.1.7
+ * Version: 1.2.0
  * Author: Solutionium
  */
 
@@ -13,9 +13,15 @@ if (!defined('ABSPATH')) {
 final class Woo_Mobile_Auth_Login_Endpoint {
     private const META_TOKEN_HASH = '_woo_mobile_auth_token_hash';
     private const META_TOKEN_EXP = '_woo_mobile_auth_token_exp';
+    private const TOKEN_META_PREFIX = '_woo_mobile_auth_token_';
+    private const MAX_ACTIVE_TOKENS_PER_USER = 20;
     private const META_RESET_OTP_HASH = '_woo_mobile_auth_reset_otp_hash';
     private const META_RESET_OTP_EXP = '_woo_mobile_auth_reset_otp_exp';
     private const META_RESET_OTP_VERIFIED = '_woo_mobile_auth_reset_otp_verified';
+    private const META_DELETE_OTP_HASH = '_woo_mobile_auth_delete_otp_hash';
+    private const META_DELETE_OTP_EXP = '_woo_mobile_auth_delete_otp_exp';
+    private const SIGNUP_OTP_TRANSIENT_PREFIX = 'woo_mobile_signup_otp_';
+    private const SIGNUP_OTP_VERIFIED_PREFIX = 'woo_mobile_signup_verified_';
     private const TOKEN_TTL_SECONDS = 30 * DAY_IN_SECONDS;
     private const RESET_OTP_TTL_SECONDS = 10 * MINUTE_IN_SECONDS;
     private const MOBILE_PAY_TOKEN_TTL_SECONDS = 5 * MINUTE_IN_SECONDS;
@@ -23,6 +29,8 @@ final class Woo_Mobile_Auth_Login_Endpoint {
     private const MOBILE_RETURN_META = '_woo_mobile_return_to_app';
     private const MOBILE_RETURN_EXPIRES_META = '_woo_mobile_return_expires';
     private const MOBILE_RETURN_SCHEME_META = '_woo_mobile_return_scheme';
+    private const META_FAVORITES_IDS = '_woo_mobile_favorite_ids';
+    private const META_FAVORITES_UPDATED_AT = '_woo_mobile_favorite_updated_at';
     private const MOBILE_RETURN_ORDER_COOKIE = 'woo_mobile_return_order';
     private const MOBILE_RETURN_TTL_SECONDS = 2 * HOUR_IN_SECONDS;
     private const DEFAULT_MOBILE_APP_SCHEME = 'solutioniuma';
@@ -109,11 +117,15 @@ final class Woo_Mobile_Auth_Login_Endpoint {
                     'type' => 'string',
                 ],
                 'phone' => [
-                    'required' => true,
+                    'required' => false,
                     'type' => 'string',
                 ],
                 'password' => [
                     'required' => true,
+                    'type' => 'string',
+                ],
+                'require_email_otp' => [
+                    'required' => false,
                     'type' => 'string',
                 ],
             ],
@@ -126,6 +138,10 @@ final class Woo_Mobile_Auth_Login_Endpoint {
             'args' => [
                 'email' => [
                     'required' => true,
+                    'type' => 'string',
+                ],
+                'mode' => [
+                    'required' => false,
                     'type' => 'string',
                 ],
             ],
@@ -142,6 +158,10 @@ final class Woo_Mobile_Auth_Login_Endpoint {
                 ],
                 'otp' => [
                     'required' => true,
+                    'type' => 'string',
+                ],
+                'mode' => [
+                    'required' => false,
                     'type' => 'string',
                 ],
             ],
@@ -170,6 +190,66 @@ final class Woo_Mobile_Auth_Login_Endpoint {
         register_rest_route('woo-mobile-auth/v1', '/update_profile', [
             'methods' => 'POST',
             'callback' => [self::class, 'update_profile'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route('woo-mobile-auth/v1', '/logout_user', [
+            'methods' => 'POST',
+            'callback' => [self::class, 'logout_user'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route('woo-mobile-auth/v1', '/request_delete_account_otp', [
+            'methods' => 'POST',
+            'callback' => [self::class, 'request_delete_account_otp'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route('woo-mobile-auth/v1', '/delete_account', [
+            'methods' => 'POST',
+            'callback' => [self::class, 'delete_account'],
+            'permission_callback' => '__return_true',
+            'args' => [
+                'method' => [
+                    'required' => false,
+                    'type' => 'string',
+                ],
+                'password' => [
+                    'required' => false,
+                    'type' => 'string',
+                ],
+                'otp' => [
+                    'required' => false,
+                    'type' => 'string',
+                ],
+            ],
+        ]);
+
+        register_rest_route('woo-mobile-auth/v1', '/favorites', [
+            'methods' => 'GET',
+            'callback' => [self::class, 'favorites_get'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route('woo-mobile-auth/v1', '/favorites/toggle', [
+            'methods' => 'POST',
+            'callback' => [self::class, 'favorites_toggle'],
+            'permission_callback' => '__return_true',
+            'args' => [
+                'product_id' => [
+                    'required' => true,
+                    'type' => 'integer',
+                ],
+                'is_favorite' => [
+                    'required' => true,
+                    'type' => 'string',
+                ],
+            ],
+        ]);
+
+        register_rest_route('woo-mobile-auth/v1', '/favorites/set', [
+            'methods' => 'POST',
+            'callback' => [self::class, 'favorites_set'],
             'permission_callback' => '__return_true',
         ]);
 
@@ -255,8 +335,7 @@ final class Woo_Mobile_Auth_Login_Endpoint {
         $token_hash = hash('sha256', $token);
         $expires_at = time() + self::TOKEN_TTL_SECONDS;
 
-        update_user_meta($user->ID, self::META_TOKEN_HASH, $token_hash);
-        update_user_meta($user->ID, self::META_TOKEN_EXP, $expires_at);
+        self::store_user_token($user->ID, $token_hash, $expires_at);
 
         return new WP_REST_Response([
             'success' => true,
@@ -275,13 +354,16 @@ final class Woo_Mobile_Auth_Login_Endpoint {
         $email = trim((string) $request->get_param('email'));
         $phone = trim((string) $request->get_param('phone'));
         $password = (string) $request->get_param('password');
+        $require_email_otp = self::to_bool($request->get_param('require_email_otp'));
 
-        if ($name === '' || $email === '' || $phone === '' || $password === '') {
+        if ($name === '' || $email === '' || $password === '' || (!$require_email_otp && $phone === '')) {
             return new WP_REST_Response([
                 'success' => false,
                 'data' => [
                     'code' => 'missing_fields',
-                    'msg' => 'Name, email, phone and password are required.',
+                    'msg' => $require_email_otp
+                        ? 'Name, email and password are required.'
+                        : 'Name, email, phone and password are required.',
                 ],
             ], 400);
         }
@@ -304,6 +386,10 @@ final class Woo_Mobile_Auth_Login_Endpoint {
                     'msg' => 'An account already exists with this email.',
                 ],
             ], 409);
+        }
+
+        if ($require_email_otp && !self::is_signup_email_verified($email)) {
+            return self::error_response('email_not_verified', 'Please verify your email with OTP before signing up.', 400);
         }
 
         if (strlen($password) < 6) {
@@ -337,14 +423,20 @@ final class Woo_Mobile_Auth_Login_Endpoint {
             'display_name' => $name,
             'first_name' => $name,
         ]);
-        update_user_meta($user_id, 'billing_phone', $phone);
+        if ($phone !== '') {
+            update_user_meta($user_id, 'billing_phone', $phone);
+            update_user_meta($user_id, 'phone_number', $phone);
+        }
 
         $token = self::generate_token();
         $token_hash = hash('sha256', $token);
         $expires_at = time() + self::TOKEN_TTL_SECONDS;
 
-        update_user_meta($user_id, self::META_TOKEN_HASH, $token_hash);
-        update_user_meta($user_id, self::META_TOKEN_EXP, $expires_at);
+        self::store_user_token($user_id, $token_hash, $expires_at);
+        if ($require_email_otp) {
+            self::clear_signup_otp($email);
+            self::clear_signup_verified($email);
+        }
 
         return new WP_REST_Response([
             'success' => true,
@@ -360,8 +452,35 @@ final class Woo_Mobile_Auth_Login_Endpoint {
 
     public static function request_password_otp(WP_REST_Request $request): WP_REST_Response {
         $email = trim((string) $request->get_param('email'));
+        $mode = self::normalize_otp_mode((string) $request->get_param('mode'));
         if (!is_email($email)) {
             return self::error_response('invalid_email', 'Please provide a valid email address.', 400);
+        }
+
+        $otp = $mode === 'signup'
+            ? (string) random_int(1000, 9999)
+            : (string) random_int(100000, 999999);
+        if ($mode === 'signup') {
+            if (email_exists($email)) {
+                return self::error_response('email_exists', 'An account already exists with this email.', 409);
+            }
+
+            self::store_signup_otp($email, $otp);
+
+            $subject = 'Your Sign Up Verification Code';
+            $message = "Your sign up verification code is: {$otp}\n\nThis code expires in 10 minutes.";
+            $headers = ['Content-Type: text/plain; charset=UTF-8'];
+            $sent = wp_mail($email, $subject, $message, $headers);
+            if (!$sent) {
+                return self::error_response('email_send_failed', 'Could not send verification code email.', 500);
+            }
+
+            return new WP_REST_Response([
+                'success' => true,
+                'data' => [
+                    'message' => 'Verification code sent successfully.',
+                ],
+            ], 200);
         }
 
         $user = get_user_by('email', $email);
@@ -369,7 +488,6 @@ final class Woo_Mobile_Auth_Login_Endpoint {
             return self::error_response('user_not_found', 'No account found with this email.', 404);
         }
 
-        $otp = (string) random_int(100000, 999999);
         $otp_hash = wp_hash_password($otp);
         $expires_at = time() + self::RESET_OTP_TTL_SECONDS;
 
@@ -396,9 +514,25 @@ final class Woo_Mobile_Auth_Login_Endpoint {
     public static function verify_password_otp(WP_REST_Request $request): WP_REST_Response {
         $email = trim((string) $request->get_param('email'));
         $otp = trim((string) $request->get_param('otp'));
+        $mode = self::normalize_otp_mode((string) $request->get_param('mode'));
 
         if (!is_email($email) || $otp === '') {
             return self::error_response('invalid_request', 'Email and OTP are required.', 400);
+        }
+
+        if ($mode === 'signup') {
+            $validation = self::validate_signup_otp($email, $otp);
+            if ($validation !== true) {
+                return $validation;
+            }
+            self::set_signup_verified($email);
+
+            return new WP_REST_Response([
+                'success' => true,
+                'data' => [
+                    'message' => 'Verification code confirmed.',
+                ],
+            ], 200);
         }
 
         $user = get_user_by('email', $email);
@@ -552,6 +686,216 @@ final class Woo_Mobile_Auth_Login_Endpoint {
             'email' => (string) $updated->user_email,
             'phone_number' => $updated_phone,
             'is_super_admin' => user_can($updated->ID, 'manage_options'),
+        ], 200);
+    }
+
+    public static function logout_user(WP_REST_Request $request): WP_REST_Response {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return self::error_response('rest_not_logged_in', 'Authentication required.', 401);
+        }
+
+        $token = self::extract_bearer_token();
+        if ($token === '') {
+            return self::error_response('missing_token', 'Bearer token is required.', 401);
+        }
+
+        $token_hash = hash('sha256', $token);
+        delete_user_meta($user_id, self::TOKEN_META_PREFIX . $token_hash);
+
+        $latest_hash = (string) get_user_meta($user_id, self::META_TOKEN_HASH, true);
+        if ($latest_hash !== '' && hash_equals($latest_hash, $token_hash)) {
+            delete_user_meta($user_id, self::META_TOKEN_HASH);
+            delete_user_meta($user_id, self::META_TOKEN_EXP);
+        }
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data' => [
+                'message' => 'Logged out successfully.',
+            ],
+        ], 200);
+    }
+
+    public static function request_delete_account_otp(WP_REST_Request $request): WP_REST_Response {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return self::error_response('rest_not_logged_in', 'Authentication required.', 401);
+        }
+
+        $user = get_user_by('id', $user_id);
+        if (!($user instanceof WP_User)) {
+            return self::error_response('user_not_found', 'User not found.', 404);
+        }
+
+        $email = trim((string) $user->user_email);
+        if (!is_email($email)) {
+            return self::error_response('invalid_email', 'No valid email found for this account.', 400);
+        }
+
+        $otp = (string) random_int(1000, 9999);
+        update_user_meta($user_id, self::META_DELETE_OTP_HASH, wp_hash_password($otp));
+        update_user_meta($user_id, self::META_DELETE_OTP_EXP, time() + self::RESET_OTP_TTL_SECONDS);
+
+        $subject = 'Your Account Deletion Verification Code';
+        $message = "Your verification code is: {$otp}\n\nThis code expires in 10 minutes.";
+        $headers = ['Content-Type: text/plain; charset=UTF-8'];
+        $sent = wp_mail($email, $subject, $message, $headers);
+
+        if (!$sent) {
+            return self::error_response('email_send_failed', 'Could not send verification code email.', 500);
+        }
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data' => [
+                'message' => 'Verification code sent successfully.',
+            ],
+        ], 200);
+    }
+
+    public static function delete_account(WP_REST_Request $request): WP_REST_Response {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return self::error_response('rest_not_logged_in', 'Authentication required.', 401);
+        }
+
+        $user = get_user_by('id', $user_id);
+        if (!($user instanceof WP_User)) {
+            return self::error_response('user_not_found', 'User not found.', 404);
+        }
+
+        $method = strtolower(trim((string) $request->get_param('method')));
+        if ($method === '') {
+            $method = 'password';
+        }
+
+        if ($method === 'otp') {
+            $otp = trim((string) $request->get_param('otp'));
+            if ($otp === '') {
+                return self::error_response('invalid_request', 'Verification code is required.', 400);
+            }
+
+            $validation = self::validate_delete_otp($user_id, $otp);
+            if ($validation !== true) {
+                return $validation;
+            }
+        } else {
+            $password = (string) $request->get_param('password');
+            if ($password === '') {
+                return self::error_response('invalid_request', 'Password is required.', 400);
+            }
+            if (!wp_check_password($password, (string) $user->user_pass, $user_id)) {
+                return self::error_response('invalid_password', 'Incorrect password.', 401);
+            }
+        }
+
+        self::anonymize_user_orders($user_id);
+        self::revoke_all_user_tokens($user_id);
+        self::clear_user_sensitive_meta($user_id);
+        wp_logout();
+
+        if (!function_exists('wp_delete_user')) {
+            require_once ABSPATH . 'wp-admin/includes/user.php';
+        }
+
+        $reassign_user_id = self::resolve_reassign_user_id($user_id);
+        $deleted = wp_delete_user($user_id, $reassign_user_id > 0 ? $reassign_user_id : null);
+
+        if (!$deleted) {
+            return self::error_response('delete_failed', 'Could not delete account at this time.', 500);
+        }
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data' => [
+                'message' => 'Account deleted successfully.',
+            ],
+        ], 200);
+    }
+
+    public static function favorites_get(WP_REST_Request $request): WP_REST_Response {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return self::error_response('rest_not_logged_in', 'Authentication required.', 401);
+        }
+
+        $payload = self::get_user_favorites_payload($user_id);
+        return new WP_REST_Response([
+            'success' => true,
+            'data' => $payload,
+        ], 200);
+    }
+
+    public static function favorites_toggle(WP_REST_Request $request): WP_REST_Response {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return self::error_response('rest_not_logged_in', 'Authentication required.', 401);
+        }
+
+        $product_id = absint($request->get_param('product_id'));
+        if ($product_id <= 0) {
+            return self::error_response('invalid_product_id', 'Valid product_id is required.', 400);
+        }
+
+        $raw_is_favorite = $request->get_param('is_favorite');
+        $is_favorite = false;
+        if (is_bool($raw_is_favorite)) {
+            $is_favorite = $raw_is_favorite;
+        } else {
+            $is_favorite = in_array(strtolower(trim((string) $raw_is_favorite)), ['1', 'true', 'yes', 'on'], true);
+        }
+
+        $ids = self::get_user_favorite_ids($user_id);
+        $ids_assoc = array_fill_keys($ids, true);
+        if ($is_favorite) {
+            $ids_assoc[$product_id] = true;
+        } else {
+            unset($ids_assoc[$product_id]);
+        }
+        $normalized = array_keys($ids_assoc);
+        sort($normalized, SORT_NUMERIC);
+
+        self::save_user_favorite_ids($user_id, $normalized);
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data' => self::get_user_favorites_payload($user_id),
+        ], 200);
+    }
+
+    public static function favorites_set(WP_REST_Request $request): WP_REST_Response {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return self::error_response('rest_not_logged_in', 'Authentication required.', 401);
+        }
+
+        $raw_ids = $request->get_param('ids');
+        $ids = [];
+        if (is_array($raw_ids)) {
+            $ids = $raw_ids;
+        } else {
+            $csv = trim((string) $raw_ids);
+            if ($csv !== '') {
+                $ids = explode(',', $csv);
+            }
+        }
+
+        $normalized = [];
+        foreach ($ids as $id) {
+            $value = absint($id);
+            if ($value > 0) {
+                $normalized[$value] = true;
+            }
+        }
+        $normalized_ids = array_keys($normalized);
+        sort($normalized_ids, SORT_NUMERIC);
+
+        self::save_user_favorite_ids($user_id, $normalized_ids);
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data' => self::get_user_favorites_payload($user_id),
         ], 200);
     }
 
@@ -784,6 +1128,12 @@ final class Woo_Mobile_Auth_Login_Endpoint {
         $token_hash = hash('sha256', $token);
         $now = time();
 
+        $token_user_id = self::find_user_id_by_token_hash($token_hash, $now);
+        if ($token_user_id > 0) {
+            return $token_user_id;
+        }
+
+        // Backward compatibility with old single-token storage.
         $users = get_users([
             'number' => 1,
             'fields' => 'ID',
@@ -808,6 +1158,62 @@ final class Woo_Mobile_Auth_Login_Endpoint {
         }
 
         return $user_id;
+    }
+
+    private static function get_user_favorite_ids(int $user_id): array {
+        if ($user_id <= 0) {
+            return [];
+        }
+        $raw = get_user_meta($user_id, self::META_FAVORITES_IDS, true);
+        if (!is_array($raw)) {
+            return [];
+        }
+        $normalized = [];
+        foreach ($raw as $id) {
+            $value = absint($id);
+            if ($value > 0) {
+                $normalized[$value] = true;
+            }
+        }
+        $ids = array_keys($normalized);
+        sort($ids, SORT_NUMERIC);
+        return $ids;
+    }
+
+    private static function save_user_favorite_ids(int $user_id, array $ids): void {
+        if ($user_id <= 0) {
+            return;
+        }
+        $normalized = [];
+        foreach ($ids as $id) {
+            $value = absint($id);
+            if ($value > 0) {
+                $normalized[$value] = true;
+            }
+        }
+        $final_ids = array_keys($normalized);
+        sort($final_ids, SORT_NUMERIC);
+
+        update_user_meta($user_id, self::META_FAVORITES_IDS, $final_ids);
+        update_user_meta($user_id, self::META_FAVORITES_UPDATED_AT, time());
+    }
+
+    private static function get_user_favorites_payload(int $user_id): array {
+        if ($user_id <= 0) {
+            return [
+                'ids' => [],
+                'updated_at' => 0,
+            ];
+        }
+        $ids = self::get_user_favorite_ids($user_id);
+        $updated_at = (int) get_user_meta($user_id, self::META_FAVORITES_UPDATED_AT, true);
+        if ($updated_at <= 0) {
+            $updated_at = 0;
+        }
+        return [
+            'ids' => $ids,
+            'updated_at' => $updated_at,
+        ];
     }
 
     public static function filter_order_pay_gateways($gateways) {
@@ -1567,6 +1973,164 @@ final class Woo_Mobile_Auth_Login_Endpoint {
         return $candidate;
     }
 
+    private static function store_user_token(int $user_id, string $token_hash, int $expires_at): void {
+        if ($user_id <= 0 || $token_hash === '' || $expires_at <= 0) {
+            return;
+        }
+
+        // Multi-device token storage: one meta key per token hash.
+        update_user_meta(
+            $user_id,
+            self::TOKEN_META_PREFIX . $token_hash,
+            $expires_at
+        );
+
+        // Keep legacy latest-token keys for backward compatibility.
+        update_user_meta($user_id, self::META_TOKEN_HASH, $token_hash);
+        update_user_meta($user_id, self::META_TOKEN_EXP, $expires_at);
+
+        self::prune_user_tokens($user_id, time());
+    }
+
+    private static function find_user_id_by_token_hash(string $token_hash, int $now): int {
+        if ($token_hash === '') {
+            return 0;
+        }
+
+        $users = get_users([
+            'number' => 1,
+            'fields' => 'ID',
+            'meta_query' => [
+                [
+                    'key' => self::TOKEN_META_PREFIX . $token_hash,
+                    'value' => $now,
+                    'type' => 'NUMERIC',
+                    'compare' => '>=',
+                ],
+            ],
+        ]);
+
+        if (!empty($users) && isset($users[0])) {
+            $user_id = (int) $users[0];
+            self::prune_user_tokens($user_id, $now);
+            return $user_id;
+        }
+
+        return 0;
+    }
+
+    private static function prune_user_tokens(int $user_id, int $now): void {
+        if ($user_id <= 0) {
+            return;
+        }
+
+        $all_meta = get_user_meta($user_id);
+        if (!is_array($all_meta) || empty($all_meta)) {
+            return;
+        }
+
+        $active = [];
+        foreach ($all_meta as $meta_key => $values) {
+            if (strpos((string) $meta_key, self::TOKEN_META_PREFIX) !== 0) {
+                continue;
+            }
+            $expiry = isset($values[0]) ? (int) $values[0] : 0;
+            if ($expiry <= $now) {
+                delete_user_meta($user_id, (string) $meta_key);
+                continue;
+            }
+            $active[(string) $meta_key] = $expiry;
+        }
+
+        if (count($active) <= self::MAX_ACTIVE_TOKENS_PER_USER) {
+            return;
+        }
+
+        arsort($active, SORT_NUMERIC);
+        $keys_to_keep = array_slice(array_keys($active), 0, self::MAX_ACTIVE_TOKENS_PER_USER, true);
+        $keep_lookup = array_fill_keys($keys_to_keep, true);
+
+        foreach ($active as $meta_key => $_expiry) {
+            if (!isset($keep_lookup[$meta_key])) {
+                delete_user_meta($user_id, $meta_key);
+            }
+        }
+    }
+
+    private static function normalize_otp_mode(string $mode): string {
+        $normalized = strtolower(trim($mode));
+        return $normalized === 'signup' ? 'signup' : 'reset';
+    }
+
+    private static function signup_email_key(string $email): string {
+        return hash('sha256', strtolower(trim($email)));
+    }
+
+    private static function store_signup_otp(string $email, string $otp): void {
+        $key = self::signup_email_key($email);
+        set_transient(
+            self::SIGNUP_OTP_TRANSIENT_PREFIX . $key,
+            [
+                'otp_hash' => wp_hash_password($otp),
+                'expires_at' => time() + self::RESET_OTP_TTL_SECONDS,
+            ],
+            self::RESET_OTP_TTL_SECONDS
+        );
+        delete_transient(self::SIGNUP_OTP_VERIFIED_PREFIX . $key);
+    }
+
+    private static function validate_signup_otp(string $email, string $otp) {
+        $key = self::signup_email_key($email);
+        $payload = get_transient(self::SIGNUP_OTP_TRANSIENT_PREFIX . $key);
+        if (!is_array($payload)) {
+            return self::error_response('otp_not_found', 'No active OTP found. Please request a new code.', 404);
+        }
+
+        $otp_hash = isset($payload['otp_hash']) ? (string) $payload['otp_hash'] : '';
+        $expires_at = isset($payload['expires_at']) ? (int) $payload['expires_at'] : 0;
+        if ($otp_hash === '' || $expires_at <= 0) {
+            self::clear_signup_otp($email);
+            return self::error_response('otp_not_found', 'No active OTP found. Please request a new code.', 404);
+        }
+        if (time() > $expires_at) {
+            self::clear_signup_otp($email);
+            return self::error_response('otp_expired', 'Verification code expired. Please request a new code.', 410);
+        }
+        if (!wp_check_password($otp, $otp_hash)) {
+            return self::error_response('otp_invalid', 'Invalid verification code.', 401);
+        }
+        return true;
+    }
+
+    private static function set_signup_verified(string $email): void {
+        $key = self::signup_email_key($email);
+        set_transient(
+            self::SIGNUP_OTP_VERIFIED_PREFIX . $key,
+            1,
+            self::RESET_OTP_TTL_SECONDS
+        );
+    }
+
+    private static function is_signup_email_verified(string $email): bool {
+        $key = self::signup_email_key($email);
+        return (int) get_transient(self::SIGNUP_OTP_VERIFIED_PREFIX . $key) === 1;
+    }
+
+    private static function clear_signup_otp(string $email): void {
+        $key = self::signup_email_key($email);
+        delete_transient(self::SIGNUP_OTP_TRANSIENT_PREFIX . $key);
+    }
+
+    private static function clear_signup_verified(string $email): void {
+        $key = self::signup_email_key($email);
+        delete_transient(self::SIGNUP_OTP_VERIFIED_PREFIX . $key);
+    }
+
+    private static function to_bool($value): bool {
+        $normalized = strtolower(trim((string) $value));
+        return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
+    }
+
     public static function get_user_first_name(array $user_arr): string {
         $user_id = isset($user_arr['id']) ? (int) $user_arr['id'] : 0;
         if ($user_id <= 0) {
@@ -1626,6 +2190,116 @@ final class Woo_Mobile_Auth_Login_Endpoint {
             return self::error_response('otp_invalid', 'Invalid verification code.', 401);
         }
         return true;
+    }
+
+    private static function validate_delete_otp(int $user_id, string $otp) {
+        $otp_hash = (string) get_user_meta($user_id, self::META_DELETE_OTP_HASH, true);
+        $expires_at = (int) get_user_meta($user_id, self::META_DELETE_OTP_EXP, true);
+
+        if ($otp_hash === '' || $expires_at <= 0) {
+            return self::error_response('otp_not_found', 'No active OTP found. Please request a new code.', 404);
+        }
+        if (time() > $expires_at) {
+            delete_user_meta($user_id, self::META_DELETE_OTP_HASH);
+            delete_user_meta($user_id, self::META_DELETE_OTP_EXP);
+            return self::error_response('otp_expired', 'Verification code expired. Please request a new code.', 410);
+        }
+        if (!wp_check_password($otp, $otp_hash)) {
+            return self::error_response('otp_invalid', 'Invalid verification code.', 401);
+        }
+        return true;
+    }
+
+    private static function anonymize_user_orders(int $user_id): void {
+        if ($user_id <= 0 || !function_exists('wc_get_orders')) {
+            return;
+        }
+
+        $orders = wc_get_orders([
+            'customer_id' => $user_id,
+            'limit' => -1,
+            'return' => 'objects',
+        ]);
+
+        if (!is_array($orders) || empty($orders)) {
+            return;
+        }
+
+        foreach ($orders as $order) {
+            if (!($order instanceof WC_Order)) {
+                continue;
+            }
+
+            $order->set_customer_id(0);
+
+            $order->set_billing_first_name('');
+            $order->set_billing_last_name('');
+            $order->set_billing_company('');
+            $order->set_billing_address_1('');
+            $order->set_billing_address_2('');
+            $order->set_billing_city('');
+            $order->set_billing_state('');
+            $order->set_billing_postcode('');
+            $order->set_billing_country('');
+            $order->set_billing_email('');
+            $order->set_billing_phone('');
+
+            $order->set_shipping_first_name('');
+            $order->set_shipping_last_name('');
+            $order->set_shipping_company('');
+            $order->set_shipping_address_1('');
+            $order->set_shipping_address_2('');
+            $order->set_shipping_city('');
+            $order->set_shipping_state('');
+            $order->set_shipping_postcode('');
+            $order->set_shipping_country('');
+
+            $order->update_meta_data('_woo_mobile_deleted_user', '1');
+            $order->save();
+        }
+    }
+
+    private static function revoke_all_user_tokens(int $user_id): void {
+        if ($user_id <= 0) {
+            return;
+        }
+        $all_meta = get_user_meta($user_id);
+        if (!is_array($all_meta)) {
+            return;
+        }
+        foreach ($all_meta as $meta_key => $_values) {
+            if (strpos((string) $meta_key, self::TOKEN_META_PREFIX) === 0) {
+                delete_user_meta($user_id, (string) $meta_key);
+            }
+        }
+        delete_user_meta($user_id, self::META_TOKEN_HASH);
+        delete_user_meta($user_id, self::META_TOKEN_EXP);
+    }
+
+    private static function clear_user_sensitive_meta(int $user_id): void {
+        if ($user_id <= 0) {
+            return;
+        }
+        delete_user_meta($user_id, self::META_RESET_OTP_HASH);
+        delete_user_meta($user_id, self::META_RESET_OTP_EXP);
+        delete_user_meta($user_id, self::META_RESET_OTP_VERIFIED);
+        delete_user_meta($user_id, self::META_DELETE_OTP_HASH);
+        delete_user_meta($user_id, self::META_DELETE_OTP_EXP);
+        delete_user_meta($user_id, self::META_FAVORITES_IDS);
+        delete_user_meta($user_id, self::META_FAVORITES_UPDATED_AT);
+    }
+
+    private static function resolve_reassign_user_id(int $deleted_user_id): int {
+        $admins = get_users([
+            'role' => 'administrator',
+            'number' => 1,
+            'fields' => 'ID',
+            'exclude' => [$deleted_user_id],
+        ]);
+        if (is_array($admins) && isset($admins[0])) {
+            return (int) $admins[0];
+        }
+        return 0;
     }
 
     private static function error_response(string $code, string $message, int $status): WP_REST_Response {

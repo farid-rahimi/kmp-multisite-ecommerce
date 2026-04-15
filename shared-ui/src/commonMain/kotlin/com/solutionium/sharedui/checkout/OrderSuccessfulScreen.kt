@@ -30,12 +30,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.solutionium.sharedui.common.component.FormattedPriceV3
+import kotlin.math.max
 
 // In a new file, e.g., OrderSuccessfulScreen.kt
 @Composable
 fun OrderSuccessfulScreen(
     orderId: Int,
     orderTotal: String,
+    orderSubtotal: String,
+    orderDiscount: String,
+    vatRate: Double,
     onContinueShopping: () -> Unit
 ) {
     Column(
@@ -91,8 +95,45 @@ fun OrderSuccessfulScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(stringResource(Res.string.total_paid), style = MaterialTheme.typography.bodyLarge)
-                    FormattedPriceV3(amount = orderTotal.toDoubleOrNull()?.toLong() ?: 0L)
+                    Text(stringResource(Res.string.subtotal), style = MaterialTheme.typography.bodyLarge)
+                    PriceWithVatNote(
+                        amount = orderSubtotal.toDoubleOrNull() ?: 0.0,
+                        vatRate = vatRate,
+                        showVatNote = false,
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                if ((orderDiscount.toDoubleOrNull() ?: 0.0) > 0.0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(stringResource(Res.string.discounts), style = MaterialTheme.typography.bodyLarge)
+                        PriceWithVatNote(
+                            amount = orderDiscount.toDoubleOrNull() ?: 0.0,
+                            vatRate = vatRate,
+                            amountColor = Color(0xFF0A7F52),
+                            showVatNote = false,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        stringResource(Res.string.total_paid),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    PriceWithVatNote(
+                        amount = orderTotal.toDoubleOrNull() ?: 0.0,
+                        vatRate = vatRate,
+                        amountColor = MaterialTheme.colorScheme.primary,
+                        isEmphasis = true,
+                        showVatNote = true,
+                    )
 //                    Text(
 //                        "€$orderTotal",
 //                        style = MaterialTheme.typography.bodyLarge,
@@ -113,4 +154,50 @@ fun OrderSuccessfulScreen(
             Text(stringResource(Res.string.continue_shopping))
         }
     }
+}
+
+@Composable
+private fun PriceWithVatNote(
+    amount: Double,
+    vatRate: Double,
+    amountColor: Color = MaterialTheme.colorScheme.onSurface,
+    isEmphasis: Boolean = false,
+    showVatNote: Boolean = false,
+) {
+    val vatAmount = calculateVatFromGrossAmount(amount, vatRate)
+    Column(horizontalAlignment = Alignment.End) {
+        FormattedPriceV3(
+            amount = amount,
+            mainStyle = if (isEmphasis) {
+                MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = amountColor,
+                )
+            } else {
+                MaterialTheme.typography.bodyLarge.copy(color = amountColor)
+            },
+        )
+        if (showVatNote && vatAmount > 0.0) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "${stringResource(Res.string.includes_vat)}: ",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FormattedPriceV3(
+                    amount = vatAmount,
+                    mainStyle = MaterialTheme.typography.labelSmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                )
+            }
+        }
+    }
+}
+
+private fun calculateVatFromGrossAmount(amount: Double, vatRate: Double): Double {
+    if (amount <= 0.0 || vatRate <= 0.0) return 0.0
+    val normalizedRate = if (vatRate > 1.0) vatRate / 100.0 else vatRate
+    val net = amount / (1.0 + normalizedRate)
+    return max(amount - net, 0.0)
 }

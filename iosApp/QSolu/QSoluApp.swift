@@ -11,6 +11,8 @@ import sharedUIKit
 @main
 struct QSoluApp: App {
     init() {
+        FirebaseBridge.configureIfAvailable()
+
         let siteBrand = (Bundle.main.object(forInfoDictionaryKey: "SITE_BRAND") as? String) ?? "SITE_A"
         let baseUrl = (Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String) ?? "https://qeshminora.com/"
         let consumerKey = (Bundle.main.object(forInfoDictionaryKey: "API_CONSUMER_KEY") as? String) ?? ""

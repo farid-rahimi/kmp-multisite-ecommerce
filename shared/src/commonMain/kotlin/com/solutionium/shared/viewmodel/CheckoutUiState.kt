@@ -13,12 +13,21 @@ sealed class PlaceOrderStatus {
     data object Idle : PlaceOrderStatus()
     data object InProgress : PlaceOrderStatus()
     data class AwaitingPayment(val paymentUrl: String, val orderId: Int) : PlaceOrderStatus()
-    data class Success(val orderId: Int, val orderTotal: String) : PlaceOrderStatus()
+    data class Success(
+        val orderId: Int,
+        val orderTotal: String,
+        val orderSubtotal: String,
+        val orderDiscount: String,
+        val vatRate: Double,
+    ) : PlaceOrderStatus()
     //data class CODSuccess(val orderId: Int, val orderTotal: String) : PlaceOrderStatus()
 
     data class BACSSuccess(
         val orderId: Int,
         val orderTotal: String,
+        val orderSubtotal: String,
+        val orderDiscount: String,
+        val vatRate: Double,
         val bacsDetails: BACSDetails?,
     ) : PlaceOrderStatus()
 
@@ -31,7 +40,11 @@ data class CheckoutUiState(
     val addressId: String? = null,
     var shippingAddress: Address? = null,
     val isLoadingAddress: Boolean = false,
+    val vatRate: Double = 0.0,
     val subTotal: Double = 0.0,
+    val normalOfferDiscount: Double = 0.0,
+    val appOnlyOfferDiscount: Double = 0.0,
+    val taxAmount: Double = 0.0,
     val shippingCost: Double = 0.0,
     val totalFees: Double = 0.0,
     val totalDiscount: Double = 0.0,

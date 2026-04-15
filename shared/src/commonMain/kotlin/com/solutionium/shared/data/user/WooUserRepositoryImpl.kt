@@ -1,7 +1,9 @@
 package com.solutionium.shared.data.user
 
 import com.solutionium.shared.data.api.woo.WooUserRemoteSource
+import com.solutionium.shared.data.database.dao.CartDao
 import com.solutionium.shared.data.database.dao.AddressDao
+import com.solutionium.shared.data.database.dao.FavoriteDao
 import com.solutionium.shared.data.local.AppPreferences
 import com.solutionium.shared.data.local.TokenStore
 import com.solutionium.shared.data.model.ActionType
@@ -18,7 +20,9 @@ internal class WooUserRepositoryImpl(
     private val wooUserRemoteSource: WooUserRemoteSource,
     private val tokenStore: TokenStore,
     private val appPreferences: AppPreferences,
-    private val addressDao: AddressDao
+    private val addressDao: AddressDao,
+    private val cartDao: CartDao,
+    private val favoriteDao: FavoriteDao,
 ) : WooUserRepository {
     override suspend fun sendOtp(phoneNumber: String): Result<Unit, GeneralError> =
         wooUserRemoteSource.sendOtp(phoneNumber)
@@ -60,8 +64,17 @@ internal class WooUserRepositoryImpl(
         email: String,
         phone: String,
         pass: String,
+        requireEmailOtp: Boolean,
     ): Result<ActionType, GeneralError> {
-        return when (val result = wooUserRemoteSource.signupUserPass(name, email, phone, pass)) {
+        return when (
+            val result = wooUserRemoteSource.signupUserPass(
+                name = name,
+                email = email,
+                phone = phone,
+                pass = pass,
+                requireEmailOtp = requireEmailOtp,
+            )
+        ) {
             is Result.Success -> {
                 tokenStore.saveToken(result.data.token)
                 tokenStore.saveUserId(result.data.userId)
@@ -74,17 +87,34 @@ internal class WooUserRepositoryImpl(
         }
     }
 
-    override suspend fun requestPasswordResetOtp(email: String): Result<Unit, GeneralError> =
-        wooUserRemoteSource.requestPasswordResetOtp(email)
+    override suspend fun requestPasswordResetOtp(email: String, mode: String): Result<Unit, GeneralError> =
+        wooUserRemoteSource.requestPasswordResetOtp(email, mode)
 
-    override suspend fun verifyPasswordResetOtp(email: String, otp: String): Result<Unit, GeneralError> =
-        wooUserRemoteSource.verifyPasswordResetOtp(email, otp)
+    override suspend fun verifyPasswordResetOtp(email: String, otp: String, mode: String): Result<Unit, GeneralError> =
+        wooUserRemoteSource.verifyPasswordResetOtp(email, otp, mode)
 
     override suspend fun resetPasswordByOtp(
         email: String,
         otp: String,
         newPassword: String,
     ): Result<Unit, GeneralError> = wooUserRemoteSource.resetPasswordByOtp(email, otp, newPassword)
+
+    override suspend fun requestDeleteAccountOtp(): Result<Unit, GeneralError> =
+        wooUserRemoteSource.requestDeleteAccountOtp(tokenStore.getToken())
+
+    override suspend fun deleteAccountWithPassword(password: String): Result<Unit, GeneralError> =
+        wooUserRemoteSource.deleteAccountWithPassword(tokenStore.getToken(), password)
+
+    override suspend fun deleteAccountWithOtp(otp: String): Result<Unit, GeneralError> =
+        wooUserRemoteSource.deleteAccountWithOtp(tokenStore.getToken(), otp)
+
+    override suspend fun clearLocalUserData() {
+        val userId = tokenStore.getUserId() ?: "0"
+        cartDao.deleteAllCartItems()
+        favoriteDao.clearAllFavorites()
+        addressDao.deleteAllAddressesByUserId(userId)
+        tokenStore.clearToken()
+    }
 
     override suspend fun getMe(): Result<UserDetails, GeneralError> {
 
@@ -146,12 +176,11 @@ internal class WooUserRepositoryImpl(
     override suspend fun logout(): Boolean {
         return when (wooUserRemoteSource.logout(tokenStore.getToken())) {
             is Result.Success -> {
-                tokenStore.clearToken() // <-- CLEARING THE TOKEN
+                clearLocalUserData()
                 true
             }
 
             is Result.Failure -> {
-                tokenStore.clearToken()
                 false
             }
         }
@@ -179,30 +208,35 @@ internal class WooUserRepositoryImpl(
     }
 
     override suspend fun saveAddress(address: Address) {
-        val savedAddressId = addressDao.insertAddress(address.toEntity(tokenStore.getUserId() ?: "0"))
+        val userId = tokenStore.getUserId() ?: "0"
+        val savedAddressId = addressDao.insertAddress(address.toEntity(userId))
         setDefaultAddress(savedAddressId.toInt())
     }
 
     override fun getAddresses(): Flow<List<Address>> {
-        return addressDao.getAllAddress(tokenStore.getUserId() ?: "0").map { entities ->
+        val userId = tokenStore.getUserId() ?: "0"
+        return addressDao.getAllAddress(userId).map { entities ->
             entities.map { it.toModel() }
         }
     }
 
     override fun getAddressById(id: Int): Flow<Address?> {
-        return addressDao.getAddressById(id).map { it.toModel() }
+        val userId = tokenStore.getUserId() ?: "0"
+        return addressDao.getAddressById(id, userId).map { it?.toModel() }
     }
 
     override suspend fun deleteAddress(address: Address) {
-        addressDao.deleteAddress(address.toEntity(tokenStore.getUserId() ?: "0"))
+        val userId = tokenStore.getUserId() ?: "0"
+        address.id?.let { addressDao.deleteAddressById(it, userId) }
         if (address.isDefault) {
-            addressDao.setFirstAddressAsDefaultForUser(tokenStore.getUserId() ?: "0")
+            addressDao.setFirstAddressAsDefaultForUser(userId)
         }
     }
 
     override suspend fun setDefaultAddress(addressId: Int) {
-        addressDao.updateAllDefaultAddress(tokenStore.getUserId() ?: "0",false)
-        addressDao.updateDefaultAddress(addressId, true)
+        val userId = tokenStore.getUserId() ?: "0"
+        addressDao.updateAllDefaultAddress(userId, false)
+        addressDao.updateDefaultAddress(addressId, userId, true)
     }
 
 

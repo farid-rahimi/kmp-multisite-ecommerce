@@ -18,6 +18,10 @@ val userDomainModule = module {
     factory<RequestPasswordResetOtpUseCase> { RequestPasswordResetOtpUseCaseImpl(get()) }
     factory<VerifyPasswordResetOtpUseCase> { VerifyPasswordResetOtpUseCaseImpl(get()) }
     factory<ResetPasswordByOtpUseCase> { ResetPasswordByOtpUseCaseImpl(get()) }
+    factory<RequestDeleteAccountOtpUseCase> { RequestDeleteAccountOtpUseCaseImpl(get()) }
+    factory<DeleteAccountWithPasswordUseCase> { DeleteAccountWithPasswordUseCaseImpl(get()) }
+    factory<DeleteAccountWithOtpUseCase> { DeleteAccountWithOtpUseCaseImpl(get()) }
+    factory<ClearLocalUserDataUseCase> { ClearLocalUserDataUseCaseImpl(get()) }
     factory<LogoutUseCase> { LogoutUseCaseImpl(get()) }
     factory<GetCurrentUserUseCase> { GetCurrentUserUseCaseImpl(get()) }
     factory<LoadAddressesUseCase> { LoadAddressesUseCaseImpl(get()) }

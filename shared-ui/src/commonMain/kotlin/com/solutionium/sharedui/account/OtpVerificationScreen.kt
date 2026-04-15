@@ -74,7 +74,12 @@ fun OtpVerificationScreen(
         modifier = modifier,
         topBar = {
             PlatformTopBar(
-                title = { Text(stringResource(Res.string.verify_otp)) },
+                title = {
+                    Text(
+                        text = stringResource(Res.string.verify_otp),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
                 onBack = onNavigateBack,
             )
         },

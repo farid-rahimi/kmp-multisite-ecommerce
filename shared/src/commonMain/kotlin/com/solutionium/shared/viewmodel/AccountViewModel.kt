@@ -10,6 +10,9 @@ import com.solutionium.shared.domain.config.WalletEnabledUseCase
 import com.solutionium.shared.domain.favorite.ObserveFavoritesUseCase
 import com.solutionium.shared.domain.order.GetLatestOrderUseCase
 import com.solutionium.shared.domain.user.CheckLoginUserUseCase
+import com.solutionium.shared.domain.user.ClearLocalUserDataUseCase
+import com.solutionium.shared.domain.user.DeleteAccountWithOtpUseCase
+import com.solutionium.shared.domain.user.DeleteAccountWithPasswordUseCase
 import com.solutionium.shared.domain.user.EditUserDetailsUseCase
 import com.solutionium.shared.domain.user.GetCurrentUserUseCase
 import com.solutionium.shared.domain.user.GetUserWalletUseCase
@@ -17,6 +20,7 @@ import com.solutionium.shared.domain.user.LoginByUserPassUseCase
 import com.solutionium.shared.domain.user.LoginOrRegisterUseCase
 import com.solutionium.shared.domain.user.LogoutUseCase
 import com.solutionium.shared.domain.user.ObserveLanguageUseCase
+import com.solutionium.shared.domain.user.RequestDeleteAccountOtpUseCase
 import com.solutionium.shared.domain.user.RequestPasswordResetOtpUseCase
 import com.solutionium.shared.domain.user.ResetPasswordByOtpUseCase
 import com.solutionium.shared.domain.user.SendOtpUseCase
@@ -48,6 +52,10 @@ class AccountViewModel(
     private val requestPasswordResetOtpUseCase: RequestPasswordResetOtpUseCase,
     private val verifyPasswordResetOtpUseCase: VerifyPasswordResetOtpUseCase,
     private val resetPasswordByOtpUseCase: ResetPasswordByOtpUseCase,
+    private val requestDeleteAccountOtpUseCase: RequestDeleteAccountOtpUseCase,
+    private val deleteAccountWithPasswordUseCase: DeleteAccountWithPasswordUseCase,
+    private val deleteAccountWithOtpUseCase: DeleteAccountWithOtpUseCase,
+    private val clearLocalUserDataUseCase: ClearLocalUserDataUseCase,
     private val logoutUseCase: LogoutUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val editUserDetailsUseCase: EditUserDetailsUseCase,
@@ -88,6 +96,9 @@ class AccountViewModel(
             checkLoginUserUseCase()
                 .distinctUntilChanged()
                 .collect { isLoggedIn ->
+                    if (_state.value.isLoggingOut) {
+                        return@collect
+                    }
                     when {
                         isLoggedIn && _state.value.stage == AccountStage.LoggedOut -> {
                             checkLoginStatus()
@@ -165,6 +176,9 @@ class AccountViewModel(
                 _state.update { it.copy(stage = AccountStage.LoggedIn) }
                 checkLoginStatus()
             }
+            AccountStage.AccountSettings -> {
+                _state.update { it.copy(stage = AccountStage.LoggedIn, deleteAccountOtpRequested = false) }
+            }
 
             AccountStage.LoggedIn -> parentBackHandler()
             AccountStage.LoggedOut -> parentBackHandler()
@@ -196,27 +210,40 @@ class AccountViewModel(
 
     }
 
+    fun onNavigateToAccountSettings() {
+        _state.update {
+            it.copy(
+                stage = AccountStage.AccountSettings,
+                deleteAccountOtpRequested = false,
+                message = null,
+                messageType = null,
+            )
+        }
+    }
+
 
     private fun checkLoginStatus() {
         scope.launch {
+            if (_state.value.isLoggingOut) return@launch
             _state.update { it.copy(isLoading = true) }
             val isLoggedIn = checkLoginUserUseCase().first() // Assume not logged in initially
             if (isLoggedIn) {
                 _state.update { it.copy(stage = AccountStage.LoggedIn, isLoading = false) }
                 fetchUserDetailsAndOrders()
             } else {
-                _state.update {
-                    it.copy(
-                        stage = AccountStage.LoggedOut,
-                        isLoading = false,
-                        passwordResetStage = PasswordResetStage.Idle,
-                        passwordResetEmail = "",
-                        passwordResetOtp = "",
-                    )
+                    _state.update {
+                        it.copy(
+                            stage = AccountStage.LoggedOut,
+                            isLoading = false,
+                            passwordResetStage = PasswordResetStage.Idle,
+                            passwordResetEmail = "",
+                            passwordResetOtp = "",
+                            signupEmailOtpStage = PasswordResetStage.EmailInput,
+                        )
+                    }
                 }
             }
         }
-    }
 
     fun onPhoneNumberChange(newNumber: String) {
             _state.update { it.copy(phoneNumber = newNumber) }
@@ -376,16 +403,16 @@ class AccountViewModel(
         email: String,
         phone: String,
         password: String,
+        requireEmailOtp: Boolean = false,
     ) {
         val trimmedName = name.trim()
         val trimmedEmail = email.trim()
         val trimmedPhone = phone.trim()
-        val normalizedPhone = PhoneNumberFormatter.normalizeFromRaw(trimmedPhone)
+        val normalizedPhone = if (trimmedPhone.isBlank()) "" else PhoneNumberFormatter.normalizeFromRaw(trimmedPhone)
 
         if (
             trimmedName.isBlank() ||
             trimmedEmail.isBlank() ||
-            trimmedPhone.isBlank() ||
             password.isBlank()
         ) {
             setErrorMessage("Please fill all signup fields.")
@@ -396,8 +423,12 @@ class AccountViewModel(
             setErrorMessage("Please enter a valid email address.")
             return
         }
-        if (!PhoneNumberFormatter.isCanonical(normalizedPhone)) {
+        if (trimmedPhone.isNotBlank() && !PhoneNumberFormatter.isCanonical(normalizedPhone)) {
             setErrorMessage("Please enter phone in valid format like +971551112222.")
+            return
+        }
+        if (requireEmailOtp && _state.value.signupEmailOtpStage != PasswordResetStage.OtpVerified) {
+            setErrorMessage("Please verify your email before creating your account.")
             return
         }
 
@@ -409,6 +440,7 @@ class AccountViewModel(
                 email = trimmedEmail,
                 phone = normalizedPhone,
                 password = password,
+                requireEmailOtp = requireEmailOtp,
             ).collect { result ->
                 when (result) {
                     is Result.Success -> {
@@ -416,6 +448,7 @@ class AccountViewModel(
                             it.copy(
                                 stage = AccountStage.LoggedIn,
                                 isLoading = false,
+                                signupEmailOtpStage = PasswordResetStage.EmailInput,
                             )
                         }
                         fetchUserDetailsAndOrders()
@@ -440,7 +473,7 @@ class AccountViewModel(
 
         scope.launch {
             _state.update { it.copy(isLoading = true, message = null, messageType = null) }
-            requestPasswordResetOtpUseCase(trimmedEmail).collect { result ->
+            requestPasswordResetOtpUseCase(trimmedEmail, "reset").collect { result ->
                 when (result) {
                     is Result.Success -> {
                         _state.update {
@@ -471,7 +504,7 @@ class AccountViewModel(
         }
         scope.launch {
             _state.update { it.copy(isLoading = true, message = null, messageType = null) }
-            verifyPasswordResetOtpUseCase(trimmedEmail, trimmedOtp).collect { result ->
+            verifyPasswordResetOtpUseCase(trimmedEmail, trimmedOtp, "reset").collect { result ->
                 when (result) {
                     is Result.Success -> {
                         _state.update {
@@ -542,6 +575,69 @@ class AccountViewModel(
         }
     }
 
+    fun resetSignupEmailVerification() {
+        _state.update { it.copy(signupEmailOtpStage = PasswordResetStage.EmailInput) }
+    }
+
+    fun requestSignupEmailOtp(email: String) {
+        val trimmedEmail = email.trim()
+        if (!isValidEmail(trimmedEmail)) {
+            setErrorMessage("Please enter a valid email address.")
+            return
+        }
+        scope.launch {
+            _state.update { it.copy(isLoading = true, message = null, messageType = null) }
+            requestPasswordResetOtpUseCase(trimmedEmail, "signup").collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                signupEmailOtpStage = PasswordResetStage.OtpSent,
+                            )
+                        }
+                        setSuccessMessage("Verification code sent to your email.")
+                    }
+
+                    is Result.Failure -> {
+                        _state.update { it.copy(isLoading = false) }
+                        setErrorMessage(toUserFriendlyMessage(result.error, "Unable to send verification code."))
+                    }
+                }
+            }
+        }
+    }
+
+    fun verifySignupEmailOtp(email: String, otp: String) {
+        val trimmedEmail = email.trim()
+        val trimmedOtp = otp.trim()
+        if (trimmedEmail.isBlank() || trimmedOtp.isBlank()) {
+            setErrorMessage("Please enter email and verification code.")
+            return
+        }
+        scope.launch {
+            _state.update { it.copy(isLoading = true, message = null, messageType = null) }
+            verifyPasswordResetOtpUseCase(trimmedEmail, trimmedOtp, "signup").collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                signupEmailOtpStage = PasswordResetStage.OtpVerified,
+                            )
+                        }
+                        setSuccessMessage("Email verified. You can now create your account.")
+                    }
+
+                    is Result.Failure -> {
+                        _state.update { it.copy(isLoading = false) }
+                        setErrorMessage(toUserFriendlyMessage(result.error, "Invalid verification code."))
+                    }
+                }
+            }
+        }
+    }
+
     fun startPasswordReset() {
         _state.update {
             it.copy(
@@ -551,6 +647,137 @@ class AccountViewModel(
                 message = null,
                 messageType = null,
             )
+        }
+    }
+
+    fun requestDeleteAccountOtp() {
+        scope.launch {
+            _state.update {
+                it.copy(
+                    isRequestingOtp = true,
+                    message = null,
+                    messageType = null,
+                )
+            }
+            requestDeleteAccountOtpUseCase().collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        _state.update {
+                            it.copy(
+                                isRequestingOtp = false,
+                                deleteAccountOtpRequested = true,
+                            )
+                        }
+                        setSuccessMessage("Verification code sent to your email.")
+                    }
+
+                    is Result.Failure -> {
+                        _state.update { it.copy(isRequestingOtp = false) }
+                        setErrorMessage(
+                            toUserFriendlyMessage(
+                                result.error,
+                                "Unable to send verification code.",
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun deleteAccountWithPassword(password: String) {
+        val trimmedPassword = password.trim()
+        if (trimmedPassword.isBlank()) {
+            setErrorMessage("Please enter your password.")
+            return
+        }
+        scope.launch {
+            _state.update {
+                it.copy(
+                    isDeletingAccount = true,
+                    message = null,
+                    messageType = null,
+                )
+            }
+            deleteAccountWithPasswordUseCase(trimmedPassword).collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        onAccountDeleted()
+                    }
+
+                    is Result.Failure -> {
+                        _state.update { it.copy(isDeletingAccount = false) }
+                        setErrorMessage(
+                            toUserFriendlyMessage(
+                                result.error,
+                                "Unable to delete your account.",
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun deleteAccountWithOtp(otp: String) {
+        val trimmedOtp = otp.trim()
+        if (trimmedOtp.isBlank()) {
+            setErrorMessage("Please enter the verification code.")
+            return
+        }
+        scope.launch {
+            _state.update {
+                it.copy(
+                    isDeletingAccount = true,
+                    message = null,
+                    messageType = null,
+                )
+            }
+            deleteAccountWithOtpUseCase(trimmedOtp).collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        onAccountDeleted()
+                    }
+
+                    is Result.Failure -> {
+                        _state.update { it.copy(isDeletingAccount = false) }
+                        setErrorMessage(
+                            toUserFriendlyMessage(
+                                result.error,
+                                "Unable to delete your account.",
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun onAccountDeleted() {
+        scope.launch {
+            clearLocalUserDataUseCase()
+            _state.update {
+                it.copy(
+                    stage = AccountStage.LoggedOut,
+                    userDetails = null,
+                    userWallet = null,
+                    latestOrder = null,
+                    isLoading = false,
+                    isLoadingWallet = false,
+                    isLoadingLatestOrder = false,
+                    isDeletingAccount = false,
+                    deleteAccountOtpRequested = false,
+                    passwordResetStage = PasswordResetStage.Idle,
+                    passwordResetEmail = "",
+                    passwordResetOtp = "",
+                    signupEmailOtpStage = PasswordResetStage.EmailInput,
+                    username = "",
+                    password = "",
+                    otp = "",
+                    message = "Your account has been deleted.",
+                    messageType = AccountMessageType.Success,
+                )
+            }
         }
     }
 
@@ -648,13 +875,26 @@ class AccountViewModel(
                     }
 
                     is Result.Failure -> {
-                        when (result.error) {
-                            is GeneralError.ApiError -> logout()
-                            GeneralError.NetworkError -> {}
-                            is GeneralError.UnknownError -> {}
+                        when (val error = result.error) {
+                            is GeneralError.ApiError -> {
+                                val shouldForceLogout =
+                                    error.status == 401 ||
+                                        error.code == "rest_not_logged_in" ||
+                                        error.code == "invalid_token" ||
+                                        error.code == "jwt_auth_invalid_token"
+                                if (shouldForceLogout) {
+                                    logout()
+                                } else {
+                                    _state.update { it.copy(isLoading = false) }
+                                }
+                            }
+                            GeneralError.NetworkError -> {
+                                _state.update { it.copy(isLoading = false) }
+                            }
+                            is GeneralError.UnknownError -> {
+                                _state.update { it.copy(isLoading = false) }
+                            }
                         }
-
-
                     }
                 }
             }
@@ -721,20 +961,48 @@ class AccountViewModel(
 
     private fun logout() {
         scope.launch {
-            _state.update { it.copy(isLoading = true) }
-            logoutUseCase().collect { _ ->
-
-                _state.update {
-                    it.copy(
-                        userDetails = null,
-                        userWallet = null,
-                        stage = AccountStage.LoggedOut,
-                        isLoading = false
-                    )
-                }
-
+            _state.update {
+                it.copy(
+                    isLoading = true,
+                    isLoggingOut = true,
+                    showLogoutConfirmDialog = false,
+                    message = null,
+                    messageType = null,
+                )
             }
-
+            runCatching {
+                logoutUseCase().collect { serverLogoutSuccess ->
+                    if (serverLogoutSuccess) {
+                        _state.update {
+                            it.copy(
+                                userDetails = null,
+                                userWallet = null,
+                                latestOrder = null,
+                                stage = AccountStage.LoggedOut,
+                                isLoading = false,
+                                isLoadingWallet = false,
+                                isLoadingLatestOrder = false,
+                                passwordResetStage = PasswordResetStage.Idle,
+                                passwordResetEmail = "",
+                                passwordResetOtp = "",
+                                signupEmailOtpStage = PasswordResetStage.EmailInput,
+                                username = "",
+                                password = "",
+                                otp = "",
+                                message = null,
+                                messageType = null,
+                            )
+                        }
+                    } else {
+                        _state.update { it.copy(isLoading = false) }
+                        setErrorMessage("We couldn't log you out right now. Please try again.")
+                    }
+                }
+            }.onFailure {
+                _state.update { it.copy(isLoading = false) }
+                setErrorMessage("We couldn't log you out right now. Please try again.")
+            }
+            _state.update { it.copy(isLoggingOut = false) }
         }
     }
 
@@ -743,16 +1011,9 @@ class AccountViewModel(
     // In AccountViewModel.kt
     fun onMyFavoritesClicked(navigateToProductList: (String) -> Unit) {
         scope.launch {
-            // This suspends until the IDs are fetched from the database
             val result = observeFavoritesUseCase.getSnapshot()
-            if (result.isEmpty()) {
-                // Send non-existent ID to force empty result instead of loading full catalog.
-                navigateToProductList("0")
-                return@launch
-            }
             val idsString = result.joinToString(separator = ",")
             navigateToProductList(idsString)
-
         }
     }
 

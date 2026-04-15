@@ -128,6 +128,7 @@ internal class WooUserRemoteSourceImpl(
         email: String,
         phone: String,
         pass: String,
+        requireEmailOtp: Boolean,
     ): Result<UserAccess, GeneralError> =
         when (
             val result = authService.registerUser(
@@ -135,6 +136,7 @@ internal class WooUserRemoteSourceImpl(
                 email = email,
                 phone = phone,
                 password = pass,
+                requireEmailOtp = requireEmailOtp,
             )
         ) {
             is NetworkResponse.Success -> {
@@ -161,8 +163,8 @@ internal class WooUserRemoteSourceImpl(
             is NetworkResponse.UnknownError -> Result.Failure(GeneralError.UnknownError(result.error))
         }
 
-    override suspend fun requestPasswordResetOtp(email: String): Result<Unit, GeneralError> =
-        when (val result = authService.requestPasswordResetOtp(email)) {
+    override suspend fun requestPasswordResetOtp(email: String, mode: String): Result<Unit, GeneralError> =
+        when (val result = authService.requestPasswordResetOtp(email, mode)) {
             is NetworkResponse.Success -> Result.Success(Unit)
             is NetworkResponse.ApiError -> {
                 val errorResponse = result.body
@@ -179,8 +181,8 @@ internal class WooUserRemoteSourceImpl(
             is NetworkResponse.UnknownError -> Result.Failure(GeneralError.UnknownError(result.error))
         }
 
-    override suspend fun verifyPasswordResetOtp(email: String, otp: String): Result<Unit, GeneralError> =
-        when (val result = authService.verifyPasswordResetOtp(email, otp)) {
+    override suspend fun verifyPasswordResetOtp(email: String, otp: String, mode: String): Result<Unit, GeneralError> =
+        when (val result = authService.verifyPasswordResetOtp(email, otp, mode)) {
             is NetworkResponse.Success -> Result.Success(Unit)
             is NetworkResponse.ApiError -> {
                 val errorResponse = result.body
@@ -203,6 +205,60 @@ internal class WooUserRemoteSourceImpl(
         newPassword: String,
     ): Result<Unit, GeneralError> =
         when (val result = authService.resetPasswordByOtp(email, otp, newPassword)) {
+            is NetworkResponse.Success -> Result.Success(Unit)
+            is NetworkResponse.ApiError -> {
+                val errorResponse = result.body
+                Result.Failure(
+                    GeneralError.ApiError(
+                        errorResponse.data?.msg,
+                        errorResponse.data?.code,
+                        result.code,
+                    ),
+                )
+            }
+
+            is NetworkResponse.NetworkError -> Result.Failure(GeneralError.NetworkError)
+            is NetworkResponse.UnknownError -> Result.Failure(GeneralError.UnknownError(result.error))
+        }
+
+    override suspend fun requestDeleteAccountOtp(token: String?): Result<Unit, GeneralError> =
+        when (val result = authService.requestDeleteAccountOtp("Bearer $token")) {
+            is NetworkResponse.Success -> Result.Success(Unit)
+            is NetworkResponse.ApiError -> {
+                val errorResponse = result.body
+                Result.Failure(
+                    GeneralError.ApiError(
+                        errorResponse.data?.msg,
+                        errorResponse.data?.code,
+                        result.code,
+                    ),
+                )
+            }
+
+            is NetworkResponse.NetworkError -> Result.Failure(GeneralError.NetworkError)
+            is NetworkResponse.UnknownError -> Result.Failure(GeneralError.UnknownError(result.error))
+        }
+
+    override suspend fun deleteAccountWithPassword(token: String?, password: String): Result<Unit, GeneralError> =
+        when (val result = authService.deleteAccountWithPassword("Bearer $token", password)) {
+            is NetworkResponse.Success -> Result.Success(Unit)
+            is NetworkResponse.ApiError -> {
+                val errorResponse = result.body
+                Result.Failure(
+                    GeneralError.ApiError(
+                        errorResponse.data?.msg,
+                        errorResponse.data?.code,
+                        result.code,
+                    ),
+                )
+            }
+
+            is NetworkResponse.NetworkError -> Result.Failure(GeneralError.NetworkError)
+            is NetworkResponse.UnknownError -> Result.Failure(GeneralError.UnknownError(result.error))
+        }
+
+    override suspend fun deleteAccountWithOtp(token: String?, otp: String): Result<Unit, GeneralError> =
+        when (val result = authService.deleteAccountWithOtp("Bearer $token", otp)) {
             is NetworkResponse.Success -> Result.Success(Unit)
             is NetworkResponse.ApiError -> {
                 val errorResponse = result.body

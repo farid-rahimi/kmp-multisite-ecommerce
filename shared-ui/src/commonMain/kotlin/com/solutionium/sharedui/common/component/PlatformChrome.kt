@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 
 expect fun platformUsesCupertinoChrome(): Boolean
 expect fun platformBackIcon(): ImageVector
+expect fun platformShareIcon(): ImageVector
 expect fun platformHomeTabIcon(selected: Boolean): ImageVector
 expect fun platformCategoryTabIcon(selected: Boolean): ImageVector
 expect fun platformCartTabIcon(selected: Boolean): ImageVector

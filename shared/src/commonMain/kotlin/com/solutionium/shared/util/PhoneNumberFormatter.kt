@@ -8,6 +8,7 @@ data class PhoneParts(
 object PhoneNumberFormatter {
     private const val TOTAL_DIGITS = 12
     private const val DEFAULT_COUNTRY_CODE = "+971"
+    private val STRICT_COUNTRY_CODES = setOf("98", "971")
 
     fun sanitizeCountryCode(
         raw: String,
@@ -52,7 +53,25 @@ object PhoneNumberFormatter {
         return normalize(fallbackCountryCode, input.filter(Char::isDigit))
     }
 
-    fun isCanonical(phone: String): Boolean = phone.matches(Regex("^\\+[0-9]{12}$"))
+    fun isValid(countryCode: String, localNumber: String): Boolean {
+        val codeDigits = sanitizeCountryCode(countryCode, keepEmpty = true).filter(Char::isDigit)
+        if (codeDigits.isBlank()) return false
+
+        val localDigits = localNumber.filter(Char::isDigit).trimStart('0')
+        if (localDigits.isBlank()) return false
+
+        val expected = expectedLocalDigits(countryCode)
+        return if (STRICT_COUNTRY_CODES.contains(codeDigits)) {
+            localDigits.length == expected
+        } else {
+            localDigits.length <= expected
+        }
+    }
+
+    fun isCanonical(phone: String): Boolean {
+        val parts = splitForUi(phone)
+        return isValid(parts.countryCode, parts.localNumber)
+    }
 
     fun splitForUi(phone: String, fallbackCountryCode: String = DEFAULT_COUNTRY_CODE): PhoneParts {
         val trimmed = phone.trim()

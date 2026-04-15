@@ -229,12 +229,17 @@ class CategoryViewModel(
     }
 
     private suspend fun loadSectionItems(config: SearchTabConfig): List<DisplayableTerm> {
-        val maxItems = config.max
+        val maxItems = config.max?.takeIf { it > 0 }
         return when (config.type.lowercase()) {
             "brand_ids" -> loadBrandsBySource(config.source, maxItems)
             "attribute", "attributes" -> {
                 val attributeId = config.source.toIntOrNull() ?: return emptyList()
-                loadAttributeTermsBySource(attributeId, maxItems)
+                loadAttributeTermsBySource(
+                    attributeId = attributeId,
+                    maxItems = maxItems,
+                    orderBy = config.sourceOrderBy,
+                    order = config.sourceOrder,
+                )
             }
 
             else -> emptyList()
@@ -268,15 +273,23 @@ class CategoryViewModel(
     private suspend fun loadAttributeTermsBySource(
         attributeId: Int,
         maxItems: Int?,
+        orderBy: String? = null,
+        order: String? = null,
     ): List<AttributeTerm> {
         val perPage = maxItems ?: 100
-        val queries = mapOf("per_page" to perPage.toString())
+        val normalizedOrderBy = normalizeAttributeTermOrderBy(orderBy)
+        val normalizedOrder = normalizeSortOrder(order)
+        val queries = buildMap {
+            put("per_page", perPage.toString())
+            put("orderby", normalizedOrderBy)
+            put("order", normalizedOrder)
+        }
 
         var terms: List<AttributeTerm> = emptyList()
         getAttributeTerms(attributeId, queries)
             .onEach { result ->
                 if (result is Result.Success) {
-                    terms = result.data.sortedBy { it.menuOrder }
+                    terms = result.data
                 }
             }
             .collect()
@@ -326,15 +339,25 @@ class CategoryViewModel(
 
     fun toProductListArgsForMore(section: CategoryDynamicSection): Map<String, String>? {
         val link = section.moreLink ?: return null
+        val pageTitle = section.moreTitle?.takeIf { it.isNotBlank() }
         return when (link.type) {
-            LinkType.ALL_PRODUCTS -> mapOf(PRODUCT_ARG_TITLE to (link.title ?: section.title))
-            else -> link.getRouteQuery().takeIf { it.isNotEmpty() }
+            LinkType.NONE -> null
+            LinkType.ALL_PRODUCTS -> mapOf(PRODUCT_ARG_TITLE to (pageTitle ?: link.title ?: section.title))
+            else -> {
+                val args = link.getRouteQuery().takeIf { it.isNotEmpty() } ?: return null
+                if (pageTitle == null) {
+                    args
+                } else {
+                    args.toMutableMap().apply { put(PRODUCT_ARG_TITLE, pageTitle) }
+                }
+            }
         }
     }
 
     fun showAllItemsFromMore(section: CategoryDynamicSection) {
         val link = section.moreLink ?: return
         when (link.type) {
+            LinkType.NONE -> Unit
             LinkType.ALL_BRANDS -> showAllBrands(section.moreTitle ?: section.title)
             LinkType.ATTRIBUTES -> {
                 val source = link.target.ifBlank { section.source }
@@ -347,6 +370,8 @@ class CategoryViewModel(
                         attributeSource = section.source,
                         attributeSlug = section.sourceSlug,
                     ),
+                    orderBy = link.orderBy,
+                    order = link.order,
                 )
             }
 
@@ -374,9 +399,16 @@ class CategoryViewModel(
         attributeId: Int,
         attributeSource: String,
         attributeFilterKey: String,
+        orderBy: String?,
+        order: String?,
     ) {
         scope.launch {
-            val terms = loadAttributeTermsBySource(attributeId = attributeId, maxItems = 100)
+            val terms = loadAttributeTermsBySource(
+                attributeId = attributeId,
+                maxItems = 100,
+                orderBy = orderBy,
+                order = order,
+            )
             _uiState.update {
                 it.copy(
                     allItemsState = CategoryAllItemsState(
@@ -399,6 +431,20 @@ class CategoryViewModel(
             ?: attributeSource.trim().takeIf { value -> value.isNotEmpty() && value.toIntOrNull() == null }
         if (slug == null) return attributeSource
         return if (slug.startsWith("pa_")) slug else "pa_$slug"
+    }
+
+    private fun normalizeAttributeTermOrderBy(orderBy: String?): String {
+        return when (orderBy?.trim()?.lowercase()) {
+            "id", "include", "name", "slug", "count", "menu_order" -> orderBy.trim().lowercase()
+            else -> "menu_order"
+        }
+    }
+
+    private fun normalizeSortOrder(order: String?): String {
+        return when (order?.trim()?.lowercase()) {
+            "desc" -> "desc"
+            else -> "asc"
+        }
     }
 
     fun backToMainDisplay() {

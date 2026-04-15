@@ -1,6 +1,7 @@
 import SwiftUI
 import sharedUIKit
 import UIKit
+import Foundation
 
 private enum RootTab: Int, CaseIterable {
     case home = 0
@@ -8,12 +9,20 @@ private enum RootTab: Int, CaseIterable {
     case cart = 2
     case account = 3
 
-    var title: String {
-        switch self {
-        case .home: return "Home"
-        case .category: return "Category"
-        case .cart: return "Cart"
-        case .account: return "Account"
+    func localizedTitle(languageCode: String) -> String {
+        switch (self, languageCode) {
+        case (.home, "ar"): return "الرئيسية"
+        case (.category, "ar"): return "الفئات"
+        case (.cart, "ar"): return "السلة"
+        case (.account, "ar"): return "حسابي"
+        case (.home, "fa"): return "خانه"
+        case (.category, "fa"): return "دسته‌بندی"
+        case (.cart, "fa"): return "سبد خرید"
+        case (.account, "fa"): return "حساب کاربری"
+        case (.home, _): return "Home"
+        case (.category, _): return "Category"
+        case (.cart, _): return "Cart"
+        case (.account, _): return "Account"
         }
     }
 
@@ -38,59 +47,101 @@ private enum RootTab: Int, CaseIterable {
 
 struct ContentView: View {
     @State private var selectedTab: RootTab = .home
+    @State private var cartItemCount: Int = 0
+    @State private var tabBarVisibilityByTab: [RootTab: Bool] = Dictionary(
+        uniqueKeysWithValues: RootTab.allCases.map { ($0, true) }
+    )
     @State private var paymentReturnPayload: PaymentReturnPayload?
     @State private var paymentReturnEventId: Int64 = 0
     private let brandTint = BrandPalette.current
 
     var body: some View {
+        let languageCode = currentAppLanguageCode()
+        let appLayoutDirection = layoutDirectionForLanguage(languageCode)
         TabView(selection: $selectedTab) {
             NativeTabHostView(
                 tab: .home,
                 selectedTab: selectedTab,
-                paymentReturnPayload: nil
+                paymentReturnPayload: nil,
+                isTabBarVisible: tabBarVisibilityByTab[.home] ?? true,
+                onCartCountChanged: { count in
+                    cartItemCount = Int(count)
+                },
+                onBottomBarVisibilityChanged: { visibility in
+                    tabBarVisibilityByTab[.home] = visibility > 0
+                }
             )
             .ignoresSafeArea(.container, edges: .bottom)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .tabItem {
-                Label(RootTab.home.title, systemImage: selectedTab == .home ? RootTab.home.selectedSystemImage : RootTab.home.systemImage)
+                Label(RootTab.home.localizedTitle(languageCode: languageCode), systemImage: selectedTab == .home ? RootTab.home.selectedSystemImage : RootTab.home.systemImage)
             }
             .tag(RootTab.home)
 
             NativeTabHostView(
                 tab: .category,
                 selectedTab: selectedTab,
-                paymentReturnPayload: nil
+                paymentReturnPayload: nil,
+                isTabBarVisible: tabBarVisibilityByTab[.category] ?? true,
+                onCartCountChanged: { count in
+                    cartItemCount = Int(count)
+                },
+                onBottomBarVisibilityChanged: { visibility in
+                    tabBarVisibilityByTab[.category] = visibility > 0
+                }
             )
             .ignoresSafeArea(.container, edges: .bottom)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .tabItem {
-                Label(RootTab.category.title, systemImage: selectedTab == .category ? RootTab.category.selectedSystemImage : RootTab.category.systemImage)
+                Label(RootTab.category.localizedTitle(languageCode: languageCode), systemImage: selectedTab == .category ? RootTab.category.selectedSystemImage : RootTab.category.systemImage)
             }
             .tag(RootTab.category)
 
             NativeTabHostView(
                 tab: .cart,
                 selectedTab: selectedTab,
-                paymentReturnPayload: paymentReturnPayload
+                paymentReturnPayload: paymentReturnPayload,
+                isTabBarVisible: tabBarVisibilityByTab[.cart] ?? true,
+                onCartCountChanged: { count in
+                    cartItemCount = Int(count)
+                },
+                onBottomBarVisibilityChanged: { visibility in
+                    tabBarVisibilityByTab[.cart] = visibility > 0
+                }
             )
             .ignoresSafeArea(.container, edges: .bottom)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .tabItem {
-                Label(RootTab.cart.title, systemImage: selectedTab == .cart ? RootTab.cart.selectedSystemImage : RootTab.cart.systemImage)
+                Label(RootTab.cart.localizedTitle(languageCode: languageCode), systemImage: selectedTab == .cart ? RootTab.cart.selectedSystemImage : RootTab.cart.systemImage)
             }
+            .badge(cartBadgeText)
             .tag(RootTab.cart)
 
             NativeTabHostView(
                 tab: .account,
                 selectedTab: selectedTab,
-                paymentReturnPayload: nil
+                paymentReturnPayload: nil,
+                isTabBarVisible: tabBarVisibilityByTab[.account] ?? true,
+                onCartCountChanged: { count in
+                    cartItemCount = Int(count)
+                },
+                onBottomBarVisibilityChanged: { visibility in
+                    tabBarVisibilityByTab[.account] = visibility > 0
+                }
             )
             .ignoresSafeArea(.container, edges: .bottom)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .tabItem {
-                Label(RootTab.account.title, systemImage: selectedTab == .account ? RootTab.account.selectedSystemImage : RootTab.account.systemImage)
+                Label(RootTab.account.localizedTitle(languageCode: languageCode), systemImage: selectedTab == .account ? RootTab.account.selectedSystemImage : RootTab.account.systemImage)
             }
             .tag(RootTab.account)
         }
         .tint(brandTint)
+        .toolbar(activeTabBarVisible ? .visible : .hidden, for: .tabBar)
         .toolbarBackground(.hidden, for: .tabBar)
-        .background(TabBarConfigurator())
+        .background(TabBarConfigurator(isVisible: activeTabBarVisible))
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .environment(\.layoutDirection, appLayoutDirection)
         .onAppear {
             configureTransparentTabBar()
         }
@@ -104,6 +155,36 @@ struct ContentView: View {
             )
             selectedTab = .cart
         }
+    }
+
+    private var cartBadgeText: String? {
+        guard cartItemCount > 0 else { return nil }
+        return cartItemCount > 99 ? "99+" : "\(cartItemCount)"
+    }
+
+    private var activeTabBarVisible: Bool {
+        tabBarVisibilityByTab[selectedTab] ?? true
+    }
+}
+
+private func currentAppLanguageCode() -> String {
+    if let code = UserDefaults.standard.string(forKey: "app_language"), !code.isEmpty {
+        return code.lowercased()
+    }
+    if let preferred = Locale.preferredLanguages.first {
+        let normalized = preferred.lowercased()
+        if normalized.hasPrefix("ar") { return "ar" }
+        if normalized.hasPrefix("fa") { return "fa" }
+    }
+    return "en"
+}
+
+private func layoutDirectionForLanguage(_ languageCode: String) -> LayoutDirection {
+    switch languageCode {
+    case "ar", "fa":
+        return .rightToLeft
+    default:
+        return .leftToRight
     }
 }
 
@@ -138,6 +219,8 @@ private func configureTransparentTabBar() {
 }
 
 private struct TabBarConfigurator: UIViewControllerRepresentable {
+    let isVisible: Bool
+
     func makeUIViewController(context: Context) -> UIViewController {
         let controller = UIViewController()
         controller.view.backgroundColor = .clear
@@ -156,7 +239,8 @@ private struct TabBarConfigurator: UIViewControllerRepresentable {
             tabBar.itemPositioning = .fill
             tabBar.itemSpacing = 0
             tabBar.layoutMargins = UIEdgeInsets(top: 0, left: 6, bottom: 0, right: 6)
-            tabBarController.additionalSafeAreaInsets.bottom = -6
+            tabBar.isHidden = !isVisible
+            tabBarController.additionalSafeAreaInsets.bottom = isVisible ? -6 : 0
         }
     }
 }
@@ -165,16 +249,29 @@ private struct NativeTabHostView: UIViewControllerRepresentable {
     let tab: RootTab
     let selectedTab: RootTab
     let paymentReturnPayload: PaymentReturnPayload?
+    let isTabBarVisible: Bool
+    let onCartCountChanged: (Int32) -> Void
+    let onBottomBarVisibilityChanged: (Int32) -> Void
 
     final class Coordinator {
         private let host: IosProductListComposeHost
         var handledEventId: Int64 = 0
 
-        init(tab: RootTab) {
+        init(
+            tab: RootTab,
+            onCartCountChanged: @escaping (Int32) -> Void,
+            onBottomBarVisibilityChanged: @escaping (Int32) -> Void
+        ) {
             host = IosProductListComposeHost(
                 initialTabIndex: Int32(tab.rawValue),
                 showBottomBar: false,
-                lockTabToInitial: true
+                lockTabToInitial: true,
+                onCartCountChanged: { rawCount in
+                    onCartCountChanged(normalizeToInt32(rawCount))
+                },
+                onBottomBarVisibilityChanged: { rawVisibility in
+                    onBottomBarVisibilityChanged(normalizeToInt32(rawVisibility))
+                }
             )
         }
 
@@ -199,7 +296,11 @@ private struct NativeTabHostView: UIViewControllerRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(tab: tab)
+        Coordinator(
+            tab: tab,
+            onCartCountChanged: onCartCountChanged,
+            onBottomBarVisibilityChanged: onBottomBarVisibilityChanged
+        )
     }
 
     func makeUIViewController(context: Context) -> UIViewController {
@@ -207,9 +308,22 @@ private struct NativeTabHostView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        if selectedTab == tab, let tabBarController = uiViewController.findTabBarController() {
+            tabBarController.tabBar.isHidden = !isTabBarVisible
+            tabBarController.additionalSafeAreaInsets.bottom = isTabBarVisible ? -6 : 0
+        }
+
         guard tab == .cart && selectedTab == .cart else { return }
         context.coordinator.deliverPaymentReturnIfNeeded(paymentReturnPayload)
     }
+}
+
+private func normalizeToInt32<T>(_ rawValue: T) -> Int32 {
+    if let value = rawValue as? Int32 { return value }
+    if let value = rawValue as? KotlinInt { return value.int32Value }
+    if let value = rawValue as? NSNumber { return value.int32Value }
+    if let value = rawValue as? Int { return Int32(value) }
+    return 0
 }
 
 private func clearSubviewBackgrounds(_ view: UIView) {

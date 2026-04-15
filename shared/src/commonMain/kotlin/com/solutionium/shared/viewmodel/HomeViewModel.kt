@@ -113,8 +113,13 @@ class HomeViewModel(
 
     private fun fetchData() {
         scope.launch {
-            val headerUrl = getHeaderLogoUseCase()
-            _state.update { it.copy(headerLogoUrl = headerUrl) }
+            val headerLogo = getHeaderLogoUseCase()
+            _state.update {
+                it.copy(
+                    headerLogoLightUrl = headerLogo?.lightUrl,
+                    headerLogoDarkUrl = headerLogo?.darkUrl,
+                )
+            }
         }
 
         checkSuperUser()

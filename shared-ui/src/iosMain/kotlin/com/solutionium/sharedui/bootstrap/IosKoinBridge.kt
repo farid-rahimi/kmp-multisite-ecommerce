@@ -45,6 +45,7 @@ class IosKoinBridge {
                         baseUrl = baseUrl,
                         consumerKey = consumerKey,
                         consumerSecret = consumerSecret,
+                        vatRate = if (siteBrand.uppercase() == "SITE_B") 0.05 else 0.0,
                         paymentReturnScheme = paymentReturnScheme,
                         passwordLoginPath = if (siteBrand.uppercase() == "SITE_B") {
                             "wp-json/woo-mobile-auth/v1/login_user"

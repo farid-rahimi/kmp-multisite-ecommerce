@@ -5,6 +5,7 @@ import com.solutionium.shared.data.model.Coupon
 import com.solutionium.shared.data.model.FeeLine
 import com.solutionium.shared.data.model.Metadata
 import com.solutionium.shared.data.model.NewOrderData
+import com.solutionium.shared.data.model.Order
 import com.solutionium.shared.data.model.PaymentGateway
 import com.solutionium.shared.data.model.Result
 import com.solutionium.shared.data.model.ShippingMethod
@@ -210,7 +211,7 @@ class CheckoutViewModel(
     fun selectShipping(method: ShippingMethod) {
         if (_state.value.selectedShippingMethod == method) return
 
-        val shippingCost = method.calculateShippingCost(_state.value.subTotal)
+        val shippingCost = method.calculateShippingCost(calculateCartGrossSubtotal(_state.value))
         _state.update {
             it.copy(
                 selectedShippingMethod = method,
@@ -233,7 +234,15 @@ class CheckoutViewModel(
 
     fun paymentDiscountAmount(methodId: String): Double {
         val discountPercent = paymentMethodHasDiscount(methodId)
-        return (discountPercent / 100.0) * (_state.value.subTotal - _state.value.totalDiscount - _state.value.paidByWallet)
+        if (discountPercent <= 0.0) return 0.0
+        val currentState = _state.value
+        val grossSubtotal = calculateCartGrossSubtotal(currentState)
+        val couponDiscountGross = calculateCouponDiscountGross(
+            grossSubtotal = grossSubtotal,
+            coupons = currentState.appliedCoupons,
+        )
+        val baseAmount = (grossSubtotal - couponDiscountGross - currentState.paidByWallet).coerceAtLeast(0.0)
+        return (discountPercent / 100.0) * baseAmount
     }
 
     private fun paymentMethodHasDiscount(methodId: String): Double {
@@ -253,7 +262,7 @@ class CheckoutViewModel(
                     code,
                     state.value.appliedCoupons,
                     state.value.cartItems,
-                    state.value.subTotal,
+                    calculateCartGrossSubtotal(state.value),
                 )
             ) {
                 is Result.Success -> {
@@ -301,37 +310,24 @@ class CheckoutViewModel(
 
     private fun recalculateTotals() {
         val currentState = _state.value
-        val subtotal = currentState.cartItems.sumOf { it.currentPrice * it.quantity }
-        var totalDiscount = 0.0
-        val fees = _state.value.fees
+        val grossSubtotal = calculateCartGrossSubtotal(currentState)
+        val normalOfferDiscountGross = calculateNormalOfferDiscountGross(currentState)
+        val appOnlyOfferDiscountGross = calculateAppOnlyOfferDiscountGross(currentState)
+        val grossSubtotalBeforeAllOffers =
+            (grossSubtotal + normalOfferDiscountGross + appOnlyOfferDiscountGross).coerceAtLeast(grossSubtotal)
+        val vatRate = networkConfigProvider.get().vatRate.coerceAtLeast(0.0)
+        val couponDiscountGross = calculateCouponDiscountGross(
+            grossSubtotal = grossSubtotal,
+            coupons = currentState.appliedCoupons,
+        )
+        val fees = currentState.fees.toMutableMap()
         val discountAmount =
-            paymentDiscountAmount(methodId = state.value.selectedPaymentGateway?.id ?: "none")
+            paymentDiscountAmount(methodId = currentState.selectedPaymentGateway?.id ?: "none")
         if (discountAmount > 0.0) {
             fees[FeeKeys.PAYMENT_DISCOUNT] = -1 * discountAmount
         } else {
             fees.remove(FeeKeys.PAYMENT_DISCOUNT)
         }
-
-        currentState.appliedCoupons.forEach { coupon ->
-            when (coupon.discountType) {
-                "percent" -> {
-                    val discountValue = coupon.amount
-                    totalDiscount += (subtotal * (discountValue / 100.0))
-                }
-
-                "fixed_cart" -> {
-                    val discountValue = coupon.amount
-                    totalDiscount += discountValue
-                }
-
-                "fixed_product" -> {
-                    val discountValue = coupon.amount
-                    totalDiscount += discountValue
-                }
-            }
-        }
-
-        totalDiscount = totalDiscount.coerceAtMost(subtotal)
 
         var totalFees = 0.0
         fees.values.forEach { fee ->
@@ -340,12 +336,12 @@ class CheckoutViewModel(
 
         val hasFreeShippingCoupon = currentState.appliedCoupons.any { it.freeShipping }
         val freeShippingByProductShippingClass =
-            _state.value.cartItems.any { it.shippingClass == "free-shipping" }
+            currentState.cartItems.any { it.shippingClass == "free-shipping" }
         var shippingFee =
             if (hasFreeShippingCoupon || freeShippingByProductShippingClass) 0.0 else (currentState.shippingCost)
 
-        _state.value.freeShippingMethodByMinOrder?.let {
-            if (it.isEligibleForMinOrderAmount(subTotal = subtotal)) {
+        currentState.freeShippingMethodByMinOrder?.let {
+            if (it.isEligibleForMinOrderAmount(subTotal = grossSubtotal)) {
                 _state.update { state -> state.copy(freeShippingByMinOrderIsActive = true) }
                 selectShipping(it)
                 shippingFee = 0.0
@@ -354,19 +350,30 @@ class CheckoutViewModel(
             }
         }
 
-        var finalTotal = (subtotal - totalDiscount + shippingFee + totalFees).coerceAtLeast(0.0)
+        val discountedGrossSubtotal = (grossSubtotal - couponDiscountGross).coerceAtLeast(0.0)
+        val taxAmount = if (vatRate > 0.0) {
+            discountedGrossSubtotal - calculateNetFromGross(discountedGrossSubtotal, vatRate)
+        } else {
+            0.0
+        }
+
+        var finalTotal = (discountedGrossSubtotal + shippingFee + totalFees).coerceAtLeast(0.0)
 
         var walletPaymentAmount = 0.0
-        if (_state.value.useWallet) {
-            val balance = _state.value.userWallet?.balance ?: 0.0
+        if (currentState.useWallet) {
+            val balance = currentState.userWallet?.balance ?: 0.0
             walletPaymentAmount = balance.coerceAtMost(finalTotal)
             finalTotal -= walletPaymentAmount
         }
 
         _state.update {
             it.copy(
-                subTotal = subtotal,
-                totalDiscount = totalDiscount,
+                vatRate = vatRate,
+                subTotal = grossSubtotalBeforeAllOffers,
+                normalOfferDiscount = normalOfferDiscountGross,
+                appOnlyOfferDiscount = appOnlyOfferDiscountGross,
+                taxAmount = taxAmount,
+                totalDiscount = couponDiscountGross,
                 shippingCost = shippingFee,
                 fees = fees,
                 paidByWallet = walletPaymentAmount,
@@ -412,6 +419,7 @@ class CheckoutViewModel(
             }
 
             val paymentReturnScheme = networkConfigProvider.get().paymentReturnScheme
+            val currentVatRate = networkConfigProvider.get().vatRate.coerceAtLeast(0.0)
             metadata.add(getPaymentRedirectUrl(paymentReturnScheme))
             metadata.add(getMobileReturnEnabledMeta())
             metadata.add(getMobileReturnSchemeMeta(paymentReturnScheme))
@@ -458,6 +466,7 @@ class CheckoutViewModel(
                 when (result) {
                     is Result.Success -> {
                         val orderResponse = result.data
+                        val orderAmounts = toSuccessOrderAmounts(orderResponse)
 
                         if (totalWalletPayment) {
                             clearCartUseCase()
@@ -465,7 +474,10 @@ class CheckoutViewModel(
                                 it.copy(
                                     placeOrderStatus = PlaceOrderStatus.Success(
                                         orderId = orderResponse.id,
-                                        orderTotal = currentState.paidByWallet.toString(),
+                                        orderTotal = orderAmounts.totalGross,
+                                        orderSubtotal = orderAmounts.subtotalGross,
+                                        orderDiscount = orderAmounts.discountGross,
+                                        vatRate = currentVatRate,
                                     ),
                                 )
                             }
@@ -476,7 +488,10 @@ class CheckoutViewModel(
                                 it.copy(
                                     placeOrderStatus = PlaceOrderStatus.BACSSuccess(
                                         orderId = orderResponse.id,
-                                        orderTotal = orderResponse.total,
+                                        orderTotal = orderAmounts.totalGross,
+                                        orderSubtotal = orderAmounts.subtotalGross,
+                                        orderDiscount = orderAmounts.discountGross,
+                                        vatRate = currentVatRate,
                                         bacsDetails = bacsDetails,
                                     ),
                                 )
@@ -487,7 +502,10 @@ class CheckoutViewModel(
                                 it.copy(
                                     placeOrderStatus = PlaceOrderStatus.Success(
                                         orderId = orderResponse.id,
-                                        orderTotal = orderResponse.total,
+                                        orderTotal = orderAmounts.totalGross,
+                                        orderSubtotal = orderAmounts.subtotalGross,
+                                        orderDiscount = orderAmounts.discountGross,
+                                        vatRate = currentVatRate,
                                     ),
                                 )
                             }
@@ -517,6 +535,73 @@ class CheckoutViewModel(
         }
     }
 
+    private fun calculateCartGrossSubtotal(state: CheckoutUiState): Double =
+        state.cartItems.sumOf { it.currentPrice * it.quantity }
+
+    private fun calculateNormalOfferDiscountGross(state: CheckoutUiState): Double =
+        state.cartItems.sumOf { item ->
+            if (item.appOffer > 0.0) return@sumOf 0.0
+            val regularPrice = item.regularPrice ?: return@sumOf 0.0
+            if (regularPrice > 0.0 && regularPrice >= item.currentPrice) {
+                (regularPrice - item.currentPrice) * item.quantity
+            } else {
+                0.0
+            }
+        }
+
+    private fun calculateAppOnlyOfferDiscountGross(state: CheckoutUiState): Double =
+        state.cartItems.sumOf { item ->
+            if (item.appOffer > 0.0 && item.appOffer < 100.0) {
+                val baseUnitGross = item.currentPrice / (1.0 - (item.appOffer / 100.0))
+                (baseUnitGross - item.currentPrice) * item.quantity
+            } else {
+                0.0
+            }
+        }
+
+    private fun calculateNetFromGross(grossAmount: Double, vatRate: Double): Double {
+        if (vatRate <= 0.0) return grossAmount
+        return grossAmount / (1.0 + vatRate)
+    }
+
+    private fun calculateCouponDiscountGross(
+        grossSubtotal: Double,
+        coupons: List<Coupon>,
+    ): Double {
+        var totalDiscount = 0.0
+        coupons.forEach { coupon ->
+            when (coupon.discountType) {
+                "percent" -> totalDiscount += (grossSubtotal * (coupon.amount / 100.0))
+                "fixed_cart", "fixed_product" -> totalDiscount += coupon.amount
+            }
+        }
+        return totalDiscount.coerceAtMost(grossSubtotal).coerceAtLeast(0.0)
+    }
+
+    private fun toSuccessOrderAmounts(order: Order): OrderAmounts {
+        val subtotalGross = order.lineItems.sumOf { line ->
+            (line.subTotal?.toDoubleOrNull() ?: 0.0) + (line.subTotalTax.toDoubleOrNull() ?: 0.0)
+        }
+        val lineTotalGross = order.lineItems.sumOf { line ->
+            (line.total.toDoubleOrNull() ?: 0.0) + (line.totalTax.toDoubleOrNull() ?: 0.0)
+        }
+        val discountGross = (subtotalGross - lineTotalGross).coerceAtLeast(0.0)
+        val totalGross = order.total.toDoubleOrNull()
+            ?: (lineTotalGross + (order.shippingTotal.toDoubleOrNull() ?: 0.0) + (order.feeTotal.toDoubleOrNull() ?: 0.0))
+
+        return OrderAmounts(
+            subtotalGross = subtotalGross.toString(),
+            discountGross = discountGross.toString(),
+            totalGross = totalGross.toString(),
+        )
+    }
+
+    private data class OrderAmounts(
+        val subtotalGross: String,
+        val discountGross: String,
+        val totalGross: String,
+    )
+
     fun verifyOrderStatusAfterPayment() {
         if (verificationJob?.isActive == true) return
 
@@ -532,12 +617,17 @@ class CheckoutViewModel(
                 is Result.Success -> {
                     val orderStatus = result.data.status
                     if (orderStatus == "completed" || orderStatus == "processing") {
+                        val currentVatRate = networkConfigProvider.get().vatRate.coerceAtLeast(0.0)
+                        val orderAmounts = toSuccessOrderAmounts(result.data)
                         clearCartUseCase()
                         _state.update {
                             it.copy(
                                 placeOrderStatus = PlaceOrderStatus.Success(
                                     orderId = result.data.id,
-                                    orderTotal = result.data.total,
+                                    orderTotal = orderAmounts.totalGross,
+                                    orderSubtotal = orderAmounts.subtotalGross,
+                                    orderDiscount = orderAmounts.discountGross,
+                                    vatRate = currentVatRate,
                                 ),
                             )
                         }

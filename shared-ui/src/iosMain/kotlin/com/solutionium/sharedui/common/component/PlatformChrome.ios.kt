@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Shapes
@@ -20,6 +21,8 @@ import androidx.compose.ui.unit.dp
 actual fun platformUsesCupertinoChrome(): Boolean = true
 
 actual fun platformBackIcon(): ImageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft
+
+actual fun platformShareIcon(): ImageVector = Icons.Outlined.IosShare
 
 actual fun platformHomeTabIcon(selected: Boolean): ImageVector =
     if (selected) Icons.Filled.Home else Icons.Outlined.Home

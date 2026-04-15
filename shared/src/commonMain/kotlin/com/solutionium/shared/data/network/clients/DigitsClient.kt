@@ -103,6 +103,7 @@ class DigitsClient(
         email: String,
         phone: String,
         password: String,
+        requireEmailOtp: Boolean = false,
     ) = run {
         val candidates = listOf(
             passwordRegisterPath,
@@ -120,6 +121,7 @@ class DigitsClient(
                 email = email,
                 phone = phone,
                 password = password,
+                requireEmailOtp = requireEmailOtp,
             )
             lastResult = result
 
@@ -141,6 +143,7 @@ class DigitsClient(
             email = email,
             phone = phone,
             password = password,
+            requireEmailOtp = requireEmailOtp,
         )
     }
 
@@ -150,6 +153,7 @@ class DigitsClient(
         email: String,
         phone: String,
         password: String,
+        requireEmailOtp: Boolean = false,
     ) = client.safeRequest<DigitsLoginRegisterResponse, DigitsErrorResponse> {
         method = HttpMethod.Post
         url { path(pathValue) }
@@ -160,6 +164,9 @@ class DigitsClient(
                     append("email", email)
                     append("phone", phone)
                     append("password", password)
+                    if (requireEmailOtp) {
+                        append("require_email_otp", "1")
+                    }
                 },
             ),
         )
@@ -174,7 +181,10 @@ class DigitsClient(
             }
         }
 
-    suspend fun requestPasswordResetOtp(email: String) =
+    suspend fun requestPasswordResetOtp(
+        email: String,
+        mode: String = "reset",
+    ) =
         client.safeRequest<DigitsSimpleResponse, DigitsErrorResponse> {
             method = HttpMethod.Post
             url { path("wp-json/woo-mobile-auth/v1/request_password_otp") }
@@ -182,12 +192,17 @@ class DigitsClient(
                 MultiPartFormDataContent(
                     formData {
                         append("email", email)
+                        append("mode", mode)
                     },
                 ),
             )
         }
 
-    suspend fun verifyPasswordResetOtp(email: String, otp: String) =
+    suspend fun verifyPasswordResetOtp(
+        email: String,
+        otp: String,
+        mode: String = "reset",
+    ) =
         client.safeRequest<DigitsSimpleResponse, DigitsErrorResponse> {
             method = HttpMethod.Post
             url { path("wp-json/woo-mobile-auth/v1/verify_password_otp") }
@@ -196,6 +211,7 @@ class DigitsClient(
                     formData {
                         append("email", email)
                         append("otp", otp)
+                        append("mode", mode)
                     },
                 ),
             )
@@ -219,7 +235,44 @@ class DigitsClient(
     suspend fun logout(token: String) =
         client.safeRequest<DigitsSimpleResponse, DigitsSimpleResponse> {
             method = HttpMethod.Post
-            url { path("wp-json/digits/v1/logout") }
+            url { path("wp-json/woo-mobile-auth/v1/logout_user") }
             header(HttpHeaders.Authorization, token)
+        }
+
+    suspend fun requestDeleteAccountOtp(token: String) =
+        client.safeRequest<DigitsSimpleResponse, DigitsErrorResponse> {
+            method = HttpMethod.Post
+            url { path("wp-json/woo-mobile-auth/v1/request_delete_account_otp") }
+            header(HttpHeaders.Authorization, token)
+        }
+
+    suspend fun deleteAccountWithPassword(token: String, password: String) =
+        client.safeRequest<DigitsSimpleResponse, DigitsErrorResponse> {
+            method = HttpMethod.Post
+            url { path("wp-json/woo-mobile-auth/v1/delete_account") }
+            header(HttpHeaders.Authorization, token)
+            setBody(
+                MultiPartFormDataContent(
+                    formData {
+                        append("method", "password")
+                        append("password", password)
+                    },
+                ),
+            )
+        }
+
+    suspend fun deleteAccountWithOtp(token: String, otp: String) =
+        client.safeRequest<DigitsSimpleResponse, DigitsErrorResponse> {
+            method = HttpMethod.Post
+            url { path("wp-json/woo-mobile-auth/v1/delete_account") }
+            header(HttpHeaders.Authorization, token)
+            setBody(
+                MultiPartFormDataContent(
+                    formData {
+                        append("method", "otp")
+                        append("otp", otp)
+                    },
+                ),
+            )
         }
 }

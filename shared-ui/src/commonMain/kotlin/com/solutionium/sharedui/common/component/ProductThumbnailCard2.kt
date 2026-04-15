@@ -104,7 +104,7 @@ fun ProductThumbnailCard2(
         modifier = modifier
             .fillMaxWidth(), // Will be constrained by LazyVerticalGrid column
         //.aspectRatio(0.5f), // Adjust aspect ratio for desired card height vs width
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(16.dp),
         //elevation = CardDefaults.cardElevation(defaultElevation = 2.dp, hoveredElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest)
     ) {
@@ -134,10 +134,10 @@ fun ProductThumbnailCard2(
                         .padding(8.dp)
                         .size(32.dp)
                         .align(Alignment.TopEnd)
-                        .background(
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                            shape = RoundedCornerShape(4.dp)
-                        )
+//                        .background(
+//                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+//                            shape = RoundedCornerShape(4.dp)
+//                        )
                         .padding(6.dp)
                 )
 
@@ -146,7 +146,7 @@ fun ProductThumbnailCard2(
                         discount = product.salesPercentage(),
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(8.dp)
+                            .padding(6.dp)
                     )
                 // Add to Cart (optional based on product)
                 if (product.hasSimpleAddToCart) {
@@ -158,11 +158,11 @@ fun ProductThumbnailCard2(
                         modifier = Modifier
                             .padding(8.dp)
                             .height(32.dp)
-                            .align(Alignment.BottomEnd)
-                            .background(
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                                shape = RoundedCornerShape(4.dp)
-                            ),
+                            .align(Alignment.BottomEnd),
+//                            .background(
+//                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+//                                shape = RoundedCornerShape(4.dp)
+//                            ),
                         // Define the transition animation
                         transitionSpec = {
                             // Animate in: Slide in from the right and fade in
@@ -187,7 +187,7 @@ fun ProductThumbnailCard2(
 //                                        shape = RoundedCornerShape(4.dp)
 //                                    )
                                     //.fillMaxSize()
-                                    .padding(6.dp)
+                                    //.padding(6.dp)
                             )
                         } else
                             IconButton(
@@ -547,21 +547,21 @@ fun SalesBadge2(
         modifier = modifier
             .background(
                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.9f),
-                shape = RoundedCornerShape(4.dp)
-            )
+                shape = RoundedCornerShape(10.dp)
+            ).height(20.dp)
             .padding(horizontal = 6.dp, vertical = 0.dp)
     ) {
         Text(
-            text = "$discount",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            text = "$discount%",
+            fontSize = 11.sp,
+            lineHeight = 11.sp,
             color = MaterialTheme.colorScheme.onPrimary
         )
 
         Text(
-            text = " %",
+            text = " OFF",
             fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
+            lineHeight = 11.sp,
             color = MaterialTheme.colorScheme.onPrimary
         )
     }
