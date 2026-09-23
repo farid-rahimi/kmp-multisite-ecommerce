@@ -85,23 +85,6 @@ This separation is the main reason the codebase can evolve backend providers wit
 - [`core/design-system`](./core/design-system/README.md) - legacy Android-only design-system module
 - [`core/ui/common`](./core/ui/common/README.md) - legacy Android-only UI common module
 
-## Product Flavors (Android)
-
-Defined in `app/build.gradle.kts` with flavor dimension `site`:
-
-- `siteA`
-  - `applicationId`: `com.solutionium.woo`
-  - `localeFilters`: `en`, `fa`
-  - Base URL: `https://qeshminora.com/`
-- `siteB`
-  - `applicationId`: `ae.leparfum.shop`
-  - `localeFilters`: `en`, `ar`
-  - Base URL: `https://leparfum.ae/`
-
-Google services files are flavor-specific:
-
-- `app/src/siteA/google-services.json`
-- `app/src/siteB/google-services.json`
 
 ## Tech Stack
 
